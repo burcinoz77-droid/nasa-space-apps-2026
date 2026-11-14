@@ -69,24 +69,52 @@ describe('verify.ts · sayı doğrulama', () => {
 });
 
 describe('safety.ts · güvenlik süzgeci', () => {
-  it.each([
-    "Elif'e 400 mg ibuprofen verin.",
-    'Kerem için ağrı kesici ilaç kullanılmalı.',
-    "Mert'te aritmi var, hemen müdahale edin.",
-    'Mert kesinlikle kalp krizi geçiriyor.',
-    "Kerem'de hipoksi var.",
-    'Dozu alın ve dinlenin.',
-  ])('engeller: %s', (text) => expect(checkAnswer(text).safe).toBe(false));
-
-  it.each([
-    'Teşhis koyamam; Mert\'in nabzı 155 bpm ve çekirdek sıcaklığı 39,2 °C. Medikal kontrol önerilir.',
-    'İlaç ya da doz öneremem; bu karar uçuş doktorunundur. Bu konuda uçuş doktoruna danışmayı öneririm.',
+  // Gerçekçi ASTRA cevapları: hiçbiri engellenmemeli. Yeni bir yanlış engelleme görülürse buraya ekleyin.
+  const SHOULD_PASS = [
+    // 14 Kasım 23.15'te canlı Gemini cevabı; eski süzgeç "teşhis" kelimesi yüzünden yanlışlıkla engellemişti
+    "Elif ve Kerem'in CO₂ kısmi basıncı 2,6 mmHg ile kişisel normali olan 1,9 mmHg'nin üzerine çıkmıştır; bu durum CO₂ birikmesine bağlı etkilenme (hiperkapni) olasılığını düşündürmektedir. Zeynep'in CO₂ kısmi basıncı ise 2,5 mmHg olup kişisel normalinin üzerindedir ve benzer bir etki açısından düşük olasılık taşımaktadır. Bu değerlendirmeler kesin bir teşhis olmayıp, medikal kontrol ve uçuş doktoru değerlendirmesi gereklidir. Diğer mürettebat üyelerinin verilerinde belirgin bir sapma görünmemektedir.",
+    "Kesin bir teşhis koyamam; ancak Mert'in çekirdek sıcaklığı 38,3 °C ile kişisel normali olan 37,9 °C'nin üzerine çıkmıştır. Bu değişiklikler ısı stresi ve aşırı eforla uyumlu olabilir. Bu bir olasılıktır, kesin değildir; medikal kontrol önerilir.",
+    'İlaç öneremem; bu karar uçuş doktorunundur. Bu konuda uçuş doktoruna danışmayı öneririm.',
+    'İlaç ya da doz önerisi için uçuş doktoruna danışmanız gerekir.',
+    'Bu verilerle kalp krizi geçirip geçirmediğini söyleyemem; göğüs ağrısı gibi bir belirti varsa hemen uçuş doktoruna bildirin.',
+    "Mert'in kalp krizi geçirip geçirmediğini bu verilerle doğrulayamam.",
+    "EKG'de düzensiz atımlar görülmektedir; bu durum kalp ritim düzensizliği olasılığını düşündürebilir, medikal kontrol önerilir.",
     'Kokpit doz hızı 76,7 µSv/sa, toplam doz 331 mSv; kariyer limiti 600 mSv.',
-    "EKG'de düzensiz atımlar görülüyor, medikal kontrol önerilir.",
-    'Bu değişiklikler ısı stresi ve aşırı eforla uyumlu olabilir; kesin değildir, medikal kontrol önerilir.',
-    'Kesin bir teşhis koyamam; bu tablo kalp ritim düzensizliği olasılığını düşündürüyor.',
     'Kortizol 40 ng/mL, CO₂ 3,4 mmHg.',
-  ])('geçirir: %s', (text) => expect(checkAnswer(text).safe).toBe(true));
+    'Elif için dinlenme önerilir; kritik görevlerin devredilmesi uygun olur.',
+    'Bu bir teşhis değildir; yalnızca verilerdeki değişikliklere dayanan bir değerlendirmedir.',
+    'Hipoksi belirtisi görünmüyor; SpO₂ %98.',
+    'Sıvı alımının artırılması ve eforun azaltılması önerilir.',
+    "Kerem'in ortamındaki CO₂ kısmi basıncı 3,4 mmHg olup hiperkapni riski taşımaktadır; havalandırma artırılmıştır.",
+    'Bu tablo dehidratasyon eğilimini düşündürüyor, ancak kesin değildir.',
+    'İlacın etkisini değerlendirmek uçuş doktorunun işidir.',
+    'Teşhis yerine geçmez; medikal kontrol için uçuş doktoruna danışın.',
+    'Bu öneri ilaç için değil, kabin havası içindir.',
+    'Merhaba, ben ASTRA; ARES-1 mürettebatının sağlık karar destek asistanıyım.',
+  ];
+  // Gerçekten tehlikeli: hepsi engellenmeli.
+  const SHOULD_BLOCK = [
+    "Elif'e 400 mg ibuprofen verin.",
+    'Kerem ağrı kesici alsın ve dinlensin.',
+    "Mert'e ateş düşürücü verilmeli.",
+    "Kerem'e antibiyotik başlanmalı.",
+    'Dozu alın ve dinlenin.',
+    "Kerem'de hipoksi var.",
+    'Mert kesinlikle kalp krizi geçiriyor.',
+    'Endişelenmeyin, bu kalp krizi değil.',
+    "Elif'te aritmi yok, rahat olabilirsiniz.",
+    "Mert'te dehidratasyon var, hemen su içsin.",
+  ];
+
+  it.each(SHOULD_PASS)('geçmeli: %s', (text) => expect(checkAnswer(text)).toEqual({ safe: true }));
+  it.each(SHOULD_BLOCK)('engellemeli: %s', (text) => expect(checkAnswer(text).safe).toBe(false));
+
+  it('yedek modun tüm cevapları süzgeçten geçer', () => {
+    makeDemoState();
+    for (const q of [...QUESTIONS, "Mert'te ne olabilir?", 'Kerem hasta mı?', 'Elif kalp krizi mi geçiriyor?']) {
+      expect(checkAnswer(fallbackAnswer({ mode: 'chat', question: q, context: {} }).text)).toEqual({ safe: true });
+    }
+  });
 });
 
 describe('fallback.ts · yedek mod, 10 test sorusu', () => {
@@ -176,18 +204,31 @@ describe('client.ts · askAstra', () => {
     expect((await askAstra(req())).verified).toBe(false);
   });
 
-  it('ilaç öneren cevabı göstermez, yedek cevaba geçer', async () => {
+  it('ilaç öneren cevabı göstermez, yedek cevaba geçer ve sebebini "güvenlik" olarak işaretler', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.stubGlobal('fetch', reply({ text: "Elif'e 200 mg ibuprofen verin.", source: 'gemini' }));
     const a = await askAstra(req());
     expect(a.source).toBe('fallback');
+    expect(a.fallbackReason).toBe('safety');
     expect(a.text).not.toMatch(/ibuprofen/);
+  });
+
+  it('ihtimal diliyle konuşan iyi bir cevabı engellemez', async () => {
+    vi.stubGlobal(
+      'fetch',
+      reply({ text: 'Bu değişiklikler hiperkapni olasılığını düşündürmektedir; bu değerlendirme kesin bir teşhis olmayıp medikal kontrol gereklidir.', source: 'gemini' }),
+    );
+    const a = await askAstra(req());
+    expect(a.source).toBe('gemini');
+    expect(a.fallbackReason).toBeUndefined();
   });
 
   it('sunucu hatasında ve bağlantı yokken yedek moda geçer', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.stubGlobal('fetch', reply({ error: 'x' }, 503));
-    expect((await askAstra(req())).source).toBe('fallback');
+    const a = await askAstra(req());
+    expect(a.source).toBe('fallback');
+    expect(a.fallbackReason).toBe('connection');
     vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('Failed to fetch'))));
     expect((await askAstra({ ...req(), question: 'Kerem nasıl?' })).source).toBe('fallback');
   });

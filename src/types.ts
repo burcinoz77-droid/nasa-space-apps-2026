@@ -203,6 +203,7 @@ export interface AstraAnswer {
   verified: boolean; // cevaptaki tüm sayılar veride var mı (src/ai/verify.ts)
   latencyMs: number;
   tools?: string[]; // ASTRA'nın cevap için çağırdığı araçlar, ekranda gösterilir (Parça 4 ekledi)
+  fallbackReason?: 'connection' | 'safety'; // yedek cevabın sebebi: bağlantı yok mu, güvenlik süzgeci mi (Parça 4 ekledi)
 }
 
 export interface ChatMessage {
