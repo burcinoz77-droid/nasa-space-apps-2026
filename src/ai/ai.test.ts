@@ -14,6 +14,7 @@ import { countSentences, EXPECTED, fakeIncident, makeDemoState, QUESTIONS, runSi
 import { resetChat } from './chatStore';
 import { possibleConditions } from './conditions';
 import { baselineReady, longHistory, longHistorySpanHours, personalNormal } from './memory';
+import { toolLabel } from './labels';
 import { buildToolData } from './tooldata';
 import { verifyNumbers } from './verify';
 
@@ -345,6 +346,7 @@ describe('conditions.ts · olası durumlar (kesin teşhis değil)', () => {
     const r = runTool('assess_possible_conditions', { ad: 'Mert' }, td) as { olasiDurumlar: { durum: string }[]; uyari: string };
     expect(r.olasiDurumlar[0].durum).toMatch(/Isı stresi/);
     expect(r.uyari).toMatch(/kesin değildir/);
+    expect(toolLabel({ ad: 'assess_possible_conditions', girdi: { ad: 'Mert' } })).toBe('Olası durumlar · Mert');
   });
 
   it('yedek modda hastalık sorusuna değişen değerler + ihtimal diliyle cevap verir', () => {

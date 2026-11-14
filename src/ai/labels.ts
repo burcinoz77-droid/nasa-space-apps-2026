@@ -52,6 +52,7 @@ export const ACTION_TR: Record<AutoActionType, string> = {
 export const TOOL_TR: Record<string, string> = {
   get_crew_member: 'Astronot detayı',
   get_metric_trend: 'Ölçüm gidişi',
+  assess_possible_conditions: 'Olası durumlar',
   list_incidents: 'Olaylar',
   get_event_log: 'Olay kaydı',
   lookup_reference: 'Kaynak bilgisi',
