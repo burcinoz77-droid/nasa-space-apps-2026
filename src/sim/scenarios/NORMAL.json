@@ -1,0 +1,8 @@
+{
+  "id": "NORMAL",
+  "name": "Normal gün",
+  "seed": 1,
+  "note": "Etki yok: herkes kendi kişisel baseline'ında. Başka senaryodan buraya geçince değerler yumuşakça normale döner (\"Tüm mürettebatı stabilize et\").",
+  "events": [],
+  "effects": []
+}
