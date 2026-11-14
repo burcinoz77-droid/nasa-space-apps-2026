@@ -59,7 +59,7 @@ export async function askAstra(req: AstraRequest): Promise<AstraAnswer> {
     const safety = checkAnswer(text);
     if (!safety.safe) {
       console.warn(`[ASTRA] Güvenlik süzgeci cevabı engelledi (${safety.reason}); yedek cevap gösteriliyor.\n${text}`);
-      return { ...fallbackAnswer(req), latencyMs: elapsed() };
+      return { ...fallbackAnswer(req), latencyMs: elapsed(), fallbackReason: 'safety' };
     }
 
     const answer: AstraAnswer = {
@@ -74,7 +74,7 @@ export async function askAstra(req: AstraRequest): Promise<AstraAnswer> {
     return answer;
   } catch (err) {
     console.warn('[ASTRA] Dil modeline ulaşılamadı, yedek moda geçildi:', err instanceof Error ? err.message : err);
-    return { ...fallbackAnswer(req), latencyMs: elapsed() };
+    return { ...fallbackAnswer(req), latencyMs: elapsed(), fallbackReason: 'connection' };
   }
 }
 

@@ -11,7 +11,7 @@ mürettebata destek olur.
 | --- | --- |
 | Uyarı açamaz, olay kapatamaz | Uyarıyı sadece Katman 1 (`src/engine/`) açar. `src/ai/` yalnızca `explanations` ve `chat` alanlarına yazar. |
 | Veriyi değiştiremez, sistem çalıştıramaz | Sunucu fonksiyonu sadece metin döndürür; otonom adımları Katman 1 başlatır. |
-| Kesin teşhis koymaz, ilaç ya da doz önermez | Olası durumları yalnızca ihtimal diliyle söyler (aşağıda). `src/ai/safety.ts`: "400 mg", "doz alın", "aritmi var", "kesinlikle hipoksi" gibi ifadeler içeren cevap gösterilmez, yerine yedek cevap gelir ve konsola yazılır. "... ile uyumlu olabilir" ve "Kesin teşhis koyamam" gibi cümleler geçer. |
+| Kesin teşhis koymaz, ilaç ya da doz önermez | `src/ai/safety.ts` sadece gerçekten tehlikeli üç şeyi engeller: ilaç ya da doz önerisi ("400 mg verin", "ağrı kesici alsın"), kesin teşhis ("Kerem'de hipoksi var", "kesinlikle kalp krizi geçiriyor") ve hayati durumlarda kesin dışlama ("kalp krizi değil"). Kelimenin geçmesi sorun değildir: "kesin bir teşhis olmayıp", "İlaç öneremem", "... ile uyumlu olabilir" geçer. Engellenen cevabın yerine yedek cevap gelir; ekranda "Yedek cevap · güvenlik süzgeci" yazar, sebep konsolda görünür. `ai.test.ts`'te 19 "geçmeli" ve 10 "engellenmeli" gerçekçi cümle var; yeni bir yanlış engelleme görülürse o cümle listeye eklenir. |
 | Sayı uyduramaz | `src/ai/verify.ts`: cevaptaki her sayı modele giden veride aranır. Hepsi varsa yeşil **Sayılar doğrulandı**, yoksa amber **Sayıları kontrol et** rozeti. |
 | İnternet yoksa susmaz | `src/ai/fallback.ts`: veriden kural tabanlı Türkçe cevap üretir; gri **Yedek mod · çevrimdışı** etiketiyle gösterilir. |
 

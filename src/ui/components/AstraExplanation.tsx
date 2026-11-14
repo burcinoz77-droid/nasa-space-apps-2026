@@ -44,10 +44,17 @@ export function AstraExplanation({ incidentId }: { incidentId: string }) {
 /** Cevabın altındaki satır: kaynak (Gemini / Claude / Yedek mod), süre, doğrulama rozeti. */
 export function AstraMeta({ answer }: { answer: AstraAnswer }) {
   const offline = answer.source === 'fallback';
+  const safety = answer.fallbackReason === 'safety';
+  const label = safety ? 'Yedek cevap · güvenlik süzgeci' : SOURCE_LABEL[answer.source];
+  const hint = safety
+    ? 'Modelin cevabı ilaç önerisi ya da kesin teşhis içerdiği için gösterilmedi; ayrıntı tarayıcı konsolunda. Bu cevap doğrudan veriden üretildi.'
+    : offline
+      ? 'Dil modeline ulaşılamadı; cevap doğrudan veriden kural tabanlı üretildi. Sebep tarayıcı konsolunda.'
+      : undefined;
   return (
     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-      <span style={{ color: offline ? COLORS.offline : COLORS.ai }} title={offline ? 'Dil modeline ulaşılamadı; cevap doğrudan veriden kural tabanlı üretildi.' : undefined}>
-        {offline ? '◌' : '✦'} {SOURCE_LABEL[answer.source]}
+      <span style={{ color: offline ? COLORS.offline : COLORS.ai }} title={hint}>
+        {offline ? '◌' : '✦'} {label}
       </span>
       {!offline && <span style={{ color: COLORS.textMuted }}>{fmt(answer.latencyMs / 1000, 1)} sn</span>}
       {!offline && <VerifiedBadge ok={answer.verified} />}
