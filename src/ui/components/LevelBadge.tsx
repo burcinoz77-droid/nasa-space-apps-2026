@@ -1,10 +1,20 @@
+// Parça 3 · Seviye rozeti: renk + simge + yazı (● NORMAL, ▲ DİKKAT, ■ KRİTİK). Renk körlüğü için üçü birlikte.
 import type { Level } from '../../types';
-import { LEVEL_COLOR, LEVEL_ICON, LEVEL_LABEL } from '../theme';
+import { alpha, COLORS, LEVEL_COLOR, LEVEL_ICON, LEVEL_LABEL } from '../theme';
 
-export function LevelBadge({ level }: { level: Level | undefined }) {
-  if (!level) return <span className="text-slate-400">● VERİ YOK</span>;
+export function LevelBadge({ level, pill = false }: { level: Level | undefined; pill?: boolean }) {
+  if (!level)
+    return (
+      <span className="font-mono text-sm font-semibold whitespace-nowrap" style={{ color: COLORS.offline }}>
+        ● VERİ YOK
+      </span>
+    );
+  const color = LEVEL_COLOR[level];
   return (
-    <span className="font-mono text-xs font-semibold" style={{ color: LEVEL_COLOR[level] }}>
+    <span
+      className={`font-mono text-sm font-semibold whitespace-nowrap ${pill ? 'rounded-full px-2 py-0.5' : ''}`}
+      style={{ color, backgroundColor: pill ? alpha(color, 0.14) : undefined }}
+    >
       {LEVEL_ICON[level]} {LEVEL_LABEL[level]}
     </span>
   );
