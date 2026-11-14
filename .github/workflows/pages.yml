@@ -1,0 +1,45 @@
+# GitHub Pages yedeği: vercel.app'i engelleyen ağlar (bazı Türkiye sağlayıcıları) için ikinci link.
+# main'e her birleştirmede otomatik yayınlanır: https://burcinoz77-droid.github.io/nasa-space-apps-2026/
+# GitHub Pages sunucu kodu çalıştıramaz: /api/astra yoktur, ASTRA burada yedek modda cevap verir.
+name: GitHub Pages yedeği
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+        env:
+          BASE_PATH: /nasa-space-apps-2026/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
