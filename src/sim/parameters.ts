@@ -36,10 +36,10 @@ const SRC = {
   eda: { source: 'OSDR EDA (ISS çevre verisi)', url: 'https://visualization.osdr.nasa.gov/eda/' },
   ochmoCO2: { source: 'OCHMO-TB-004 CO₂', url: 'https://www.nasa.gov/ochmo-tb-004-carbon-dioxide-2/' },
   ntrsSuit: { source: 'EVA giysisi regülatörü (NASA NTRS)', url: 'https://ntrs.nasa.gov/api/citations/20230007781/downloads/Regulators_ICES2023_Final.pdf' },
-  ntrsCabin: { source: 'Kabin atmosferi (NASA NTRS)', url: 'https://ntrs.nasa.gov/api/citations/20240004074/downloads/SHOP%20-%20Variable%20Pressure%20Suit_v2.pdf' },
+  ntrsCabin: { source: 'Kabin atmosferi 14,7 psia, %21 O₂ (NASA NTRS, ICES-2024)', url: 'https://ntrs.nasa.gov/api/citations/20240005117/downloads/ICES-2024-128-Final%20Manuscript-No%20Tracked%20Changes.pdf' },
   barger2014: { source: 'Barger vd. 2014, Lancet Neurology (ISS)', url: 'https://www.eurekalert.org/news-releases/595450' },
   hrpSleep: { source: 'NASA HRP uyku riski', url: 'https://www.nasa.gov/reference/risk-from-inadequate-sleep-and-irregular-schedules/' },
-  relay: { source: 'NASA Mars Relay Network', url: 'https://science.nasa.gov/?p=434038' },
+  relay: { source: 'NASA NTRS, ASCEND 2022: Mars görevlerinde iletişim gecikmesi', url: 'https://ntrs.nasa.gov/api/citations/20220013418/downloads/ASCEND-Communication%20Delays%2C%20Disruptions%2C%20and%20Blackouts%20for%20Crewed%20Mars%20Missions.pdf' },
   donki: { source: 'NASA DONKI, Mayıs 2024 SEP', url: 'https://ccmc.gsfc.nasa.gov/DONKI-API/get/SEP?startDate=2024-05-01&endDate=2024-05-31' },
   assumption: { source: 'Varsayım', assumption: true },
 } as const;
@@ -87,8 +87,10 @@ export const PARAMS = {
   careerDoseLimit: { label: 'Kariyer radyasyon limiti', value: 600, unit: 'mSv', ...SRC.ochmoRad },
   cabinCO2Median: { label: 'Kabin CO₂, ISS medyanı', value: 1.9, unit: 'mmHg (ISS RR-19 medyan 2.516 ppm)', ...SRC.eda },
   cabinCO2FailurePeak: { label: 'Kabin CO₂, ölçülen en yüksek', value: 5.3, unit: 'mmHg (EDA en yüksek 6.977 ppm)', ...SRC.eda },
-  co2CautionLimit: { label: 'CO₂ dikkat eşiği', value: 2.3, unit: 'mmHg', ...SRC.ochmoCO2 },
-  co2CriticalLimit: { label: 'CO₂ kritik eşiği', value: 3.0, unit: 'mmHg', ...SRC.ochmoCO2 },
+  // 2,3 mmHg: NASA NTRS'e göre belirtiler bu seviyeden itibaren bildirilmiş (plan). OCHMO-TB-004 ayrıca baş ağrısı riskini
+  // %1'in altında tutmak için 7 günlük ortalamanın 2,5 mmHg altında kalmasını ister; 3,0 mmHg 1 saatlik üst sınırdır.
+  co2CautionLimit: { label: 'CO₂ dikkat eşiği', value: 2.3, unit: 'mmHg (belirtiler başlıyor; 7 gün ort. sınırı 2,5)', ...SRC.ochmoCO2 },
+  co2CriticalLimit: { label: 'CO₂ kritik eşiği', value: 3.0, unit: 'mmHg (1 saatlik ortalama, NASA-STD-3001 V2 6004)', ...SRC.ochmoCO2 },
   cabinPressure: { label: 'Kabin basıncı ve O₂', value: 101.3, unit: 'kPa, %21 O₂', ...SRC.ntrsCabin },
   suitPressure: { label: 'EVA giysisi basıncı ve O₂', value: 29.6, unit: 'kPa, %100 O₂ (4,3 psia)', ...SRC.ntrsSuit },
   sleepInSpaceMean: { label: 'Uzayda ortalama uyku', value: 6.09, unit: 'sa', ...SRC.barger2014 },
