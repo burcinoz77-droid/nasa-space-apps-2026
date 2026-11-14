@@ -1,0 +1,18 @@
+{
+  "id": "CO2_SCRUBBER_FAIL",
+  "name": "CO₂ temizleyici arızası",
+  "seed": 7,
+  "source": "OSDR EDA (ISS'te ölçülen en yüksek CO₂ 6.977 ppm ≈ 5,3 mmHg); OCHMO-TB-004 belirti eşikleri",
+  "note": "Kokpit kabininde ppCO₂ 90 ölçümde 1,9'dan 5,3 mmHg'ye çıkar. Belirtiler (solunum, EtCO₂, nabız, PVT) kabin CO₂'siyle orantılıdır; Kerem iki kat tepki verir. Havalandırma artırılınca CO₂ 2,0'a iner, belirtiler de geriler. Belirti büyüklükleri varsayımdır.",
+  "events": [
+    { "atTick": 0, "type": "SCRUBBER_FAIL", "text": "Kokpit CO₂ temizleyicisi durdu" }
+  ],
+  "effects": [
+    { "metric": "env.ppCO2_mmHg", "crew": "KOKPIT", "to": 5.3, "rampTicks": 90 },
+    { "metric": "resp.rr_bpm", "crew": "KOKPIT", "add": 3, "trait": "co2Response", "followsCO2": true },
+    { "metric": "resp.minuteVent_L_min", "crew": "KOKPIT", "add": 2, "trait": "co2Response", "followsCO2": true },
+    { "metric": "resp.etco2_mmHg", "crew": "KOKPIT", "add": 3, "trait": "co2Response", "followsCO2": true },
+    { "metric": "cardio.hr_bpm", "crew": "KOKPIT", "add": 6, "trait": "co2Response", "followsCO2": true },
+    { "metric": "cog.pvtMeanRt_ms", "crew": "KOKPIT", "add": 20, "trait": "co2Response", "followsCO2": true }
+  ]
+}

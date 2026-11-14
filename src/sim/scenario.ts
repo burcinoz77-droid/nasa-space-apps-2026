@@ -18,6 +18,7 @@ export interface ScenarioEffect {
   rampTicks?: number; // tam etkiye kaç ölçümde ulaşır (varsayılan 1)
   endTick?: number; // bu ölçümden sonra etki kalkar; değer baseline'a yumuşakça döner
   trait?: TraitKey; // etkinin büyüklüğü kişisel hassasiyetle çarpılır (örn. Kerem co2Response = 2)
+  followsCO2?: boolean; // etki kabin CO₂'sinin ne kadar yükseldiğiyle orantılı (havalandırma artınca belirtiler de geriler)
 }
 
 export interface ScenarioEvent {

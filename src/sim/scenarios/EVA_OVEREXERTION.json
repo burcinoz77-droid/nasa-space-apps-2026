@@ -1,0 +1,21 @@
+{
+  "id": "EVA_OVEREXERTION",
+  "name": "EVA aşırı efor",
+  "seed": 155,
+  "source": "Stahn vd. 2017 (uzayda egzersizde çekirdek sıcaklık 40 °C'yi aşabiliyor); ter biyobelirteçleri tablosu (laktat, sodyum aralıkları)",
+  "note": "Mert yüzeyde ağır iş yaparken (panel taşıma) aşırı efor ve ısı birikimi yaşar. Hedef değerler plandaki tablodan. Zorunlu dinlenme verilince nabız, solunum, laktat ve çekirdek sıcaklık baseline'a döner.",
+  "events": [
+    { "atTick": 0, "untilTick": 40, "type": "EVA_HEAVY", "text": "Mert: habitat güneş paneli taşıma, ağır EVA görevi" },
+    { "atTick": 40, "type": "EVA_HEAT", "text": "Mert: giysi içi ısı birikimi" }
+  ],
+  "effects": [
+    { "metric": "cardio.hr_bpm", "crew": ["mert"], "to": 155, "rampTicks": 40 },
+    { "metric": "resp.coreTemp_C", "crew": ["mert"], "to": 39.2, "startTick": 10, "rampTicks": 60 },
+    { "metric": "biochem.sweatLactate_mM", "crew": ["mert"], "to": 22, "rampTicks": 40 },
+    { "metric": "biochem.sweatSodium_mM", "crew": ["mert"], "to": 70, "startTick": 10, "rampTicks": 50 },
+    { "metric": "resp.rr_bpm", "crew": ["mert"], "to": 32, "rampTicks": 40 },
+    { "metric": "resp.etco2_mmHg", "crew": ["mert"], "to": 46, "startTick": 10, "rampTicks": 40 },
+    { "metric": "cardio.spo2_pct", "crew": ["mert"], "to": 95, "startTick": 10, "rampTicks": 40 },
+    { "metric": "resp.gsr_uS", "crew": ["mert"], "add": 3, "rampTicks": 30 }
+  ]
+}

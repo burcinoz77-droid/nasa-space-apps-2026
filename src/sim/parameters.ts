@@ -183,15 +183,16 @@ export interface CrewTraits {
   radiationResponse: number; // radyasyon olayında stres (kortizol, GSR, nabız) etkisinin çarpanı
   cardioResponse: number; // nabız etkilerinin çarpanı
   metabolicResponse: number; // laktat, çekirdek sıcaklık, ter etkilerinin çarpanı
-  fatigueResponse: number; // uyku eksikliği ve bilişsel yük etkisinin çarpanı
+  fatigueResponse: number; // Mars 180. gün yükü: 1 = tablodaki tam etki, 0,5 = yarı şiddet
   offsets: Partial<Record<MetricKey, number>>; // kişisel baseline kayması
 }
 
-const NEUTRAL: CrewTraits = { co2Response: 1, radiationResponse: 1, cardioResponse: 1, metabolicResponse: 1, fatigueResponse: 1, offsets: {} };
+// Plan: Mars 180. gün yükünü Elif tam şiddette, diğerleri yarı şiddette yaşar
+const NEUTRAL: CrewTraits = { co2Response: 1, radiationResponse: 1, cardioResponse: 1, metabolicResponse: 1, fatigueResponse: 0.5, offsets: {} };
 
 export const CREW_TRAITS: Record<CrewId, CrewTraits> = {
   // Elif: radyasyona hassas; Mars 180. gün yükünü güçlü yaşar
-  elif: { ...NEUTRAL, radiationResponse: 1.6, fatigueResponse: 1.5 },
+  elif: { ...NEUTRAL, radiationResponse: 1.6, fatigueResponse: 1 },
   // Kerem: CO₂'ye iki kat tepki
   kerem: { ...NEUTRAL, co2Response: 2 },
   // Zeynep: nabzı düşük ve dayanıklı (pilot)

@@ -74,6 +74,13 @@ export function createSimulation(seed = 2026): Simulation {
   }
   build();
 
+  /** Kabin CO₂'si normalden arıza tepesine ne kadar yükseldi: 0 → 1. */
+  function co2Excess(c: CrewState): number {
+    const base = c.baseline['env.ppCO2_mmHg'];
+    const span = PARAMS.cabinCO2FailurePeak.value - base;
+    return clamp((c.x['env.ppCO2_mmHg'] - base) / span, 0, 1);
+  }
+
   /** Bu tick'teki hedef: baseline + senaryo etkileri + otonom adımlar. */
   function targetFor(c: CrewState, key: MetricKey, elapsed: number): number {
     const base = c.baseline[key];
@@ -85,7 +92,8 @@ export function createSimulation(seed = 2026): Simulation {
     if (def) {
       for (const e of def.effects) {
         if (e.metric !== key || !appliesTo(e, c.member.id, c.member.location)) continue;
-        const f = effectFraction(e, elapsed);
+        let f = effectFraction(e, elapsed);
+        if (e.followsCO2) f *= co2Excess(c);
         if (f <= 0) continue;
         target += effectDelta(e, base, traits) * f;
         if (key === 'env.doseRate_uSv_h') doseEffectActive = true;

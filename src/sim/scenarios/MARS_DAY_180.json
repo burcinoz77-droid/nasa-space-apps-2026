@@ -1,0 +1,25 @@
+{
+  "id": "MARS_DAY_180",
+  "name": "Mars 180. gün yükü",
+  "seed": 180,
+  "source": "Barger vd. 2014 (uzayda uyku 6,09 sa); Jones vd. 2022 (uyku eksikliği PVT'yi bozar, stresi artırır)",
+  "note": "Altı ay izolasyon ve uyku borcunun birikmiş etkisi. Elif tam şiddette (tablodaki değerler), diğerleri yarı şiddette yaşar (fatigueResponse). Uyku, PVT, PANAS, BSI-18 günlük ölçümdür: yeni değere kayar ve orada kalır. Etki büyüklükleri varsayımdır.",
+  "events": [
+    { "atTick": 0, "untilTick": 60, "type": "WORKLOAD", "text": "180. gün: yoğun bilimsel program, üst üste kısa uykular" },
+    { "atTick": 60, "type": "SLEEP_DEBT", "text": "Birikmiş uyku borcu: bilişsel testlerde düşüş" }
+  ],
+  "effects": [
+    { "metric": "env.sleepLastNight_h", "crew": "ALL", "to": 5.0, "rampTicks": 20, "trait": "fatigueResponse" },
+    { "metric": "env.remPct", "crew": "ALL", "to": 16, "rampTicks": 20, "trait": "fatigueResponse" },
+    { "metric": "env.swsPct", "crew": "ALL", "to": 12, "rampTicks": 20, "trait": "fatigueResponse" },
+    { "metric": "env.circadianShift_h", "crew": "ALL", "to": 2.5, "rampTicks": 30, "trait": "fatigueResponse" },
+    { "metric": "cog.pvtMeanRt_ms", "crew": "ALL", "add": 70, "startTick": 10, "rampTicks": 30, "trait": "fatigueResponse" },
+    { "metric": "cog.pvtLapses", "crew": "ALL", "to": 6, "startTick": 10, "rampTicks": 30, "trait": "fatigueResponse" },
+    { "metric": "cog.panasPositive", "crew": "ALL", "add": -10, "startTick": 15, "rampTicks": 30, "trait": "fatigueResponse" },
+    { "metric": "cog.panasNegative", "crew": "ALL", "add": 8, "startTick": 15, "rampTicks": 30, "trait": "fatigueResponse" },
+    { "metric": "cog.bsi18_gsi", "crew": "ALL", "add": 10, "startTick": 15, "rampTicks": 30, "trait": "fatigueResponse" },
+    { "metric": "cog.speechStrainIndex", "crew": "ALL", "add": 25, "startTick": 15, "rampTicks": 30, "trait": "fatigueResponse" },
+    { "metric": "cardio.hrv_rmssd_ms", "crew": "ALL", "add": -12, "startTick": 10, "rampTicks": 30, "trait": "fatigueResponse" },
+    { "metric": "biochem.sweatCortisol_ng_mL", "crew": "ALL", "add": 25, "startTick": 10, "rampTicks": 30, "trait": "fatigueResponse" }
+  ]
+}

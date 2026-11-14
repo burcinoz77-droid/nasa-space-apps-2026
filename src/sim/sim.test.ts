@@ -76,4 +76,52 @@ describe('Simülasyon', () => {
     const after = by(run(80, sim).telemetry, 'elif').env.doseRate_uSv_h;
     expect(after).toBeLessThan(base * 1.3);
   });
+
+  it('CO₂ arızası Kokpit CO₂\'sini 5,3\'e çıkarır, Kerem iki kat etkilenir, havalandırma geri getirir', () => {
+    const sim = createSimulation(11);
+    run(30, sim);
+    sim.setScenario('CO2_SCRUBBER_FAIL');
+    const peak = run(120, sim).telemetry;
+    expect(by(peak, 'kerem').env.ppCO2_mmHg).toBeGreaterThan(4.8);
+    expect(by(peak, 'mert').env.ppCO2_mmHg).toBeLessThan(2.3); // Gezegen ekibi giysi içinde
+    sim.onAutoAction({ type: 'INCREASE_VENTILATION', crewIds: ['kerem'], at: 0, reason: 'test', incidentId: 'x' });
+    const after = run(80, sim).telemetry;
+    expect(by(after, 'elif').env.ppCO2_mmHg).toBeLessThan(2.4); // aynı kabin
+    expect(by(after, 'kerem').resp.rr_bpm).toBeLessThan(by(peak, 'kerem').resp.rr_bpm);
+  });
+
+  it('Mars 180. gün: Elif tam, diğerleri yarı şiddette', () => {
+    const sim = createSimulation();
+    const before = run(30, sim).telemetry;
+    sim.setScenario('MARS_DAY_180');
+    const after = run(80, sim).telemetry;
+    const drop = (id: string) => by(before, id).env.sleepLastNight_h - by(after, id).env.sleepLastNight_h;
+    expect(by(after, 'elif').env.sleepLastNight_h).toBeLessThan(5.3);
+    expect(drop('elif')).toBeGreaterThan(drop('kerem') * 1.5);
+    expect(by(after, 'elif').cog.pvtLapses).toBeGreaterThanOrEqual(5);
+  });
+
+  it('EVA aşırı efor: Mert ısınır; zorunlu dinlenme nabız ve sıcaklığı geri getirir', () => {
+    const sim = createSimulation();
+    const before = run(30, sim).telemetry;
+    sim.setScenario('EVA_OVEREXERTION');
+    const hot = run(90, sim).telemetry;
+    expect(by(hot, 'mert').resp.coreTemp_C).toBeGreaterThan(39);
+    expect(by(hot, 'mert').cardio.hr_bpm).toBeGreaterThan(145);
+    expect(by(hot, 'deniz').cardio.hr_bpm).toBeLessThan(110);
+    sim.onAutoAction({ type: 'MANDATORY_REST', crewIds: ['mert'], at: 0, reason: 'test', incidentId: 'x' });
+    const rested = run(40, sim).telemetry;
+    expect(by(rested, 'mert').resp.coreTemp_C).toBeLessThan(38.3);
+    expect(by(rested, 'mert').cardio.hr_bpm).toBeLessThan(by(before, 'mert').cardio.hr_bpm + 12);
+  });
+
+  it('Normal\'e dönünce (stabilize et) değerler baseline\'a döner', () => {
+    const sim = createSimulation();
+    const before = run(30, sim).telemetry;
+    sim.setScenario('EVA_OVEREXERTION');
+    run(80, sim);
+    sim.setScenario('NORMAL');
+    const back = run(40, sim).telemetry;
+    expect(Math.abs(by(back, 'mert').resp.coreTemp_C - by(before, 'mert').resp.coreTemp_C)).toBeLessThan(0.4);
+  });
 });
