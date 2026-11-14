@@ -2,7 +2,7 @@
 // Renkler theme.ts'ten: fırtına ve yük amber, kritik senaryolar kırmızı çerçeve, stabilize yeşil.
 import { controls } from '../../loop';
 import { SCENARIOS } from '../../sim/scenario';
-import { SIM } from '../../sim/parameters';
+import { PARAMS, SIM, type Param } from '../../sim/parameters';
 import { useAstra } from '../../store';
 import type { ScenarioId, Telemetry } from '../../types';
 import { COLORS, fmt } from '../theme';
@@ -26,6 +26,20 @@ const BUTTONS: ScenarioButton[] = [
 ];
 
 const SPEEDS = [800, 1200, 2500];
+const PARAM_LIST: Param[] = Object.values(PARAMS);
+
+function SourceCell({ p }: { p: Param }) {
+  const badge = p.assumption ? (
+    <span className="ml-2 rounded px-1.5 py-0.5 text-xs" style={{ color: COLORS.offline, border: `1px solid ${COLORS.offline}` }}>Varsayım</span>
+  ) : null;
+  if (!p.url) return <span style={{ color: COLORS.textMuted }}>{p.source}{badge}</span>;
+  return (
+    <span>
+      <a href={p.url} target="_blank" rel="noreferrer" className="underline decoration-dotted" style={{ color: COLORS.calm }}>{p.source}</a>
+      {badge}
+    </span>
+  );
+}
 
 export function Ayarlar() {
   const tickMs = useAstra((s) => s.tickMs);
@@ -110,6 +124,40 @@ export function Ayarlar() {
           </p>
         </section>
       </div>
+
+      <section className="rounded-2xl border border-space-border bg-space-panel p-4 lg:col-span-3">
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="font-semibold">Veri kaynakları</h2>
+          <span className="text-xs" style={{ color: COLORS.textMuted }}>
+            {PARAM_LIST.length} parametre · {PARAM_LIST.filter((p) => p.assumption).length} varsayım · tüm astronot verisi simülasyondur
+          </span>
+        </div>
+        <div className="max-h-96 overflow-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-space-panel text-left" style={{ color: COLORS.textMuted }}>
+              <tr>
+                <th className="py-1 pr-3 font-normal">Parametre</th>
+                <th className="py-1 pr-3 font-normal">Değer</th>
+                <th className="py-1 font-normal">Kaynak</th>
+              </tr>
+            </thead>
+            <tbody>
+              {PARAM_LIST.map((p) => (
+                <tr key={p.label} className="border-t border-space-border">
+                  <td className="py-1.5 pr-3">{p.label}</td>
+                  <td className="py-1.5 pr-3 font-mono whitespace-nowrap">
+                    {fmt(p.value, Number.isInteger(p.value) ? 0 : 2)} <span style={{ color: COLORS.textMuted }}>{p.unit}</span>
+                  </td>
+                  <td className="py-1.5"><SourceCell p={p} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-xs" style={{ color: COLORS.textMuted }}>
+          Güneş fırtınası olay zamanları NASA DONKI Mayıs 2024 kayıtlarından alındı (data/donki_sep_2024-05.json). DONKI doz değeri vermez; doz çarpanları varsayımdır.
+        </p>
+      </section>
     </div>
   );
 }

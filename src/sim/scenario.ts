@@ -26,6 +26,8 @@ export interface ScenarioEvent {
   untilTick?: number; // yoksa senaryo bitene kadar ekranda kalır
   type: string; // 'SPE_ONSET' gibi kod
   text: string; // ekranda görünen Türkçe bilgi (ship.activeEvents'e yazılır)
+  utc?: string; // gerçek olayın zamanı (DONKI)
+  url?: string; // gerçek olayın DONKI kaydı
 }
 
 export interface ScenarioDef {

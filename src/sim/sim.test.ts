@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { createSimulation } from './index';
 import { PARAMS } from './parameters';
 import type { Telemetry } from '../types';
+import { SCENARIOS } from './scenario';
+import donkiSep from '../../data/donki_sep_2024-05.json?raw';
 
 const run = (n: number, sim = createSimulation(7)) => {
   let last: ReturnType<typeof sim.tick> | undefined;
@@ -123,5 +125,16 @@ describe('Simülasyon', () => {
     sim.setScenario('NORMAL');
     const back = run(40, sim).telemetry;
     expect(Math.abs(by(back, 'mert').resp.coreTemp_C - by(before, 'mert').resp.coreTemp_C)).toBeLessThan(0.4);
+  });
+
+  it('güneş fırtınasındaki her SEP olayı kayıtlı DONKI verisinde var', () => {
+    const links = (JSON.parse(donkiSep) as { link: string }[]).map((e) => e.link);
+    const sepEvents = SCENARIOS.SOLAR_STORM!.events.filter((e) => e.url?.includes('/SEP/'));
+    expect(sepEvents.length).toBeGreaterThan(0);
+    for (const e of sepEvents) expect(links).toContain(e.url);
+  });
+
+  it('5 senaryonun hepsi yüklü', () => {
+    expect(Object.keys(SCENARIOS).sort()).toEqual(['CO2_SCRUBBER_FAIL', 'EVA_OVEREXERTION', 'MARS_DAY_180', 'NORMAL', 'SOLAR_STORM']);
   });
 });

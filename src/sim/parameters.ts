@@ -7,6 +7,7 @@ import type { CrewId, CrewLocation } from '../types';
 import type { MetricKey } from '../metrics';
 
 export interface Param {
+  label: string; // ekranda görünen Türkçe ad
   value: number;
   unit: string;
   source: string; // kısa ad
@@ -47,64 +48,70 @@ const SRC = {
 // Mevcut anahtarlar (doseRateMarsTransit, careerDoseLimit ...) korunur; Parça 3 bunlara bağlanabilir.
 export const PARAMS = {
   // Veri grubu 1 · Kalp-damar
-  heartRateRest: { value: 68, unit: 'bpm (dinlenme 60–75)', ...SRC.norsk2015 },
-  heartRateEva: { value: 92, unit: 'bpm (EVA 90–150)', ...SRC.norsk2015 },
-  hrvRmssdMean: { value: 42, unit: 'ms (SD 15, aralık 19–75)', ...SRC.nunan2010 },
-  ecgEctopicNormal: { value: 1, unit: 'düzensiz atım/dk üst sınır', ...SRC.assumption },
-  ecgIrregularThreshold: { value: 6, unit: 'düzensiz atım/dk → ritim "irregular"', ...SRC.assumption },
-  bpSysRest: { value: 112, unit: 'mmHg', ...SRC.norsk2015 },
-  bpDiaRest: { value: 70, unit: 'mmHg', ...SRC.norsk2015 },
-  bpDropInSpace: { value: 8, unit: 'mmHg (24 saatlik, sistolik)', ...SRC.norsk2015 },
-  spo2Normal: { value: 98, unit: '% (aralık 96–99)', ...SRC.hrpHypoxia },
+  heartRateRest: { label: 'Nabız, dinlenme', value: 68, unit: 'bpm (dinlenme 60–75)', ...SRC.norsk2015 },
+  heartRateEva: { label: 'Nabız, EVA', value: 92, unit: 'bpm (EVA 90–150)', ...SRC.norsk2015 },
+  hrvRmssdMean: { label: 'Kalp hızı değişkenliği (HRV)', value: 42, unit: 'ms (SD 15, aralık 19–75)', ...SRC.nunan2010 },
+  ecgEctopicNormal: { label: 'EKG düzensiz atım, normal üst sınır', value: 1, unit: 'düzensiz atım/dk üst sınır', ...SRC.assumption },
+  ecgIrregularThreshold: { label: 'EKG "düzensiz ritim" eşiği', value: 6, unit: 'düzensiz atım/dk → ritim "irregular"', ...SRC.assumption },
+  bpSysRest: { label: 'Sistolik tansiyon', value: 112, unit: 'mmHg', ...SRC.norsk2015 },
+  bpDiaRest: { label: 'Diyastolik tansiyon', value: 70, unit: 'mmHg', ...SRC.norsk2015 },
+  bpDropInSpace: { label: 'Uzayda tansiyon düşüşü', value: 8, unit: 'mmHg (24 saatlik, sistolik)', ...SRC.norsk2015 },
+  spo2Normal: { label: 'Oksijen doygunluğu (SpO₂)', value: 98, unit: '% (aralık 96–99)', ...SRC.hrpHypoxia },
   // Veri grubu 2 · Solunum ve metabolik
-  respRateRest: { value: 14, unit: 'nefes/dk (12–20)', ...SRC.jems },
-  respRateEva: { value: 22, unit: 'nefes/dk (EVA 20–32)', ...SRC.jems },
-  minuteVentRest: { value: 6.5, unit: 'L/dk (5–8)', ...SRC.assumption },
-  minuteVentEva: { value: 22, unit: 'L/dk (EVA 20+)', ...SRC.assumption },
-  etco2Normal: { value: 38, unit: 'mmHg (35–45)', ...SRC.jems },
-  coreTempRiseInSpace: { value: 1.0, unit: '°C', ...SRC.stahn2017 },
-  coreTempRest: { value: 37.4, unit: '°C (uzayda 37,3–37,8)', ...SRC.stahn2017 },
-  skinTempRest: { value: 33.7, unit: '°C (33–34,5)', ...SRC.assumption },
-  gsrBaseline: { value: 4, unit: 'µS (2–6)', ...SRC.assumption },
+  respRateRest: { label: 'Solunum sayısı, dinlenme', value: 14, unit: 'nefes/dk (12–20)', ...SRC.jems },
+  respRateEva: { label: 'Solunum sayısı, EVA', value: 22, unit: 'nefes/dk (EVA 20–32)', ...SRC.jems },
+  minuteVentRest: { label: 'Dakika ventilasyonu, dinlenme', value: 6.5, unit: 'L/dk (5–8)', ...SRC.assumption },
+  minuteVentEva: { label: 'Dakika ventilasyonu, EVA', value: 22, unit: 'L/dk (EVA 20+)', ...SRC.assumption },
+  etco2Normal: { label: 'Soluk sonu CO₂ (EtCO₂)', value: 38, unit: 'mmHg (35–45)', ...SRC.jems },
+  coreTempRiseInSpace: { label: 'Uzayda çekirdek sıcaklık artışı', value: 1.0, unit: '°C', ...SRC.stahn2017 },
+  coreTempRest: { label: 'Çekirdek sıcaklık, dinlenme', value: 37.4, unit: '°C (uzayda 37,3–37,8)', ...SRC.stahn2017 },
+  skinTempRest: { label: 'Deri sıcaklığı', value: 33.7, unit: '°C (33–34,5)', ...SRC.assumption },
+  gsrBaseline: { label: 'Galvanik deri tepkisi (GSR)', value: 4, unit: 'µS (2–6)', ...SRC.assumption },
   // Veri grubu 3 · Biyokimyasal
-  vocIndexBaseline: { value: 20, unit: '/100', ...SRC.iac18, assumption: true },
-  sweatCortisolNormal: { value: 40, unit: 'ng/mL (8–140)', ...SRC.sweat },
-  sweatLactateRest: { value: 10, unit: 'mM (5–20)', ...SRC.sweat },
-  sweatSodiumNormal: { value: 45, unit: 'mM (10–100)', ...SRC.sweat },
+  vocIndexBaseline: { label: 'Nefes VOC oksidatif stres indeksi', value: 20, unit: '/100', ...SRC.iac18, assumption: true },
+  sweatCortisolNormal: { label: 'Ter kortizolü', value: 40, unit: 'ng/mL (8–140)', ...SRC.sweat },
+  sweatLactateRest: { label: 'Ter laktatı, dinlenme', value: 10, unit: 'mM (5–20)', ...SRC.sweat },
+  sweatSodiumNormal: { label: 'Ter sodyumu', value: 45, unit: 'mM (10–100)', ...SRC.sweat },
   // Veri grubu 4 · Psikolojik ve bilişsel
-  pvtMeanRtRested: { value: 250, unit: 'ms', ...SRC.jones2022 },
-  pvtLapseThreshold: { value: 355, unit: 'ms', ...SRC.basner2011 },
-  bsi18PopulationMean: { value: 4.7, unit: '/72', ...SRC.franke2017 },
-  panasPositiveMean: { value: 33.3, unit: '/50', ...SRC.watson1988 },
-  panasNegativeMean: { value: 17.4, unit: '/50', ...SRC.watson1988 },
-  speechStrainBaseline: { value: 25, unit: '/100', ...SRC.assumption },
-  pupilDiameterRest: { value: 4.5, unit: 'mm', ...SRC.hrpSans, assumption: true },
-  pupilLatencyRest: { value: 230, unit: 'ms', ...SRC.hrpSans, assumption: true },
+  pvtMeanRtRested: { label: 'PVT tepki süresi, dinlenmiş', value: 250, unit: 'ms', ...SRC.jones2022 },
+  pvtLapseThreshold: { label: 'PVT dikkat kaybı eşiği', value: 355, unit: 'ms', ...SRC.basner2011 },
+  bsi18PopulationMean: { label: 'BSI-18 genel nüfus ortalaması', value: 4.7, unit: '/72', ...SRC.franke2017 },
+  panasPositiveMean: { label: 'PANAS olumlu ortalama', value: 33.3, unit: '/50', ...SRC.watson1988 },
+  panasNegativeMean: { label: 'PANAS olumsuz ortalama', value: 17.4, unit: '/50', ...SRC.watson1988 },
+  speechStrainBaseline: { label: 'Konuşma zorlanma indeksi', value: 25, unit: '/100', ...SRC.assumption },
+  pupilDiameterRest: { label: 'Göz bebeği çapı', value: 4.5, unit: 'mm', ...SRC.hrpSans, assumption: true },
+  pupilLatencyRest: { label: 'Göz bebeği tepki gecikmesi', value: 230, unit: 'ms', ...SRC.hrpSans, assumption: true },
   // Veri grubu 5 · Çevre
-  doseRateMarsTransit: { value: 1.84, unit: 'mSv/gün', ...SRC.swri },
-  doseRateMarsSurface: { value: 0.64, unit: 'mSv/gün', ...SRC.spaceCom },
-  careerDoseLimit: { value: 600, unit: 'mSv', ...SRC.ochmoRad },
-  cabinCO2Median: { value: 1.9, unit: 'mmHg (ISS RR-19 medyan 2.516 ppm)', ...SRC.eda },
-  cabinCO2FailurePeak: { value: 5.3, unit: 'mmHg (EDA en yüksek 6.977 ppm)', ...SRC.eda },
-  co2CautionLimit: { value: 2.3, unit: 'mmHg', ...SRC.ochmoCO2 },
-  co2CriticalLimit: { value: 3.0, unit: 'mmHg', ...SRC.ochmoCO2 },
-  cabinPressure: { value: 101.3, unit: 'kPa, %21 O₂', ...SRC.ntrsCabin },
-  suitPressure: { value: 29.6, unit: 'kPa, %100 O₂ (4,3 psia)', ...SRC.ntrsSuit },
-  sleepInSpaceMean: { value: 6.09, unit: 'sa', ...SRC.barger2014 },
-  remPctNormal: { value: 22, unit: '%', ...SRC.hrpSleep, assumption: true },
-  swsPctNormal: { value: 18, unit: '%', ...SRC.hrpSleep, assumption: true },
+  doseRateMarsTransit: { label: 'Doz hızı, Mars yolu (Kokpit)', value: 1.84, unit: 'mSv/gün', ...SRC.swri },
+  doseRateMarsSurface: { label: 'Doz hızı, Mars yüzeyi', value: 0.64, unit: 'mSv/gün', ...SRC.spaceCom },
+  careerDoseLimit: { label: 'Kariyer radyasyon limiti', value: 600, unit: 'mSv', ...SRC.ochmoRad },
+  cabinCO2Median: { label: 'Kabin CO₂, ISS medyanı', value: 1.9, unit: 'mmHg (ISS RR-19 medyan 2.516 ppm)', ...SRC.eda },
+  cabinCO2FailurePeak: { label: 'Kabin CO₂, ölçülen en yüksek', value: 5.3, unit: 'mmHg (EDA en yüksek 6.977 ppm)', ...SRC.eda },
+  co2CautionLimit: { label: 'CO₂ dikkat eşiği', value: 2.3, unit: 'mmHg', ...SRC.ochmoCO2 },
+  co2CriticalLimit: { label: 'CO₂ kritik eşiği', value: 3.0, unit: 'mmHg', ...SRC.ochmoCO2 },
+  cabinPressure: { label: 'Kabin basıncı ve O₂', value: 101.3, unit: 'kPa, %21 O₂', ...SRC.ntrsCabin },
+  suitPressure: { label: 'EVA giysisi basıncı ve O₂', value: 29.6, unit: 'kPa, %100 O₂ (4,3 psia)', ...SRC.ntrsSuit },
+  sleepInSpaceMean: { label: 'Uzayda ortalama uyku', value: 6.09, unit: 'sa', ...SRC.barger2014 },
+  remPctNormal: { label: 'REM uykusu oranı', value: 22, unit: '%', ...SRC.hrpSleep, assumption: true },
+  swsPctNormal: { label: 'Derin uyku oranı', value: 18, unit: '%', ...SRC.hrpSleep, assumption: true },
   // İletişim
-  commDelayMin: { value: 180, unit: 's (tek yön)', ...SRC.relay },
-  commDelayMax: { value: 1344, unit: 's (tek yön)', ...SRC.relay },
-  commDelayDemo: { value: 750, unit: 's (tek yön, 12,5 dk)', ...SRC.relay },
+  commDelayMin: { label: 'Dünya gecikmesi, en kısa', value: 180, unit: 's (tek yön)', ...SRC.relay },
+  commDelayMax: { label: 'Dünya gecikmesi, en uzun', value: 1344, unit: 's (tek yön)', ...SRC.relay },
+  commDelayDemo: { label: 'Dünya gecikmesi, demo', value: 750, unit: 's (tek yön, 12,5 dk)', ...SRC.relay },
   // Senaryo çarpanları (DONKI zamanı verir, doz değerini vermez)
-  stormDoseMultiplierOnset: { value: 25, unit: '× doz hızı (Kokpit)', ...SRC.assumption },
-  stormDoseMultiplierPeak: { value: 60, unit: '× doz hızı (Kokpit)', ...SRC.assumption },
-  stormDoseMultiplierSurface: { value: 5, unit: '× doz hızı (Mars atmosferi kalkan)', ...SRC.assumption },
-  shelterDoseFactor: { value: 0.3, unit: '× doz hızı (sığınakta)', ...SRC.assumption },
+  stormDoseMultiplierOnset: { label: 'Fırtına doz çarpanı, başlangıç', value: 25, unit: '× doz hızı (Kokpit)', ...SRC.assumption },
+  stormDoseMultiplierPeak: { label: 'Fırtına doz çarpanı, zirve', value: 60, unit: '× doz hızı (Kokpit)', ...SRC.assumption },
+  stormDoseMultiplierSurface: { label: 'Fırtına doz çarpanı, yüzey', value: 5, unit: '× doz hızı (Mars atmosferi kalkan)', ...SRC.assumption },
+  shelterDoseFactor: { label: 'Sığınakta doz çarpanı', value: 0.3, unit: '× doz hızı (sığınakta)', ...SRC.assumption },
 } satisfies Record<string, Param>;
 
 export type ParamKey = keyof typeof PARAMS;
+
+/** Bir ölçümün kaynak rozeti için: hangi parametreye dayanıyor? (Parça 3'ün SourceBadge'i bunu kullanabilir) */
+export function sourceForMetric(key: MetricKey): Param & { key: ParamKey } {
+  const k = NORMALS[key].param;
+  return { key: k, ...PARAMS[k] };
+}
 
 // ---------- Simülasyon ayarları ----------
 export const SIM = {
