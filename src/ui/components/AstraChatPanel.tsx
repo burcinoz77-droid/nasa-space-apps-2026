@@ -33,7 +33,7 @@ export function AstraChatPanel() {
     setQuestion('');
     setBusy(true);
     try {
-      const answer = await askAstra({ mode: 'chat', question: q, context: buildContext(useAstra.getState(), { question: q, compact: true }) });
+      const answer = await askAstra({ mode: 'chat', question: q, context: buildContext(useAstra.getState(), { question: q }) });
       addChat({ id: crypto.randomUUID(), role: 'astra', text: answer.text, at: Date.now(), answer });
     } finally {
       setBusy(false);
