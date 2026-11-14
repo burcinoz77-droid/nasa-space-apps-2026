@@ -6,7 +6,7 @@ import { fallbackAnswer } from './fallback';
 import { checkAnswer } from './safety';
 import { verifyNumbers } from './verify';
 
-const TIMEOUT_MS = 12_000;
+const TIMEOUT_MS = 22_000; // sunucu en fazla 20 sn içinde ya cevap ya hata döner (3 model × 6 sn)
 const cache = new Map<string, { at: number; answer: AstraAnswer }>();
 const CACHE_MS = 60_000; // aynı soru 60 sn içinde tekrar gelirse kotayı harcama
 

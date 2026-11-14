@@ -257,7 +257,25 @@ describe('api/astra.ts · sunucu fonksiyonu', () => {
     expect(res.status).toBe(200);
     expect(((await res.json()) as { text: string }).text).toBe('Yedek modelden cevap.');
     expect(f.mock.calls[0][0]).toContain('gemini-3.8-flash');
-    expect(f.mock.calls[1][0]).toContain('gemini-3.7-flash');
+    expect(f.mock.calls[1][0]).toContain('gemini-3.5-flash-lite');
+  });
+
+  it('Gemini: model hiç cevap vermezse süresi dolunca sıradaki modele geçer', async () => {
+    process.env.ASTRA_PROVIDER = 'gemini';
+    process.env.GEMINI_API_KEY = 'test';
+    process.env.GEMINI_MODEL_TIMEOUT_MS = '50';
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const f = vi
+      .fn(async (_url: string, _init: RequestInit) => Response.json({ candidates: [{ content: { parts: [{ text: 'Hızlı modelden cevap.' }] } }] }))
+      .mockImplementationOnce(
+        (_url: string, init: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))),
+      );
+    vi.stubGlobal('fetch', f);
+    const res = await handler.fetch(post({ mode: 'chat', question: 'Merhaba', context: {} }));
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { text: string }).text).toBe('Hızlı modelden cevap.');
+    expect(f).toHaveBeenCalledTimes(2);
   });
 
   it('Gemini: tüm modeller yoğunsa 502 döner (istemci yedek moda geçer); anahtar hatasında yedek model denenmez', async () => {

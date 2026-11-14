@@ -45,25 +45,40 @@ function buildSystem(body: Body): string {
 class ModelUnavailableError extends Error {}
 const RETRY_WITH_NEXT_MODEL = new Set([404, 429, 500, 503]);
 
+/** Tüm denemelerin toplam üst sınırı (3 model × 6 sn + pay). İstemci 22 sn bekler. */
+const TOTAL_TIMEOUT_MS = 20_000;
+
 /**
- * Önce GEMINI_MODEL'i dener; o model yoğunsa ya da kotası dolduysa sıradaki yedek modele geçer.
- * Yedekler GEMINI_FALLBACK_MODELS ile değiştirilebilir (virgülle ayrılmış). Ücretsiz katmanda
- * "This model is currently experiencing high demand" (503) demo sırasında da görülebilir.
+ * Önce GEMINI_MODEL'i dener; o model yoğunsa, kotası dolduysa ya da 6 sn içinde cevap vermezse
+ * sıradaki yedek modele geçer. Yedekler GEMINI_FALLBACK_MODELS ile değiştirilebilir (virgülle ayrılmış).
+ * Ücretsiz katmanda "This model is currently experiencing high demand" demo sırasında da görülebilir.
  */
 async function callGemini(system: string, question: string, signal: AbortSignal): Promise<string> {
   const primary = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
-  const fallbacks = (process.env.GEMINI_FALLBACK_MODELS ?? 'gemini-3.7-flash,gemini-3.5-flash-lite')
+  const fallbacks = (process.env.GEMINI_FALLBACK_MODELS ?? 'gemini-3.5-flash-lite,gemini-3.7-flash')
     .split(',')
     .map((m) => m.trim())
     .filter((m) => m && m !== primary);
+  // Her model için bekleme süresi. Yoğun model bazen "503" demek yerine hiç cevap vermez; o zaman sıradakine geçilir.
+  const perModelMs = Number(process.env.GEMINI_MODEL_TIMEOUT_MS) || 6_000;
   let lastError: unknown;
   for (const model of [primary, ...fallbacks]) {
+    const attempt = new AbortController();
+    const stop = () => attempt.abort();
+    signal.addEventListener('abort', stop);
+    const timer = setTimeout(stop, perModelMs);
     try {
-      return await callGeminiModel(model, system, question, signal);
+      return await callGeminiModel(model, system, question, attempt.signal);
     } catch (err) {
       lastError = err;
-      if (!(err instanceof ModelUnavailableError) || signal.aborted) throw err;
-      console.warn(`[ASTRA] ${model} şu an cevap veremiyor (${err.message.slice(0, 80)}); sıradaki model deneniyor.`);
+      if (signal.aborted) throw err; // toplam süre doldu
+      const timedOut = attempt.signal.aborted;
+      if (!timedOut && !(err instanceof ModelUnavailableError)) throw err; // anahtar hatası gibi: başka model de çözmez
+      const why = timedOut ? `${perModelMs / 1000} sn içinde cevap vermedi` : `şu an cevap veremiyor (${String((err as Error).message).slice(0, 80)})`;
+      console.warn(`[ASTRA] ${model} ${why}; sıradaki model deneniyor.`);
+    } finally {
+      clearTimeout(timer);
+      signal.removeEventListener('abort', stop);
     }
   }
   throw lastError;
@@ -157,7 +172,7 @@ export default {
       return Response.json({ error: `${keyName} tanımlı değil (.env ya da Vercel ortam değişkeni)`, source: provider }, { status: 503 });
     }
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 10_000);
+    const timer = setTimeout(() => controller.abort(), TOTAL_TIMEOUT_MS);
     try {
       const system = buildSystem(body);
       const text =
@@ -167,7 +182,8 @@ export default {
       if (!text) throw new Error('Model boş cevap döndürdü');
       return Response.json({ text, source: provider, latencyMs: Date.now() - started });
     } catch (err) {
-      // İstemci bu durumda yedek moda geçer (src/ai/fallback.ts)
+      // İstemci bu durumda yedek moda geçer (src/ai/fallback.ts). Sebep terminalde de görünsün.
+      console.warn(`[ASTRA] Model cevabı alınamadı, ekranda yedek mod gösterilecek: ${String(err).slice(0, 300)}`);
       return Response.json({ error: String(err), source: provider }, { status: 502 });
     } finally {
       clearTimeout(timer);
