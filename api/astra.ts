@@ -79,7 +79,7 @@ Kurallar (hiçbir koşulda esnetme):
 {veri}`;
 
 const TOOL_RULES = `Araçlar:
-- Aşağıdaki veri bir özettir. Bir kişinin tüm ölçümleri ve skorları için get_crew_member, bir ölçümün son ölçümlerdeki gidişi ("artıyor mu?", "düzeliyor mu?") için get_metric_trend, olayların ayrıntısı için list_incidents, otonom adımlar ve onaylar için get_event_log, eşik, limit ve bilimsel kaynak için lookup_reference aracını kullan.
+- Aşağıdaki veri bir özettir; soruda adı geçen ve durumu normal olmayan kişilerin tüm ölçümleri özette zaten vardır, bunlar için araç çağırma. Diğer kişilerin tüm ölçümleri ve skorları için get_crew_member, bir ölçümün son ölçümlerdeki gidişi ("artıyor mu?", "düzeliyor mu?") için get_metric_trend, olayların ayrıntısı için list_incidents, otonom adımlar ve onaylar için get_event_log, eşik, limit ve bilimsel kaynak için lookup_reference aracını kullan.
 - Hastalık, rahatsızlık ya da "ne olabilir?" sorularında assess_possible_conditions aracını çağır.
 - Cevap için gereken bilgi özette yoksa tahmin etme; önce uygun aracı çağır. Selamlama gibi veri gerektirmeyen mesajlarda araç çağırma.
 - Araç sonucundaki sayıları aynen kullan. Bir eşik ya da limitten söz ederken kaynağını kısaca belirt (örneğin "NASA-STD-3001'e göre").
@@ -400,8 +400,15 @@ const RETRY_WITH_NEXT_MODEL = new Set([404, 429, 500, 503]);
 const TOOL_ERROR = /function|tool|declaration|schema/i;
 /** Araç turu sınırı: bu kadar turdan sonra model metinle cevap vermeye zorlanır. */
 const MAX_TOOL_ROUNDS = 3;
-/** Tüm denemelerin toplam üst sınırı. İstemci 22 sn bekler. */
-const TOTAL_TIMEOUT_MS = 20_000;
+/**
+ * Tüm denemelerin toplam üst sınırı. Canlı sitede Gemini bir isteğe ~7 sn'de cevap veriyor; araç kullanan
+ * sorular 2 istek sürer. İstemci 38 sn bekler. Vercel'de süre sınırı vercel.json'da 60 sn.
+ */
+const TOTAL_TIMEOUT_MS = 35_000;
+/** Bir isteğin bekleme süresi (GEMINI_MODEL_TIMEOUT_MS ile değişir). Ölçülen ~6,7 sn'nin yaklaşık iki katı. */
+const DEFAULT_REQUEST_TIMEOUT_MS = 12_000;
+/** Yedek modele geçmek için en az bu kadar süre kalmış olmalı; yoksa hemen yedek moda düşülür. */
+const MIN_TIME_FOR_NEXT_MODEL_MS = 8_000;
 
 /** Tek bir HTTP isteği; kendi zaman aşımıyla. Yoğun model bazen hiç cevap vermez. */
 async function postJson(url: string, headers: Record<string, string>, body: unknown, signal: AbortSignal, timeoutMs: number): Promise<unknown> {
@@ -426,16 +433,23 @@ async function postJson(url: string, headers: Record<string, string>, body: unkn
  * Önce GEMINI_MODEL'i dener; o model yoğunsa, kotası dolduysa ya da bir isteğe 6 sn içinde cevap
  * vermezse sıradaki yedek modele geçer. Yedekler GEMINI_FALLBACK_MODELS ile değiştirilebilir.
  */
-async function callGemini(system: string, turns: Turn[], signal: AbortSignal, kit: ToolKit | null): Promise<ModelResult> {
+async function callGemini(system: string, turns: Turn[], signal: AbortSignal, kit: ToolKit | null, deadline: number): Promise<ModelResult> {
   const primary = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
   const fallbacks = (process.env.GEMINI_FALLBACK_MODELS ?? 'gemini-3.5-flash-lite,gemini-3.7-flash')
     .split(',')
     .map((m) => m.trim())
     .filter((m) => m && m !== primary);
   let lastError: unknown;
-  for (const model of [primary, ...fallbacks]) {
+  for (const [i, model] of [primary, ...fallbacks].entries()) {
+    if (i > 0 && deadline - Date.now() < MIN_TIME_FOR_NEXT_MODEL_MS) {
+      console.warn(`[ASTRA] ${model} için yeterli süre kalmadı; yedek moda geçiliyor.`);
+      break;
+    }
+    const started = Date.now();
     try {
-      return await geminiConversation(model, system, turns, signal, kit);
+      const result = await geminiConversation(model, system, turns, signal, kit);
+      console.log(`[ASTRA] ${model} cevap verdi: ${((Date.now() - started) / 1000).toFixed(1)} sn${result.tools.length ? `, ${result.tools.length} araç` : ''}`);
+      return result;
     } catch (err) {
       lastError = err;
       if (signal.aborted || !(err instanceof ModelUnavailableError)) throw err; // anahtar hatası gibi: başka model de çözmez
@@ -452,7 +466,7 @@ interface GeminiPart {
 }
 
 async function geminiConversation(model: string, system: string, turns: Turn[], signal: AbortSignal, kit: ToolKit | null, withThinking = true): Promise<ModelResult> {
-  const timeoutMs = Number(process.env.GEMINI_MODEL_TIMEOUT_MS) || 6_000;
+  const timeoutMs = Number(process.env.GEMINI_MODEL_TIMEOUT_MS) || DEFAULT_REQUEST_TIMEOUT_MS;
   const contents: unknown[] = turns.map((t) => ({ role: t.role === 'user' ? 'user' : 'model', parts: [{ text: t.text }] }));
   const tools: UsedTool[] = [];
   const outputs: unknown[] = [];
@@ -539,7 +553,7 @@ async function callClaude(system: string, turns: Turn[], signal: AbortSignal, ki
         { 'x-api-key': process.env.ANTHROPIC_API_KEY ?? '', 'anthropic-version': '2023-06-01' },
         body,
         signal,
-        15_000,
+        20_000,
       )) as typeof data;
     } catch (err) {
       if (!(err instanceof HttpError)) throw err;
@@ -594,12 +608,13 @@ export default {
     }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TOTAL_TIMEOUT_MS);
+    const deadline = started + TOTAL_TIMEOUT_MS;
     try {
       const turns: Turn[] = [...(body.mode === 'chat' ? cleanHistory(body.history) : []), { role: 'user', text: body.question }];
       // Araçlar sadece sohbette ve veri kopyası geldiyse; olay açıklaması hızlı olsun diye tek adım.
       const kit: ToolKit | null = body.mode === 'chat' && body.toolData && typeof body.toolData === 'object' ? { data: body.toolData as ToolData } : null;
       const ask = (k: ToolKit | null) =>
-        provider === 'claude' ? callClaude(buildSystem(body, k), turns, controller.signal, k) : callGemini(buildSystem(body, k), turns, controller.signal, k);
+        provider === 'claude' ? callClaude(buildSystem(body, k), turns, controller.signal, k) : callGemini(buildSystem(body, k), turns, controller.signal, k, deadline);
       let result: ModelResult;
       try {
         result = await ask(kit);
