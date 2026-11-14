@@ -37,6 +37,13 @@ sabitler: kariyer doz limiti 600 mSv (NASA-STD-3001), CO₂ dikkat/kritik sını
 STRESS, MULTI) güncel değerlerle; sohbette anahtar kelimeye göre (kim dinlenmeli, neden kritik,
 radyasyon, CO₂, gecikme, belirli bir ölçüm, ilaç, teşhis, komut, rol dışı istek).
 
+## Üslup ve sohbet
+
+ASTRA resmî ve saygılı konuşur ("siz" dili, emoji ve günlük ifade yok) ama cevabın biçimini soruya göre
+ayarlar: selama kısa bir tanıtımla, tek değer sorusuna değer + birimle, "neden" sorusuna gözlem → önem →
+yapılacak adım sırasıyla cevap verir. Sohbetin son 4 mesajı modele gider; "Peki Kerem?" gibi devam soruları
+anlaşılır. Örnek cevaplar `api/astra.ts` içindeki `SYSTEM_PROMPT`'ta.
+
 ## Sağlayıcı geçişi
 
 `.env` (yerel) ve Vercel ortam değişkenleri:

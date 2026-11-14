@@ -349,6 +349,11 @@ function chatText(question: string, s: AstraState): string {
 
   if (Object.keys(s.telemetry).length === 0) return 'Henüz telemetri gelmedi; birkaç saniye sonra tekrar sorun.';
 
+  // 0) Selamlama, teşekkür, "kimsin"
+  if (has(/^(merhaba|selam|günaydın|iyi akşamlar|iyi geceler|iyi günler|hey|teşekkür|sağ ol|kimsin|sen kimsin|nasılsın)/) && q.length < 40) {
+    if (has(/^(teşekkür|sağ ol)/)) return 'Rica ederim. Başka bir sorunuz olursa yardımcı olmaktan memnuniyet duyarım.';
+    return 'Merhaba, ben ASTRA; ARES-1 mürettebatının sağlık karar destek asistanıyım. Mürettebatın sağlık ve ortam verileriyle ilgili sorularınızı yanıtlayabilirim; örneğin "Bugün kim dinlenmeli?" diye sorabilirsiniz.';
+  }
   // 1) Rol dışı istekler
   if (has(/talimat|unut|şiir|hikaye|hikâye|şarkı|masal|fıkra|kod yaz|rol yap|rolünden/)) {
     return 'Ben ASTRA\'yım; yalnızca ARES-1 mürettebatının sağlık ve ortam verisi hakkında yardımcı olurum. Örneğin "Bugün kim dinlenmeli?" ya da "Radyasyon durumu nasıl?" diye sorabilirsiniz.';
@@ -397,7 +402,14 @@ function chatText(question: string, s: AstraState): string {
   if (match) return metricText(s, crew, match[1]);
   // 9) Bir kişinin durumu
   if (crew.length && has(/nasıl|durum|iyi mi|ne durumda|kritik|dikkat|skor/)) return whyText(s, crew[0], false);
-  // 10) Kişi adı geçiyor ama ölçüm tanınmadı: uydurma
+  // 10) Sadece bir ad ("Peki Kerem?"): o kişinin durumu
+  const FILLER = new Set(['peki', 'ya', 'ne', 'için', 've', 'mi', 'mı', 'olacak', 'bakalım', 'şimdi']);
+  const rest = q
+    .replace(/[^a-zçğıöşü\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w && !FILLER.has(w) && !crew.some((id) => w.startsWith(id)));
+  if (crew.length && rest.length === 0) return whyText(s, crew[0], false);
+  // 11) Kişi adı geçiyor ama ölçüm tanınmadı: uydurma
   if (crew.length) {
     return sentences(
       'Bu ölçüm veride yok; tahmin yürütmem.',
@@ -407,6 +419,6 @@ function chatText(question: string, s: AstraState): string {
       DOCTOR,
     );
   }
-  // 11) Genel özet
+  // 12) Genel özet
   return summaryText(s);
 }

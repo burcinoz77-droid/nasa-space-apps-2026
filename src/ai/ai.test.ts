@@ -108,6 +108,16 @@ describe('fallback.ts · yedek mod, 10 test sorusu', () => {
     expect(t).toMatch(/havalandırma/i);
   });
 
+  it('selama veri saymadan, resmî bir tanıtımla karşılık verir', () => {
+    const t = fallbackAnswer({ mode: 'chat', question: 'Merhaba', context: {} }).text;
+    expect(t).toMatch(/^Merhaba, ben ASTRA/);
+    expect(t).not.toMatch(/\d+ (bpm|mmHg|°C)/);
+  });
+
+  it('"Peki Kerem?" sorusunu Kerem\'in durumu olarak anlar', () => {
+    expect(fallbackAnswer({ mode: 'chat', question: 'Peki Kerem?', context: {} }).text).toMatch(/^Kerem'in durumu kritik/);
+  });
+
   it('telemetri yokken de cevap verir', () => {
     useAstra.getState().clearAll();
     expect(fallbackAnswer({ mode: 'chat', question: 'Elif nasıl?', context: {} }).text).toMatch(/telemetri/);
@@ -172,6 +182,21 @@ describe('client.ts · askAstra', () => {
     expect((await askAstra(req())).source).toBe('fallback');
     vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new TypeError('Failed to fetch'))));
     expect((await askAstra({ ...req(), question: 'Kerem nasıl?' })).source).toBe('fallback');
+  });
+
+  it('sohbetin son mesajlarını sunucuya gönderir (devam soruları için)', async () => {
+    const { addChat } = useAstra.getState();
+    addChat({ id: '1', role: 'user', text: "Elif'in nabzı kaç?", at: 1 });
+    addChat({ id: '2', role: 'astra', text: "Elif'in kalp atış hızı 69 bpm.", at: 2 });
+    addChat({ id: '3', role: 'user', text: 'Peki Kerem?', at: 3 });
+    const f = reply({ text: "Kerem'in kalp atış hızı 82 bpm.", source: 'gemini' });
+    vi.stubGlobal('fetch', f);
+    await askAstra({ mode: 'chat', question: 'Peki Kerem?', context: {} });
+    const body = JSON.parse(String((f.mock.calls[0] as unknown as [string, RequestInit])[1].body));
+    expect(body.history).toEqual([
+      { role: 'user', text: "Elif'in nabzı kaç?" },
+      { role: 'astra', text: "Elif'in kalp atış hızı 69 bpm." },
+    ]);
   });
 
   it('aynı soru 60 sn içinde önbellekten gelir', async () => {
@@ -291,6 +316,30 @@ describe('api/astra.ts · sunucu fonksiyonu', () => {
     vi.stubGlobal('fetch', badKey);
     expect((await handler.fetch(post({ mode: 'chat', question: 'Merhaba', context: {} }))).status).toBe(502);
     expect(badKey).toHaveBeenCalledTimes(1);
+  });
+
+  it('önceki konuşmayı modele sırayla iletir; bozuk geçmişi yok sayar', async () => {
+    process.env.ASTRA_PROVIDER = 'gemini';
+    process.env.GEMINI_API_KEY = 'test';
+    const f = vi.fn(async (_url: string, _init: RequestInit) => Response.json({ candidates: [{ content: { parts: [{ text: 'Tamam.' }] } }] }));
+    vi.stubGlobal('fetch', f);
+    const history = [
+      { role: 'astra', text: 'başta asistan mesajı atılır' },
+      { role: 'user', text: "Elif'in nabzı kaç?" },
+      { role: 'astra', text: '69 bpm.' },
+      42,
+    ];
+    await handler.fetch(post({ mode: 'chat', question: 'Peki Kerem?', context: {}, history }));
+    const sent = JSON.parse(String(f.mock.calls[0][1].body));
+    expect(sent.contents.map((c: { role: string }) => c.role)).toEqual(['user', 'model', 'user']);
+    expect(sent.contents[2].parts[0].text).toBe('Peki Kerem?');
+
+    process.env.ASTRA_PROVIDER = 'claude';
+    process.env.ANTHROPIC_API_KEY = 'test';
+    const c = vi.fn(async (_url: string, _init: RequestInit) => Response.json({ content: [{ type: 'text', text: 'Tamam.' }] }));
+    vi.stubGlobal('fetch', c);
+    await handler.fetch(post({ mode: 'chat', question: 'Peki Kerem?', context: {}, history }));
+    expect(JSON.parse(String(c.mock.calls[0][1].body)).messages.map((m: { role: string }) => m.role)).toEqual(['user', 'assistant', 'user']);
   });
 
   it('Claude: "thinking" alanı reddedilirse onsuz tekrar dener', async () => {

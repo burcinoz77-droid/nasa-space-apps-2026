@@ -1,6 +1,7 @@
 // Parça 4 · Tarayıcı tarafı: /api/astra'ya sorar; cevap gelmezse yedek moda geçer.
 // Katman 2 sadece OKUR: bu klasör telemetriye, olaylara ya da otonom adımlara yazamaz.
 // Sıra: önbellek -> sunucu -> güvenlik süzgeci -> sayı doğrulama. Hata olursa yedek mod.
+import { useAstra } from '../store';
 import type { AstraAnswer, AstraRequest } from '../types';
 import { fallbackAnswer } from './fallback';
 import { checkAnswer } from './safety';
@@ -10,10 +11,22 @@ const TIMEOUT_MS = 22_000; // sunucu en fazla 20 sn içinde ya cevap ya hata dö
 const cache = new Map<string, { at: number; answer: AstraAnswer }>();
 const CACHE_MS = 60_000; // aynı soru 60 sn içinde tekrar gelirse kotayı harcama
 
+/**
+ * Sohbetteki son 4 mesaj (devam soruları için: "Peki Kerem?"). Panel yeni soruyu
+ * askAstra'dan önce sohbete eklediği için son mesaj sorunun kendisiyse çıkarılır.
+ */
+function recentHistory(question: string): { role: 'user' | 'astra'; text: string }[] {
+  const chat = useAstra.getState().chat;
+  const last = chat[chat.length - 1];
+  const previous = last && last.role === 'user' && last.text.trim() === question.trim() ? chat.slice(0, -1) : chat;
+  return previous.slice(-4).map((m) => ({ role: m.role, text: m.text.slice(0, 500) }));
+}
+
 export async function askAstra(req: AstraRequest): Promise<AstraAnswer> {
   const started = performance.now();
   const elapsed = () => Math.round(performance.now() - started);
-  const key = `${req.mode}|${req.question.trim().toLowerCase()}|${JSON.stringify(req.context).length}`;
+  const history = req.mode === 'chat' ? recentHistory(req.question) : [];
+  const key = `${req.mode}|${req.question.trim().toLowerCase()}|${JSON.stringify(req.context).length}|${JSON.stringify(history).length}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < CACHE_MS) return { ...hit.answer, source: 'cache', latencyMs: elapsed() };
 
@@ -23,7 +36,7 @@ export async function askAstra(req: AstraRequest): Promise<AstraAnswer> {
     const res = await fetch('/api/astra', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(req),
+      body: JSON.stringify(history.length ? { ...req, history } : req),
       signal: controller.signal,
     }).finally(() => clearTimeout(timer));
     if (!res.ok) {
