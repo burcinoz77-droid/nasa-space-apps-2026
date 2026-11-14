@@ -26,6 +26,7 @@ Anahtar yoksa da çalışır: ASTRA sohbeti yedek moda geçer.
 | `npm run build` | Yayın paketi (`dist/`) |
 | `npm run typecheck` | Tip kontrolü |
 | `npm run test` | Vitest testleri |
+| `ASTRA_LIVE=1 npx vitest run src/ai/astra.live.test.ts` | 10 test sorusunu gerçek modele sorar (bkz. `docs/test-sorulari.md`) |
 
 ## Klasörler ve sahipleri
 
@@ -38,7 +39,15 @@ Anahtar yoksa da çalışır: ASTRA sohbeti yedek moda geçer.
 | `src/ui/` | Ekranlar, renk sistemi | Parça 3 (Raporlar: Parça 2, Ayarlar: Parça 1, Görevler: Parça 4) |
 | `api/astra.ts`, `src/ai/` | Katman 2: ASTRA yapay zekâsı | Parça 4 |
 | `src/loop.ts`, `src/store.ts` | Parçaları bağlayan döngü ve ortak durum | Herkes (gruba yaz) |
-| `docs/` | Sunum, kaynaklar | Parça 4 |
+| `docs/` | Sunum, kaynaklar, ASTRA belgeleri | Parça 4 |
+
+## ASTRA (Katman 2) kısaca
+
+- Olay açıklaması ve sohbet: Türkçe, en fazla 4 cümle, sadece veriye dayanır. Ayrıntı: `docs/ASTRA.md`.
+- Teşhis koymaz, ilaç önermez, uyarı açamaz, veriyi değiştiremez. Güvenlik süzgeci bu kuralı ihlal eden cevabı göstermez.
+- Cevaptaki her sayı veride aranır: **Sayılar doğrulandı** / **Sayıları kontrol et** rozeti.
+- İnternet ya da anahtar yoksa **Yedek mod**: cevaplar veriden kural tabanlı üretilir; gemideki döngü zaten internetsiz çalışır.
+- Diğer ekranlarda olay açıklaması: `<AstraExplanation incidentId={incident.id} />`.
 
 ## Veri ve kaynaklar
 
@@ -48,9 +57,19 @@ değerler arayüzde "Varsayım" olarak işaretlenir.
 
 ## Yapay zekâ kullanım beyanı
 
-- Uygulamanın içinde: Katman 2 için Google Gemini (geliştirme) ve Anthropic Claude Haiku 5.5 (demo).
-- Geliştirme sırasında: planlama, kod iskeleti ve kaynak taraması için Claude kullanıldı.
-- Katman 1'in karar mantığı (eşikler, kurallar) ekip tarafından yazılmıştır; dil modeli uyarı açamaz, veriyi değiştiremez.
+NASA Space Apps kuralı gereği kullanılan veri, araç ve yapay zekâ burada belirtilir.
+
+**Uygulamanın içinde (ürünün parçası)**
+- Katman 2 (ASTRA): Google Gemini (`gemini-3.8-flash`, geliştirme) ve Anthropic Claude Haiku 5.5 (`claude-haiku-5-5`, demo). Sunucu fonksiyonundan REST ile çağrılır; anahtarlar yalnızca sunucuda durur.
+- Dil modeli yalnızca okur: olayları açıklar ve soruları cevaplar. Uyarı açamaz, telemetriyi, olayları ya da otonom adımları değiştiremez. Teşhis ve ilaç içeren cevaplar güvenlik süzgecinde durdurulur; cevaptaki sayılar veriyle karşılaştırılır.
+
+**Geliştirme sırasında**
+- Anthropic Claude: planlama, kod iskeleti, kaynak taraması ve Parça 4 (ASTRA) kodunun yazımında yardımcı olarak kullanıldı. Üretilen kod ekip tarafından gözden geçirildi ve testlerle (`npm run test`) doğrulandı.
+- Katman 1'in karar mantığı (eşikler, kurallar) ekip tarafından yazılmıştır.
+
+**Veri ve görseller**
+- Tüm astronot verileri sentetiktir (simülasyon); gerçek bir kişinin sağlık verisi kullanılmaz. Parametre kaynakları `src/sim/parameters.ts` içindedir (NASA HRP, NASA-STD-3001, OCHMO-TB-004, OSDR EDA, DONKI, hakemli çalışmalar).
+- Görevler sayfasındaki görsel, projeye özel temsilî bir SVG çizimdir. NASA logosu ya da NASA'ya ait görsel kullanılmamıştır; proje NASA tarafından onaylanmış değildir.
 
 ## Lisans
 
