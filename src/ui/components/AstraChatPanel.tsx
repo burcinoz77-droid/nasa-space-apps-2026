@@ -2,8 +2,9 @@
 // Hazır soru düğmeleri, yükleniyor animasyonu, kaynak (Gemini / Claude / Yedek mod) ve süre
 // etiketi, "Sayılar doğrulandı" rozeti, kullanılan araçlar, alttaki sorumluluk satırı ve
 // "Sohbeti sıfırla" düğmesi. Sohbet panel kapanınca ya da sayfa yenilenince kaybolmaz (src/ai/chatStore.ts).
+// Panel başlığından tutulup sürüklenebilir; yeri hatırlanır, başlığa çift tıklayınca sağ alt köşeye döner.
 // Sadece chat alanına yazar.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { askAstra } from '../../ai/client';
 import { resetChat } from '../../ai/chatStore';
 import { buildContext } from '../../ai/context';
@@ -11,6 +12,39 @@ import { useAstra } from '../../store';
 import { AstraMeta, Thinking } from './AstraExplanation';
 
 const PRESETS = ['Bugün kim dinlenmeli?', 'Kerem neden kritik?', 'Radyasyon durumu nasıl?', 'CO₂ güvenli mi?'];
+
+// ---- Sürükleme: panelin sol üst köşesinin ekrandaki yeri (px). null = varsayılan sağ alt köşe.
+type Pos = { x: number; y: number };
+const POS_KEY = 'astra-panel-konum-v1';
+const MARGIN = 8;
+
+function loadPos(): Pos | null {
+  try {
+    const p = JSON.parse(globalThis.localStorage?.getItem(POS_KEY) ?? 'null') as Pos | null;
+    return p && Number.isFinite(p.x) && Number.isFinite(p.y) ? p : null;
+  } catch {
+    return null;
+  }
+}
+
+function savePos(p: Pos | null) {
+  try {
+    if (p) globalThis.localStorage?.setItem(POS_KEY, JSON.stringify(p));
+    else globalThis.localStorage?.removeItem(POS_KEY);
+  } catch {
+    // depo kapalıysa konum sadece bu oturumda kalır
+  }
+}
+
+/** Paneli ekranın içinde tutar (pencere küçülse de kaybolmasın). */
+function clampPos(p: Pos, el: HTMLElement | null): Pos {
+  const w = el?.offsetWidth ?? 400;
+  const h = el?.offsetHeight ?? 560;
+  return {
+    x: Math.min(Math.max(MARGIN, p.x), Math.max(MARGIN, window.innerWidth - w - MARGIN)),
+    y: Math.min(Math.max(MARGIN, p.y), Math.max(MARGIN, window.innerHeight - h - MARGIN)),
+  };
+}
 
 export function AstraChatPanel() {
   const [open, setOpen] = useState(false);
@@ -20,6 +54,42 @@ export function AstraChatPanel() {
   const chat = useAstra((s) => s.chat);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
+  const [pos, setPos] = useState<Pos | null>(loadPos);
+  const drag = useRef<{ dx: number; dy: number; last: Pos | null } | null>(null);
+
+  // Pencere boyutu değişince panel ekran dışında kalmasın
+  useEffect(() => {
+    const onResize = () => setPos((p) => (p ? clampPos(p, panelRef.current) : p));
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  function startDrag(e: ReactPointerEvent<HTMLElement>) {
+    if (e.button !== 0 || (e.target as HTMLElement).closest('button')) return; // kapat düğmesi sürüklemez
+    const rect = panelRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    drag.current = { dx: e.clientX - rect.left, dy: e.clientY - rect.top, last: null };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+
+  function moveDrag(e: ReactPointerEvent<HTMLElement>) {
+    if (!drag.current) return;
+    const next = clampPos({ x: e.clientX - drag.current.dx, y: e.clientY - drag.current.dy }, panelRef.current);
+    drag.current.last = next;
+    setPos(next);
+  }
+
+  function endDrag() {
+    if (!drag.current) return;
+    if (drag.current.last) savePos(drag.current.last); // sadece gerçekten taşındıysa kaydet
+    drag.current = null;
+  }
+
+  function resetPos() {
+    setPos(null);
+    savePos(null);
+  }
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end' });
@@ -63,13 +133,25 @@ export function AstraChatPanel() {
 
   return (
     <section
+      ref={panelRef}
       aria-label="ASTRA sohbet paneli"
       onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
-      className="fixed right-6 bottom-6 z-40 flex h-[560px] max-h-[calc(100vh-3rem)] w-[400px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-ai/50 bg-space-panel shadow-2xl shadow-black/40"
+      style={pos ? { left: pos.x, top: pos.y } : undefined}
+      className={`fixed z-40 flex h-[560px] max-h-[calc(100vh-3rem)] w-[400px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-ai/50 bg-space-panel shadow-2xl shadow-black/40 ${pos ? '' : 'right-6 bottom-6'}`}
     >
-      <header className="flex items-center justify-between border-b border-space-border px-4 py-3">
+      <header
+        onPointerDown={startDrag}
+        onPointerMove={moveDrag}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onDoubleClick={resetPos}
+        title="Sürükleyerek taşıyın · çift tıklayınca sağ alt köşeye döner"
+        className="flex cursor-move touch-none items-center justify-between border-b border-space-border px-4 py-3 select-none"
+      >
         <div>
-          <div className="font-semibold text-ai">✦ ASTRA</div>
+          <div className="font-semibold text-ai">
+            ✦ ASTRA <span className="ml-1 text-sm font-normal text-slate-500" aria-hidden>⠿ taşı</span>
+          </div>
           <div className="text-sm text-slate-400">Katman 2 · karar desteği</div>
         </div>
         <button onClick={() => setOpen(false)} className="rounded-lg px-2 py-1 text-slate-400 hover:bg-white/5" aria-label="Paneli kapat">
