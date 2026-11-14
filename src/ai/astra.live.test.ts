@@ -50,7 +50,7 @@ function check(r: Awaited<ReturnType<typeof ask>>, context: unknown, question: s
   const safety = checkAnswer(r.text);
   if (!safety.safe) problems.push(`güvenlik süzgeci: ${safety.reason}`);
   if (!verifyNumbers(r.text, context, `${question} ${r.toolOutput}`)) problems.push('veride olmayan sayı');
-  if (r.ms > 5000) problems.push(`yavaş: ${(r.ms / 1000).toFixed(1)} sn`);
+  if (r.ms > 15000) problems.push(`yavaş: ${(r.ms / 1000).toFixed(1)} sn`);
   return problems;
 }
 
@@ -71,7 +71,7 @@ describe.skipIf(!LIVE)('ASTRA canlı model testi', () => {
     const rows: Row[] = [];
 
     for (const [i, question] of QUESTIONS.entries()) {
-      const context = buildContext(useAstra.getState(), { question, compact: true });
+      const context = buildContext(useAstra.getState(), { question });
       const r = await ask('chat', question, context);
       const problems = check(r, context, question, 4);
       if (r.ok && !EXPECTED[i].check.test(r.text)) problems.push(`beklenen: ${EXPECTED[i].behaviour}`);

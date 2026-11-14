@@ -84,7 +84,8 @@ anlaşılır. Örnek cevaplar `api/astra.ts` içindeki `SYSTEM_PROMPT`'ta.
 ASTRA_PROVIDER=gemini          # demo günü: claude
 GEMINI_API_KEY=...
 GEMINI_MODEL=gemini-3.8-flash
-GEMINI_FALLBACK_MODELS=gemini-3.5-flash-lite,gemini-3.7-flash  # ana model 503/429 verirse ya da 6 sn cevap vermezse sırayla denenir
+GEMINI_FALLBACK_MODELS=gemini-3.5-flash-lite,gemini-3.7-flash  # ana model 503/429 verirse ya da 12 sn cevap vermezse sırayla denenir
+GEMINI_MODEL_TIMEOUT_MS=12000  # bir isteğin bekleme süresi; canlıda ölçülen ~6,7 sn, bunun altına indirmeyin
 ANTHROPIC_API_KEY=...
 CLAUDE_MODEL=claude-haiku-5-5
 ```
@@ -92,6 +93,11 @@ CLAUDE_MODEL=claude-haiku-5-5
 Claude'da düşünme kapalı (`thinking: disabled`, `effort: low`); model bu alanları tanımazsa kod bir kez
 onlarsız tekrar dener. Anahtar yoksa sunucu modeli hiç çağırmadan 503 döner, arayüz yedek moda geçer.
 Vercel'de değişkeni değiştirdikten sonra **Redeploy** gerekir.
+
+**Süreler:** Canlı sitede Gemini bir isteğe yaklaşık 6,7 sn'de cevap veriyor. Bir isteğin bekleme süresi 12 sn,
+toplam süre 35 sn (araç kullanan sorular 2 istek sürer); yedek modele ancak en az 8 sn kalmışsa geçilir.
+İstemci 38 sn bekler. Vercel'de fonksiyon süre sınırı `vercel.json`'da 60 sn. Sunucu terminalinde (ya da Vercel
+loglarında) `[ASTRA] gemini-... cevap verdi: X sn` satırı gerçek süreyi gösterir.
 
 ## Diğer parçalar için: olay açıklama kutusu
 

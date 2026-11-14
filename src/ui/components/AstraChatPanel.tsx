@@ -16,6 +16,7 @@ export function AstraChatPanel() {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
   const [busy, setBusy] = useState(false);
+  const [waited, setWaited] = useState(0); // saniye; uzun bekleyişte kullanıcı neler olduğunu görsün
   const chat = useAstra((s) => s.chat);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -28,15 +29,22 @@ export function AstraChatPanel() {
     if (open) inputRef.current?.focus();
   }, [open]);
 
+  useEffect(() => {
+    if (!busy) return;
+    const id = setInterval(() => setWaited((w) => w + 1), 1000);
+    return () => clearInterval(id);
+  }, [busy]);
+
   async function send(text?: string) {
     const q = (text ?? question).trim().slice(0, 600);
     if (!q || busy) return;
     const { addChat } = useAstra.getState();
     addChat({ id: crypto.randomUUID(), role: 'user', text: q, at: Date.now() });
     setQuestion('');
+    setWaited(0);
     setBusy(true);
     try {
-      const answer = await askAstra({ mode: 'chat', question: q, context: buildContext(useAstra.getState(), { question: q, compact: true }) });
+      const answer = await askAstra({ mode: 'chat', question: q, context: buildContext(useAstra.getState(), { question: q }) });
       addChat({ id: crypto.randomUUID(), role: 'astra', text: answer.text, at: Date.now(), answer });
     } finally {
       setBusy(false);
@@ -87,7 +95,7 @@ export function AstraChatPanel() {
             </div>
           ),
         )}
-        {busy && <Thinking label="ASTRA düşünüyor" />}
+        {busy && <Thinking label={waited < 5 ? 'ASTRA düşünüyor' : `ASTRA veriyi inceliyor · ${waited} sn`} />}
         <div ref={endRef} />
       </div>
 
