@@ -38,6 +38,9 @@ function astraDevApi(): Plugin {
   };
 }
 
+// BASE_PATH sadece GitHub Pages yedeği için verilir (.github/workflows/pages.yml).
+// Vercel ve yerel geliştirmede boş kalır, site kök dizinde ('/') çalışır.
 export default defineConfig({
+  base: process.env.BASE_PATH || '/',
   plugins: [react(), tailwindcss(), astraDevApi()],
 });
