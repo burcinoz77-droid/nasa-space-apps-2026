@@ -81,7 +81,7 @@ export default function App() {
             <h1 className="text-2xl font-bold">{current.label}</h1>
             <span className="text-sm text-slate-400">{current.subtitle}</span>
           </div>
-          {page === 'kokpit' && <Kokpit onOpenCrew={openCrew} />}
+          {page === 'kokpit' && <Kokpit onOpenCrew={openCrew} onOpenReports={() => setPage('raporlar')} />}
           {page === 'astronot' && <AstronotEkrani crewId={crew} onSelect={setCrew} />}
           {page === 'astronotlar' && <Astronotlar onOpenCrew={openCrew} />}
           {page === 'gorevler' && <Gorevler />}

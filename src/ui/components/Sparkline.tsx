@@ -51,16 +51,31 @@ export function Sparkline({
   );
 }
 
-/** Hafif SVG trend çizgisi (son 60 ölçüm). */
-export function TrendLine({ values, color = COLORS.calm, width = 96, height = 24 }: { values: number[]; color?: string; width?: number; height?: number }) {
+/**
+ * Hafif SVG trend çizgisi (son 60 ölçüm). minSpan: dikey ölçeğin en az aralığı (ör. nabız için 20 bpm);
+ * küçük gürültü büyütülüp çizgi titrek görünmesin, gerçek sapma yine belirgin olsun.
+ */
+export function TrendLine({
+  values,
+  color = COLORS.calm,
+  width = 96,
+  height = 24,
+  minSpan = 0,
+}: {
+  values: number[];
+  color?: string;
+  width?: number;
+  height?: number;
+  minSpan?: number;
+}) {
   const pts = values.slice(-60);
   if (pts.length < 2) return <svg width={width} height={height} aria-hidden />;
   let lo = Math.min(...pts);
   let hi = Math.max(...pts);
-  if (hi - lo < 1e-9) {
-    lo -= 1;
-    hi += 1;
-  }
+  const span = Math.max(hi - lo, minSpan, 1e-6);
+  const mid = (hi + lo) / 2;
+  lo = mid - span / 2;
+  hi = mid + span / 2;
   const d = pts
     .map((v, i) => {
       const x = (i / (pts.length - 1)) * (width - 2) + 1;

@@ -1,5 +1,14 @@
 @import 'tailwindcss';
 
+/* Yazı tipi: Barlow (arayüz) ve Barlow Semi Condensed (sayılar, tabular rakam). Paketin içinde: internetsiz çalışır. */
+@import '@fontsource/barlow/400.css';
+@import '@fontsource/barlow/500.css';
+@import '@fontsource/barlow/600.css';
+@import '@fontsource/barlow/700.css';
+@import '@fontsource/barlow-semi-condensed/500.css';
+@import '@fontsource/barlow-semi-condensed/600.css';
+@import '@fontsource/barlow-semi-condensed/700.css';
+
 /* Renkler src/ui/theme.ts ile aynı; Tailwind sınıfları (bg-space-panel, text-calm ...) buradan gelir. */
 @theme {
   --color-space-bg: #070b1a;
@@ -10,7 +19,9 @@
   --color-caution: #fbbf24;
   --color-critical: #f87171;
   --color-ai: #a78bfa;
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Barlow', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* "mono" sınıfı sayılar içindir: dar, tabular rakamlı Barlow Semi Condensed (kokpit göstergeleri gibi) */
+  --font-mono: 'Barlow Semi Condensed', 'Barlow', ui-monospace, monospace;
 }
 
 html,
@@ -32,6 +43,19 @@ body {
 .font-mono,
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+.font-mono {
+  letter-spacing: 0.01em;
+}
+
+/* Yörünge ekranının zemini: ince ölçü ızgarası, kenarlara doğru söner (vektör ekran hissi) */
+.astra-scope {
+  background-color: var(--color-space-bg);
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--color-calm) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-calm) 7%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: center;
 }
 
 /* Koyu kaydırma çubuğu */
