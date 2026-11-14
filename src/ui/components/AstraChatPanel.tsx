@@ -1,8 +1,11 @@
 // Parça 4 · ASTRA sohbet paneli. Mor renk = yapay zekânın sesi.
 // Hazır soru düğmeleri, yükleniyor animasyonu, kaynak (Gemini / Claude / Yedek mod) ve süre
-// etiketi, "Sayılar doğrulandı" rozeti, alttaki sorumluluk satırı. Sadece chat alanına yazar.
+// etiketi, "Sayılar doğrulandı" rozeti, kullanılan araçlar, alttaki sorumluluk satırı ve
+// "Sohbeti sıfırla" düğmesi. Sohbet panel kapanınca ya da sayfa yenilenince kaybolmaz (src/ai/chatStore.ts).
+// Sadece chat alanına yazar.
 import { useEffect, useRef, useState } from 'react';
 import { askAstra } from '../../ai/client';
+import { resetChat } from '../../ai/chatStore';
 import { buildContext } from '../../ai/context';
 import { useAstra } from '../../store';
 import { AstraMeta, Thinking } from './AstraExplanation';
@@ -69,7 +72,7 @@ export function AstraChatPanel() {
       <div className="flex-1 space-y-3 overflow-auto p-4 text-sm">
         {chat.length === 0 && (
           <div className="rounded-xl border border-ai/30 bg-ai/10 p-3 leading-relaxed text-slate-200">
-            Merhaba, ben ASTRA. Mürettebatın canlı verisine dayanarak Türkçe cevap veririm. Uyarıları Katman 1 açar; kararı siz verirsiniz.
+            Merhaba, ben ASTRA. Mürettebatın canlı verisine dayanarak cevap veririm; değişen değerlere bakarak olası durumları ihtimal olarak belirtebilirim. Uyarıları Katman 1 açar; kararı siz verirsiniz.
           </div>
         )}
         {chat.map((m) =>
@@ -120,9 +123,20 @@ export function AstraChatPanel() {
           Sor
         </button>
       </form>
-      <p className="px-4 pb-3 text-sm leading-snug text-slate-400">
-        ASTRA öneri verir, kararı mürettebat verir. Teşhis koymaz, ilaç önermez, uyarı açamaz.
-      </p>
+      <div className="flex items-start justify-between gap-3 px-4 pb-3">
+        <p className="text-sm leading-snug text-slate-400">
+          ASTRA öneri verir, karar mürettebatındır. Kesin teşhis koymaz, ilaç önermez, uyarı açamaz.
+        </p>
+        <button
+          type="button"
+          onClick={resetChat}
+          disabled={busy || chat.length === 0}
+          className="shrink-0 rounded-lg border border-space-border px-2.5 py-1 text-sm text-slate-300 hover:bg-white/5 disabled:opacity-40"
+          title="Sohbeti temizler; ASTRA önceki mesajları unutur."
+        >
+          ↺ Sohbeti sıfırla
+        </button>
+      </div>
     </section>
   );
 }

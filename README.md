@@ -44,7 +44,8 @@ Anahtar yoksa da çalışır: ASTRA sohbeti yedek moda geçer.
 ## ASTRA (Katman 2) kısaca
 
 - Olay açıklaması ve sohbet: Türkçe, en fazla 4 cümle, sadece veriye dayanır. Ayrıntı: `docs/ASTRA.md`.
-- Teşhis koymaz, ilaç önermez, uyarı açamaz, veriyi değiştiremez. Güvenlik süzgeci bu kuralı ihlal eden cevabı göstermez.
+- Kesin teşhis koymaz: değişen değerlere dayanarak olası durumları ihtimal diliyle söyler ("... ile uyumlu olabilir") ve medikal kontrol önerir. İlaç önermez, uyarı açamaz, veriyi değiştiremez. Güvenlik süzgeci kesin ifade ya da ilaç içeren cevabı göstermez.
+- Araç kullanımı (6 salt-okur araç), kaynaklı bilgi tabanı, uzun dönem veri hafızası ve son 10 mesajı hatırlayan sohbet; sohbet sayfa yenilense de devam eder, "Sohbeti sıfırla" ile temizlenir.
 - Cevaptaki her sayı veride aranır: **Sayılar doğrulandı** / **Sayıları kontrol et** rozeti.
 - İnternet ya da anahtar yoksa **Yedek mod**: cevaplar veriden kural tabanlı üretilir; gemideki döngü zaten internetsiz çalışır.
 - Diğer ekranlarda olay açıklaması: `<AstraExplanation incidentId={incident.id} />`.
@@ -61,7 +62,7 @@ NASA Space Apps kuralı gereği kullanılan veri, araç ve yapay zekâ burada be
 
 **Uygulamanın içinde (ürünün parçası)**
 - Katman 2 (ASTRA): Google Gemini (`gemini-3.8-flash`, geliştirme) ve Anthropic Claude Haiku 5.5 (`claude-haiku-5-5`, demo). Sunucu fonksiyonundan REST ile çağrılır; anahtarlar yalnızca sunucuda durur.
-- Dil modeli yalnızca okur: olayları açıklar ve soruları cevaplar. Uyarı açamaz, telemetriyi, olayları ya da otonom adımları değiştiremez. Teşhis ve ilaç içeren cevaplar güvenlik süzgecinde durdurulur; cevaptaki sayılar veriyle karşılaştırılır.
+- Dil modeli yalnızca okur: olayları açıklar, soruları cevaplar ve veriye dayalı olası durumları ihtimal olarak belirtir. Uyarı açamaz, telemetriyi, olayları ya da otonom adımları değiştiremez. Kesin teşhis ve ilaç içeren cevaplar güvenlik süzgecinde durdurulur; cevaptaki sayılar veriyle karşılaştırılır.
 
 **Geliştirme sırasında**
 - Anthropic Claude: planlama, kod iskeleti, kaynak taraması ve Parça 4 (ASTRA) kodunun yazımında yardımcı olarak kullanıldı. Üretilen kod ekip tarafından gözden geçirildi ve testlerle (`npm run test`) doğrulandı.

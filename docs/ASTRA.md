@@ -11,7 +11,7 @@ mürettebata destek olur.
 | --- | --- |
 | Uyarı açamaz, olay kapatamaz | Uyarıyı sadece Katman 1 (`src/engine/`) açar. `src/ai/` yalnızca `explanations` ve `chat` alanlarına yazar. |
 | Veriyi değiştiremez, sistem çalıştıramaz | Sunucu fonksiyonu sadece metin döndürür; otonom adımları Katman 1 başlatır. |
-| Teşhis koymaz, ilaç ya da doz önermez | Sistem talimatı + `src/ai/safety.ts` güvenlik süzgeci: "400 mg", "doz alın", "aritmi var" gibi ifadeler içeren cevap gösterilmez, yerine yedek cevap gelir ve konsola yazılır. "Teşhis koyamam", "İlaç öneremem" gibi reddetme cümleleri geçer. |
+| Kesin teşhis koymaz, ilaç ya da doz önermez | Olası durumları yalnızca ihtimal diliyle söyler (aşağıda). `src/ai/safety.ts`: "400 mg", "doz alın", "aritmi var", "kesinlikle hipoksi" gibi ifadeler içeren cevap gösterilmez, yerine yedek cevap gelir ve konsola yazılır. "... ile uyumlu olabilir" ve "Kesin teşhis koyamam" gibi cümleler geçer. |
 | Sayı uyduramaz | `src/ai/verify.ts`: cevaptaki her sayı modele giden veride aranır. Hepsi varsa yeşil **Sayılar doğrulandı**, yoksa amber **Sayıları kontrol et** rozeti. |
 | İnternet yoksa susmaz | `src/ai/fallback.ts`: veriden kural tabanlı Türkçe cevap üretir; gri **Yedek mod · çevrimdışı** etiketiyle gösterilir. |
 
@@ -43,18 +43,37 @@ Mentor önerisiyle ASTRA üç yetenekle çalışır:
 
 | Yetenek | Ne yapar | Nerede |
 | --- | --- | --- |
-| **Araç kullanımı (tool calling)** | Model, cevap için gereken ayrıntıyı 5 salt-okur araçla kendisi çeker: `get_crew_member` (bir astronotun 33 ölçümü, skorları, açık olayları), `get_metric_trend` (bir ölçümün son ölçümlerdeki gidişi: artıyor / azalıyor / sabit), `list_incidents`, `get_event_log`, `lookup_reference` (eşik, limit ve bilimsel kaynak). Gemini'de `functionCall`, Claude'da `tool_use` ile; en fazla 3 tur. Kullanılan araçlar cevabın altında "⚙ Kullanılan araçlar" satırında görünür. | `api/astra.ts` (`TOOLS`, `runTool`) |
+| **Araç kullanımı (tool calling)** | Model, cevap için gereken ayrıntıyı 6 salt-okur araçla kendisi çeker: `get_crew_member` (bir astronotun 33 ölçümü kişisel normalleriyle, skorları, açık olayları), `get_metric_trend` (yakın ve uzun dönem gidiş: artıyor / azalıyor / sabit), `assess_possible_conditions` (veriye dayalı olası durumlar), `list_incidents`, `get_event_log`, `lookup_reference` (eşik, limit ve bilimsel kaynak). Gemini'de `functionCall`, Claude'da `tool_use` ile; en fazla 3 tur. Kullanılan araçlar cevabın altında "⚙ Kullanılan araçlar" satırında görünür. | `api/astra.ts` (`TOOLS`, `runTool`) |
 | **Bağlam (context)** | Her soruda kısa bir canlı veri özeti (herkes için 8 ana ölçüm, sorunlu kişilerin en çok sapan sinyalleri, açık olaylar, sabitler) + araçların okuduğu anlık veri kopyası + NASA ve hakemli kaynaklı bilgi tabanı. | `src/ai/context.ts`, `src/ai/tooldata.ts`, `src/ai/knowledge.ts` |
-| **Çok turlu sohbet (multi-turn)** | Son 4 mesaj modele gider; "Peki Kerem?" gibi devam soruları anlaşılır. | `src/ai/client.ts`, `api/astra.ts` (`cleanHistory`) |
+| **Çok turlu sohbet (multi-turn)** | Son 10 mesaj modele gider; "Peki Kerem?" gibi devam soruları anlaşılır. Sohbet sayfa yenilense de devam eder. | `src/ai/client.ts`, `api/astra.ts` (`cleanHistory`) |
 
 Araçlar hiçbir şeyi değiştiremez: sadece tarayıcının gönderdiği veri kopyasını okur. Model araç tanımlarını kabul
 etmezse sunucu araçsız ve ayrıntılı veriyle bir kez daha sorar. Olay açıklamaları hız için araçsız, tek adımdır.
+
+## Olası durum tahmini (kesin teşhis değil)
+
+Ekip kararıyla ASTRA, değişen değerlere dayanarak olası durumları söyleyebilir. `src/ai/conditions.ts` her
+astronotun ölçümlerini kişisel normaliyle karşılaştırır (z ≥ 2,5 ya da mutlak eşik) ve 9 kuraldan uyanları
+döndürür: CO₂ birikmesi (hiperkapni), hipoksi, ısı stresi ve aşırı efor, sıvı-elektrolit kaybı, kalp ritim
+düzensizliği olasılığı, uyku yoksunluğu ve yorgunluk, akut stres yükü, SANS şüphesi, radyasyon maruziyetinde
+artış. Her sonuçta dayanak sinyaller (güncel değer + kişisel normal), olasılık (düşük / orta; asla "kesin"),
+önerilen kontrol ve kaynak bulunur. Model bunu `assess_possible_conditions` aracıyla okur ve şu sırayla
+anlatır: hangi değerler nasıl değişti → "... ile uyumlu olabilir" → kesin olmadığı ve medikal kontrol.
+Normal günde 200 ölçüm boyunca yanlış tahmin çıkmadığı testlidir.
+
+## Hafıza
+
+- **Veri hafızası** (`src/ai/memory.ts`): 33 ölçümün kişisel normali (ilk 30 ölçüm) ve her 5 ölçümde bir
+  kayıtla en fazla 72 kayıtlık uzun geçmiş (yaklaşık 60 saat görev süresi). `get_metric_trend` yakın ve uzun
+  dönem gidişi birlikte verir. "Simülasyonu sıfırla" ile sıfırlanır.
+- **Sohbet hafızası**: son 10 mesaj modele gider. Sohbet tarayıcıda saklanır (`src/ai/chatStore.ts`); panel
+  kapatılıp açılınca ya da sayfa yenilenince devam eder. Panelin altındaki **Sohbeti sıfırla** düğmesi temizler.
 
 ## Üslup ve sohbet
 
 ASTRA resmî ve saygılı konuşur ("siz" dili, emoji ve günlük ifade yok) ama cevabın biçimini soruya göre
 ayarlar: selama kısa bir tanıtımla, tek değer sorusuna değer + birimle, "neden" sorusuna gözlem → önem →
-yapılacak adım sırasıyla cevap verir. Sohbetin son 4 mesajı modele gider; "Peki Kerem?" gibi devam soruları
+yapılacak adım sırasıyla cevap verir. Sohbetin son 10 mesajı modele gider; "Peki Kerem?" gibi devam soruları
 anlaşılır. Örnek cevaplar `api/astra.ts` içindeki `SYSTEM_PROMPT`'ta.
 
 ## Sağlayıcı geçişi

@@ -9,7 +9,7 @@ interface Body {
   mode: 'chat' | 'incident';
   question: string;
   context: unknown;
-  /** Sohbetteki son mesajlar (en fazla 4), devam sorularını anlamak için. İstemci gönderir. */
+  /** Sohbetteki son mesajlar (en fazla 10), devam sorularını anlamak için. İstemci gönderir. */
   history?: unknown;
   /** Araçların okuduğu anlık veri kopyası (src/ai/tooldata.ts). Sadece sohbette gelir. */
   toolData?: unknown;
@@ -21,13 +21,13 @@ interface Turn {
   text: string;
 }
 
-/** Geçmişi temizler: en fazla 4 mesaj, kullanıcıyla başlar, sırayla değişir, ASTRA'nın cevabıyla biter. */
+/** Geçmişi temizler: en fazla 10 mesaj, kullanıcıyla başlar, sırayla değişir, ASTRA'nın cevabıyla biter. */
 function cleanHistory(raw: unknown): Turn[] {
   if (!Array.isArray(raw)) return [];
   const items = raw
     .filter((m): m is { role: string; text: string } => !!m && typeof m === 'object' && typeof (m as { text?: unknown }).text === 'string')
     .map((m): Turn => ({ role: m.role === 'user' ? 'user' : 'assistant', text: m.text.slice(0, 500) }))
-    .slice(-4);
+    .slice(-10);
   const turns: Turn[] = [];
   for (const t of items) {
     if (!turns.length && t.role !== 'user') continue;
@@ -51,13 +51,16 @@ Dünya'daki uçuş doktoruna mesaj gidip cevap dönmesi 6 ile 44 dakika sürüyo
   * Durum, neden ya da risk sorusu: sırasıyla ne görüldüğünü (değer, birim ve kişisel normal), bunun neden önemli olduğunu ve ne yapılması gerektiğini açıkla.
   * Öneri sorusu: veriye dayanan öneriyi gerekçesiyle ver; son kararın mürettebata ait olduğunu belirt.
   * Değerler normalse bunu açıkça belirt; gereksiz öneri ekleme.
-- Önceki konuşma varsa dikkate al: "Peki Kerem?" gibi devam sorularını önceki soruya göre yorumla.
+- Önceki konuşma varsa dikkate al: "Peki Kerem?" gibi devam sorularını önceki soruya göre yorumla. Uzun dönem gidiş sorulursa (örneğin "son saatlerde nasıl değişti?") get_metric_trend sonucundaki uzunDonem alanını kullan.
 - En fazla 4 cümle; basit sorularda 1-2 cümle yeterlidir. Madde işareti ve başlık kullanma. Kişilere ilk adlarıyla değin (Elif, Kerem, Zeynep, Emir, Deniz, Mert).
 
 Kurallar (hiçbir koşulda esnetme):
 - Sadece aşağıdaki veriyi kullan. Veride olmayan bir sayıyı asla yazma, tahmin etme, yuvarlayıp yeni sayı üretme, yüzde hesaplama.
 - Sayıları veride yazdığı gibi ve birimiyle yaz; ondalık ayırıcı olarak virgül kullan (36,8 °C, %98, 3,4 mmHg).
-- Teşhis koyma, ilaç ya da doz önerme. "Aritmi var" deme; "EKG'de düzensiz atımlar görülmektedir, medikal kontrol önerilir" de. İlaç sorulursa "İlaç öneremem" de ve uçuş doktoruna yönlendir; hastalık sorulursa "Teşhis koyamam" de, gördüğün değerleri belirt ve medikal kontrol öner.
+- Kesin teşhis koyma ve kesin bilgi verme. Bununla birlikte verideki değişikliklere dayanarak olası durumları söyleyebilirsin: önce hangi değerlerin nasıl değiştiğini (güncel değer ve kişisel normal) belirt, sonra "... ile uyumlu olabilir" ya da "... olasılığını düşündürüyor" gibi ihtimal diliyle olası durumu söyle, ardından bunun kesin olmadığını ve medikal kontrol ile uçuş doktoru değerlendirmesi gerektiğini ekle.
+- Olası durumları yalnızca verideki "olasiDurumlar" alanından ya da assess_possible_conditions aracından al; orada olmayan bir hastalık adı söyleme. Olası durum yoksa "Verilerde belirgin bir sapma görünmüyor" de. "X var", "X geçiriyor", "kesinlikle" gibi kesin ifadeler kullanma.
+- Hayati tehlike düşündüren bir soru gelirse (örneğin kalp krizi) bunu verilerle doğrulayamayacağını açıkça söyle ve belirti varsa hemen uçuş doktoruna bildirilmesini öner.
+- İlaç ya da doz önerme. İlaç sorulursa "İlaç öneremem" de ve uçuş doktoruna yönlendir.
 - Önerebileceğin otonom adımlar yalnızca: radyasyon sığınağına geçiş, havalandırmayı artırma, zorunlu dinlenme. Son kararı mürettebat verir.
 - Uyarı açamazsın, gemi sistemlerini (havalandırma, sığınak, alarm) çalıştıramaz ya da kapatamazsın. Böyle bir istek gelirse yapamayacağını, uyarıları Katman 1'in açtığını ve kararın mürettebatta olduğunu belirt.
 - Sorulan ölçüm veride yoksa "Bu ölçüm veride yok" de; tahmin yürütme.
@@ -69,6 +72,7 @@ Kurallar (hiçbir koşulda esnetme):
 - "Merhaba" -> "Merhaba, ben ASTRA; ARES-1 mürettebatının sağlık karar destek asistanıyım. Mürettebatın sağlık ve ortam verileriyle ilgili sorularınızı yanıtlayabilirim."
 - "Elif'in nabzı kaç?" -> "Elif'in kalp atış hızı şu anda 69 bpm; bu değer kişisel normaliyle uyumludur."
 - "Kerem neden kritik?" -> "Kerem'in ortamındaki CO₂ kısmi basıncı 3,4 mmHg olup hem kişisel normalinin hem de 3,0 mmHg kritik sınırının üzerindedir. Yüksek CO₂ baş ağrısı ve dikkat kaybına yol açabilir. Havalandırma otomatik olarak artırılmıştır; değerin birkaç ölçüm sonra yeniden kontrol edilmesi önerilir."
+"- "Mert'te ne olabilir?" -> "Kesin bir teşhis koyamam; ancak Mert'in çekirdek sıcaklığı 38,3 °C ile kişisel normali olan 37,9 °C'nin, nabzı 135 bpm ile 97 bpm'nin ve ter laktatı 20,3 mM ile 15,9 mM'nin üzerine çıkmıştır. Bu değişiklikler ısı stresi ve aşırı eforla uyumlu olabilir. Bu bir olasılıktır, kesin değildir; eforun azaltılması, medikal kontrol ve uçuş doktoru değerlendirmesi önerilir."
 - "Bugün kim dinlenmeli?" -> "Katman 1, Elif'e zorunlu dinlenme vermiştir; dün gece uyku süresi 5,0 saat ve PVT tepki süresi 330 ms olup kişisel normalinin belirgin biçimde üzerindedir. Diğer mürettebatın değerleri normal aralıktadır. Dinlenme planına ilişkin son karar mürettebata aittir."
 
 {araclar}Güncel mürettebat ve gemi verisi (JSON):
@@ -76,6 +80,7 @@ Kurallar (hiçbir koşulda esnetme):
 
 const TOOL_RULES = `Araçlar:
 - Aşağıdaki veri bir özettir. Bir kişinin tüm ölçümleri ve skorları için get_crew_member, bir ölçümün son ölçümlerdeki gidişi ("artıyor mu?", "düzeliyor mu?") için get_metric_trend, olayların ayrıntısı için list_incidents, otonom adımlar ve onaylar için get_event_log, eşik, limit ve bilimsel kaynak için lookup_reference aracını kullan.
+- Hastalık, rahatsızlık ya da "ne olabilir?" sorularında assess_possible_conditions aracını çağır.
 - Cevap için gereken bilgi özette yoksa tahmin etme; önce uygun aracı çağır. Selamlama gibi veri gerektirmeyen mesajlarda araç çağırma.
 - Araç sonucundaki sayıları aynen kullan. Bir eşik ya da limitten söz ederken kaynağını kısaca belirt (örneğin "NASA-STD-3001'e göre").
 
@@ -83,7 +88,7 @@ const TOOL_RULES = `Araçlar:
 
 const INCIDENT_RULES = `
 
-Görev: Verideki "aciklanacakOlay" için en fazla 3 cümlelik bir olay açıklaması yaz: ne oldu (sinyallerin değerleri ve kişisel normalleriyle), olası fizyolojik ya da çevresel neden, önerilen adım. Olayı Katman 1 açtı; yeni uyarı açma, sadece açıkla.`;
+Görev: Verideki "aciklanacakOlay" için en fazla 3 cümlelik bir olay açıklaması yaz: ne oldu (sinyallerin değerleri ve kişisel normalleriyle), olası fizyolojik ya da çevresel neden, önerilen adım. Verideki "olasiDurumlar" boş değilse en olası olanı ihtimal diliyle ("... ile uyumlu olabilir") belirt. Olayı Katman 1 açtı; yeni uyarı açma, sadece açıkla.`;
 
 function buildSystem(body: Body, kit: ToolKit | null): string {
   let data: unknown = body.context ?? {};
@@ -107,6 +112,7 @@ interface MetricData {
   ad: string;
   birim: string;
   deger: number | string;
+  kisiselNormal?: number;
   olcumSikligi?: string;
 }
 interface CrewData {
@@ -123,6 +129,9 @@ interface ToolData {
   murettebat?: Record<string, CrewData>;
   gecmis?: Record<string, Record<string, number[]>>;
   gecmisAraligi?: string;
+  uzunGecmis?: Record<string, Record<string, { degerler: number[]; enDusuk: number; enYuksek: number; ortalama: number }>>;
+  uzunGecmisKapsami_saat?: number;
+  olasiDurumUyarisi?: string;
   olaylar?: IncidentData[];
   kayit?: unknown[];
   bilgi?: { konu: string; anahtarKelimeler?: string[]; bilgiler?: unknown[] }[];
@@ -157,12 +166,19 @@ export const TOOLS: ToolDef[] = [
   {
     name: 'get_metric_trend',
     description:
-      'Bir astronotun bir ölçümünün son ölçümlerdeki gidişini getirir: eskiden yeniye değerler, en düşük, en yüksek, değişim ve yön (artıyor, azalıyor, sabit).',
+      'Bir astronotun bir ölçümünün gidişini getirir: yakın dönem (son ölçümler; eskiden yeniye değerler, en düşük, en yüksek, değişim, yön) ve uzun dönem (görevin son saatleri; özet değerler) ile kişisel normal.',
     params: {
       ad: CREW_PARAM,
       olcum: { type: 'string', description: 'Ölçüm adı; örneğin nabız, SpO₂, solunum, çekirdek sıcaklık, CO₂, radyasyon doz hızı, HRV, kortizol, laktat' },
     },
     required: ['ad', 'olcum'],
+  },
+  {
+    name: 'assess_possible_conditions',
+    description:
+      'Bir astronot için veriye dayalı OLASI durumları getirir (kesin teşhis değildir): hangi ölçümlerin kişisel normalinden saptığı (dayanak), olasılık (düşük/orta), açıklama, önerilen kontrol ve kaynak. Hastalık, rahatsızlık ya da "ne olabilir?" sorularında kullan.',
+    params: { ad: CREW_PARAM },
+    required: ['ad'],
   },
   {
     name: 'list_incidents',
@@ -244,6 +260,15 @@ function findMetric(crew: CrewData, query: unknown): MetricData | undefined {
   return list.find((m) => norm(m.ad).includes(q) || q.includes(norm(m.ad)));
 }
 
+/** Değer listesinin yönü: artıyor, azalıyor ya da sabit. */
+function direction(values: number[]): 'artıyor' | 'azalıyor' | 'sabit' {
+  if (values.length < 2) return 'sabit';
+  const first = values[0];
+  const change = values[values.length - 1] - first;
+  if (Math.abs(change) <= Math.max(0.05, Math.abs(first) * 0.02)) return 'sabit';
+  return change > 0 ? 'artıyor' : 'azalıyor';
+}
+
 const crewNames = (data: ToolData) => Object.values(data.murettebat ?? {}).map((c) => c.ad);
 
 /** Bir aracı veri kopyası üzerinde çalıştırır. Hata yerine açıklayıcı bir sonuç döner. */
@@ -263,25 +288,39 @@ export function runTool(name: string, args: ToolArgs, data: ToolData): unknown {
       const metric = findMetric(crew, args.olcum);
       if (!metric) return { hata: 'Bu ölçüm veride yok.', mevcutOlcumler: (crew.olcumler ?? []).map((m) => m.ad) };
       const values = data.gecmis?.[id]?.[metric.anahtar] ?? [];
+      const long = data.uzunGecmis?.[id]?.[metric.anahtar];
+      const base = { astronot: crew.ad, olcum: metric.ad, birim: metric.birim, sonDeger: metric.deger, kisiselNormal: metric.kisiselNormal };
+      const uzunDonem = long ? { ...long, kapsam_saat: data.uzunGecmisKapsami_saat, yon: direction(long.degerler) } : undefined;
       if (metric.olcumSikligi || values.length < 2) {
-        return { astronot: crew.ad, olcum: metric.ad, birim: metric.birim, sonDeger: metric.deger, not: 'Bu ölçüm günde bir kez ölçülür ya da yeterli geçmiş yok; sadece son değer var.' };
+        return { ...base, uzunDonem, not: 'Bu ölçüm günde bir kez ölçülür ya da yakın dönem geçmişi kısa; son değer ve uzun dönem özeti var.' };
       }
       const first = values[0];
       const last = values[values.length - 1];
-      const change = Number((last - first).toFixed(2));
-      const flat = Math.abs(change) <= Math.max(0.05, Math.abs(first) * 0.02);
+      return {
+        ...base,
+        yakinDonem: {
+          degerler: values,
+          aralik: data.gecmisAraligi,
+          ilk: first,
+          son: last,
+          enDusuk: Math.min(...values),
+          enYuksek: Math.max(...values),
+          degisim: Number((last - first).toFixed(2)),
+          yon: direction(values),
+        },
+        uzunDonem,
+      };
+    }
+    case 'assess_possible_conditions': {
+      const found = findCrew(data, args.ad);
+      if (!found) return { hata: 'Bu ada sahip bir astronot yok.', mevcutAstronotlar: crewNames(data) };
+      const [, crew] = found;
+      const list = Array.isArray(crew.olasiDurumlar) ? crew.olasiDurumlar : [];
       return {
         astronot: crew.ad,
-        olcum: metric.ad,
-        birim: metric.birim,
-        degerler: values,
-        aralik: data.gecmisAraligi,
-        ilk: first,
-        son: last,
-        enDusuk: Math.min(...values),
-        enYuksek: Math.max(...values),
-        degisim: change,
-        yon: flat ? 'sabit' : change > 0 ? 'artıyor' : 'azalıyor',
+        olasiDurumlar: list,
+        ...(list.length ? {} : { not: 'Verilerde belirgin bir sapma görünmüyor ya da kişisel normal henüz kuruluyor.' }),
+        uyari: data.olasiDurumUyarisi ?? 'Bu değerlendirme kesin değildir; teşhis yerine geçmez.',
       };
     }
     case 'list_incidents': {

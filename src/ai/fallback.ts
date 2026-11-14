@@ -8,7 +8,9 @@ import { PARAMS } from '../sim/parameters';
 import { useAstra, type AstraState } from '../store';
 import type { AstraAnswer, AstraRequest, CrewId, CrewLocation, Incident, IncidentType, MetricScore } from '../types';
 import { fmt } from '../ui/theme';
+import { possibleConditions } from './conditions';
 import { ACTION_DONE_TR, crewInText, delayText, LEVEL_TR, shortName, valueText } from './labels';
+import { baselineReady } from './memory';
 
 const DOCTOR = 'Bu konuda uçuş doktoruna danışmayı öneririm.';
 
@@ -236,6 +238,37 @@ function whyText(s: AstraState, id: CrewId, askedCritical: boolean): string {
   );
 }
 
+/** Olası durum cevabı: önce değişen değerler, sonra "... ile uyumlu olabilir", sonra kesin olmadığı. */
+function conditionText(s: AstraState, id: CrewId | undefined, urgent: boolean): string {
+  const lifeThreat = urgent && 'Bu verilerle hayati bir durumu doğrulayamam; belirti varsa hemen uçuş doktoruna bildirin.';
+  if (!id) return sentences('Kesin bir teşhis koyamam.', lifeThreat, DOCTOR);
+  if (!baselineReady()) {
+    return sentences(
+      'Kesin bir teşhis koyamam.',
+      'Kişisel normal değerler henüz öğreniliyor; ilk 30 ölçümden sonra daha anlamlı bir değerlendirme yapabilirim.',
+      lifeThreat,
+      DOCTOR,
+    );
+  }
+  const found = possibleConditions(s, id);
+  if (!found.length) {
+    return sentences(
+      'Kesin bir teşhis koyamam.',
+      `${shortName(id)}'in ölçümlerinde kişisel normaline göre belirgin bir sapma görünmüyor.`,
+      lifeThreat,
+      DOCTOR,
+    );
+  }
+  const name = (d: string) => lcFirst(d.replace(/ (olasılığı|şüphesi)$/, ''));
+  const [top, second] = found;
+  return sentences(
+    `Kesin bir teşhis koyamam; ancak ${shortName(id)} için ${list(top.dayanak.slice(0, 3).map(lcFirst))} olarak ölçüldü.`,
+    `Bu değişiklikler ${name(top.durum)} ile uyumlu olabilir${second ? `; ${name(second.durum)} olasılığı da düşünülebilir` : ''}.`,
+    lifeThreat,
+    `Bu bir olasılıktır, kesin değildir; önerilen: ${top.oneri.charAt(0).toLocaleLowerCase('tr-TR')}${top.oneri.slice(1)} ve medikal kontrol.`,
+  );
+}
+
 function restText(s: AstraState): string {
   const cog = (id: CrewId) => s.statuses[id]?.domainScores.cog ?? 100;
   const pvt = (id: CrewId) => metricNow(s, id, 'cog.pvtMeanRt_ms') ?? 0;
@@ -376,15 +409,9 @@ function chatText(question: string, s: AstraState): string {
       DOCTOR,
     );
   }
-  // 4) Teşhis
-  if (has(/kriz|teşhis|tanı(?![a-zçğıöşü])|hastalı|hasta mı|enfarktüs|inme geçir|felç/)) {
-    const id = crew[0] ?? mostSevere(s);
-    return sentences(
-      'Teşhis koyamam.',
-      id && statusSentence(s, id),
-      id && topSignalsSentence(s, id),
-      `Medikal kontrol önerilir; ${DOCTOR.charAt(0).toLocaleLowerCase('tr-TR')}${DOCTOR.slice(1)}`,
-    );
+  // 4) Hastalık, teşhis, "ne olabilir?": veriye dayalı olası durum, ihtimal diliyle
+  if (has(/kriz|teşhis|tanı(?![a-zçğıöşü])|hastalı|hasta mı|enfarktüs|inme geçir|felç|ne olabilir|rahatsız|sorun ne/)) {
+    return conditionText(s, crew[0] ?? mostSevere(s), has(/kriz|enfarktüs|inme|felç/));
   }
   // 5) Kim dinlenmeli
   if (has(/dinlen/)) return restText(s);
