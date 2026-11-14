@@ -37,6 +37,26 @@ sabitler: kariyer doz limiti 600 mSv (NASA-STD-3001), CO₂ dikkat/kritik sını
 STRESS, MULTI) güncel değerlerle; sohbette anahtar kelimeye göre (kim dinlenmeli, neden kritik,
 radyasyon, CO₂, gecikme, belirli bir ölçüm, ilaç, teşhis, komut, rol dışı istek).
 
+## Araç kullanımı, bağlam ve çok turlu sohbet
+
+Mentor önerisiyle ASTRA üç yetenekle çalışır:
+
+| Yetenek | Ne yapar | Nerede |
+| --- | --- | --- |
+| **Araç kullanımı (tool calling)** | Model, cevap için gereken ayrıntıyı 5 salt-okur araçla kendisi çeker: `get_crew_member` (bir astronotun 33 ölçümü, skorları, açık olayları), `get_metric_trend` (bir ölçümün son ölçümlerdeki gidişi: artıyor / azalıyor / sabit), `list_incidents`, `get_event_log`, `lookup_reference` (eşik, limit ve bilimsel kaynak). Gemini'de `functionCall`, Claude'da `tool_use` ile; en fazla 3 tur. Kullanılan araçlar cevabın altında "⚙ Kullanılan araçlar" satırında görünür. | `api/astra.ts` (`TOOLS`, `runTool`) |
+| **Bağlam (context)** | Her soruda kısa bir canlı veri özeti (herkes için 8 ana ölçüm, sorunlu kişilerin en çok sapan sinyalleri, açık olaylar, sabitler) + araçların okuduğu anlık veri kopyası + NASA ve hakemli kaynaklı bilgi tabanı. | `src/ai/context.ts`, `src/ai/tooldata.ts`, `src/ai/knowledge.ts` |
+| **Çok turlu sohbet (multi-turn)** | Son 4 mesaj modele gider; "Peki Kerem?" gibi devam soruları anlaşılır. | `src/ai/client.ts`, `api/astra.ts` (`cleanHistory`) |
+
+Araçlar hiçbir şeyi değiştiremez: sadece tarayıcının gönderdiği veri kopyasını okur. Model araç tanımlarını kabul
+etmezse sunucu araçsız ve ayrıntılı veriyle bir kez daha sorar. Olay açıklamaları hız için araçsız, tek adımdır.
+
+## Üslup ve sohbet
+
+ASTRA resmî ve saygılı konuşur ("siz" dili, emoji ve günlük ifade yok) ama cevabın biçimini soruya göre
+ayarlar: selama kısa bir tanıtımla, tek değer sorusuna değer + birimle, "neden" sorusuna gözlem → önem →
+yapılacak adım sırasıyla cevap verir. Sohbetin son 4 mesajı modele gider; "Peki Kerem?" gibi devam soruları
+anlaşılır. Örnek cevaplar `api/astra.ts` içindeki `SYSTEM_PROMPT`'ta.
+
 ## Sağlayıcı geçişi
 
 `.env` (yerel) ve Vercel ortam değişkenleri:
@@ -45,7 +65,7 @@ radyasyon, CO₂, gecikme, belirli bir ölçüm, ilaç, teşhis, komut, rol dı�
 ASTRA_PROVIDER=gemini          # demo günü: claude
 GEMINI_API_KEY=...
 GEMINI_MODEL=gemini-3.8-flash
-GEMINI_FALLBACK_MODELS=gemini-3.7-flash,gemini-3.5-flash-lite  # ana model 503/429 verirse sırayla denenir
+GEMINI_FALLBACK_MODELS=gemini-3.5-flash-lite,gemini-3.7-flash  # ana model 503/429 verirse ya da 6 sn cevap vermezse sırayla denenir
 ANTHROPIC_API_KEY=...
 CLAUDE_MODEL=claude-haiku-5-5
 ```

@@ -48,6 +48,23 @@ export const ACTION_TR: Record<AutoActionType, string> = {
   MANDATORY_REST: 'zorunlu dinlenme',
 };
 
+/** Araç adlarının ekranda görünen Türkçe karşılığı (api/astra.ts'teki TOOLS). */
+export const TOOL_TR: Record<string, string> = {
+  get_crew_member: 'Astronot detayı',
+  get_metric_trend: 'Ölçüm gidişi',
+  list_incidents: 'Olaylar',
+  get_event_log: 'Olay kaydı',
+  lookup_reference: 'Kaynak bilgisi',
+};
+
+/** "Ölçüm gidişi · Kerem, CO₂" */
+export function toolLabel(tool: { ad: string; girdi?: Record<string, unknown> }): string {
+  const args = Object.values(tool.girdi ?? {})
+    .filter((v) => v !== undefined && v !== '')
+    .map(String);
+  return `${TOOL_TR[tool.ad] ?? tool.ad}${args.length ? ` · ${args.join(', ')}` : ''}`;
+}
+
 /** 'kerem' -> 'Kerem'. Mürettebata ilk adıyla hitap edilir (Muhammed Emir -> Emir). */
 export function shortName(id: CrewId): string {
   return id.charAt(0).toLocaleUpperCase('tr-TR') + id.slice(1);

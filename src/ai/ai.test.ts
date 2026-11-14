@@ -2,7 +2,7 @@
 // Parça 4 · Katman 2 testleri. Çalıştırma: npm run test
 // Dil modeli çağrılmaz (fetch sahte); canlı model testi için: astra.live.test.ts
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import handler from '../../api/astra';
+import handler, { runTool, TOOLS } from '../../api/astra';
 import { useAstra } from '../store';
 import type { CrewStatus, IncidentType } from '../types';
 import { askAstra, clearAstraCache } from './client';
@@ -11,6 +11,7 @@ import { incidentQuestion, requestExplanation } from './explain';
 import { fallbackAnswer } from './fallback';
 import { checkAnswer } from './safety';
 import { countSentences, EXPECTED, fakeIncident, makeDemoState, QUESTIONS, runSimulation } from './testing';
+import { buildToolData } from './tooldata';
 import { verifyNumbers } from './verify';
 
 type Crew = { ad: string; olcumler: Record<string, unknown> };
@@ -108,6 +109,16 @@ describe('fallback.ts · yedek mod, 10 test sorusu', () => {
     expect(t).toMatch(/havalandırma/i);
   });
 
+  it('selama veri saymadan, resmî bir tanıtımla karşılık verir', () => {
+    const t = fallbackAnswer({ mode: 'chat', question: 'Merhaba', context: {} }).text;
+    expect(t).toMatch(/^Merhaba, ben ASTRA/);
+    expect(t).not.toMatch(/\d+ (bpm|mmHg|°C)/);
+  });
+
+  it('"Peki Kerem?" sorusunu Kerem\'in durumu olarak anlar', () => {
+    expect(fallbackAnswer({ mode: 'chat', question: 'Peki Kerem?', context: {} }).text).toMatch(/^Kerem'in durumu kritik/);
+  });
+
   it('telemetri yokken de cevap verir', () => {
     useAstra.getState().clearAll();
     expect(fallbackAnswer({ mode: 'chat', question: 'Elif nasıl?', context: {} }).text).toMatch(/telemetri/);
@@ -174,6 +185,45 @@ describe('client.ts · askAstra', () => {
     expect((await askAstra({ ...req(), question: 'Kerem nasıl?' })).source).toBe('fallback');
   });
 
+  it('sohbetin son mesajlarını sunucuya gönderir (devam soruları için)', async () => {
+    const { addChat } = useAstra.getState();
+    addChat({ id: '1', role: 'user', text: "Elif'in nabzı kaç?", at: 1 });
+    addChat({ id: '2', role: 'astra', text: "Elif'in kalp atış hızı 69 bpm.", at: 2 });
+    addChat({ id: '3', role: 'user', text: 'Peki Kerem?', at: 3 });
+    const f = reply({ text: "Kerem'in kalp atış hızı 82 bpm.", source: 'gemini' });
+    vi.stubGlobal('fetch', f);
+    await askAstra({ mode: 'chat', question: 'Peki Kerem?', context: {} });
+    const body = JSON.parse(String((f.mock.calls[0] as unknown as [string, RequestInit])[1].body));
+    expect(body.history).toEqual([
+      { role: 'user', text: "Elif'in nabzı kaç?" },
+      { role: 'astra', text: "Elif'in kalp atış hızı 69 bpm." },
+    ]);
+  });
+
+  it('kullanılan araçları Türkçe etiketle gösterir; araçla okunan sayıyı doğrulanmış sayar', async () => {
+    vi.stubGlobal(
+      'fetch',
+      reply({
+        text: 'Kariyer limiti 600 mSv; toplam doz 480 mSv olunca dikkat olayı açılır.',
+        source: 'gemini',
+        tools: [{ ad: 'lookup_reference', girdi: { konu: 'radyasyon' } }],
+        toolOutput: '[{"bilgi":"Kariyer radyasyon limiti 600 mSv. ... 480 mSv ..."}]',
+      }),
+    );
+    const a = await askAstra({ mode: 'chat', question: 'Radyasyon limiti ne?', context: {} });
+    expect(a.tools).toEqual(['Kaynak bilgisi · radyasyon']);
+    expect(a.verified).toBe(true);
+  });
+
+  it('sohbet isteğiyle araç verisini de gönderir', async () => {
+    const f = reply({ text: 'Tamam.', source: 'gemini' });
+    vi.stubGlobal('fetch', f);
+    await askAstra({ mode: 'chat', question: 'Mert nasıl?', context: {} });
+    const body = JSON.parse(String((f.mock.calls[0] as unknown as [string, RequestInit])[1].body));
+    expect(Object.keys(body.toolData.murettebat)).toHaveLength(6);
+    expect(body.toolData.bilgi.length).toBeGreaterThan(5);
+  });
+
   it('aynı soru 60 sn içinde önbellekten gelir', async () => {
     const f = reply({ text: 'Merhaba, ben ASTRA.', source: 'gemini' });
     vi.stubGlobal('fetch', f);
@@ -203,6 +253,52 @@ describe('explain.ts · olay açıklaması', () => {
   it('olay sorusu sinyalleri değer ve kişisel normalle verir', () => {
     const s = makeDemoState();
     expect(incidentQuestion(s.incidents[0])).toContain('3,4 mmHg (kişisel normal 1,9 mmHg)');
+  });
+});
+
+describe('Araçlar (tool calling) · salt-okur araçlar', () => {
+  const data = () => {
+    const s = makeDemoState();
+    // Katman 1 henüz 30 ölçümlük baseline kuruyorsa geçmiş kısa olabilir; araç yine de cevap vermeli.
+    return JSON.parse(JSON.stringify(buildToolData(s)));
+  };
+
+  it('5 araç tanımlı ve her birinin açıklaması var', () => {
+    expect(TOOLS.map((t) => t.name)).toEqual(['get_crew_member', 'get_metric_trend', 'list_incidents', 'get_event_log', 'lookup_reference']);
+    for (const t of TOOLS) expect(t.description.length).toBeGreaterThan(30);
+  });
+
+  it('get_crew_member: adı esnek tanır, tüm ölçümleri ve açık olayları verir', () => {
+    const r = runTool('get_crew_member', { ad: "Kerem'in" }, data()) as { ad: string; olcumler: unknown[]; acikOlaylar: unknown[] };
+    expect(r.ad).toBe('Kerem');
+    expect(r.olcumler.length).toBe(33);
+    expect(r.acikOlaylar.length).toBe(1);
+    expect(runTool('get_crew_member', { ad: 'Kenji' }, data())).toMatchObject({ hata: expect.stringMatching(/astronot yok/) });
+  });
+
+  it('get_metric_trend: Türkçe ölçüm adından doğru ölçümü bulur', () => {
+    runSimulation(40);
+    const td = JSON.parse(JSON.stringify(buildToolData(useAstra.getState())));
+    const r = runTool('get_metric_trend', { ad: 'Elif', olcum: 'nabız' }, td) as { olcum: string; degerler: number[]; yon: string };
+    expect(r.olcum).toBe('Kalp atış hızı');
+    expect(r.degerler.length).toBeGreaterThan(2);
+    expect(['artıyor', 'azalıyor', 'sabit']).toContain(r.yon);
+    expect((runTool('get_metric_trend', { ad: 'Elif', olcum: 'toplam doz' }, td) as { olcum: string }).olcum).toBe('Toplam radyasyon dozu');
+    expect((runTool('get_metric_trend', { ad: 'Elif', olcum: 'CO₂' }, td) as { olcum: string }).olcum).toBe('CO₂ kısmi basıncı');
+  });
+
+  it('get_metric_trend: veride olmayan ölçümde "veride yok" der', () => {
+    expect(runTool('get_metric_trend', { ad: 'Deniz', olcum: 'kemik yoğunluğu' }, data())).toMatchObject({ hata: 'Bu ölçüm veride yok.' });
+  });
+
+  it('list_incidents, get_event_log, lookup_reference', () => {
+    const d = data();
+    expect((runTool('list_incidents', {}, d) as { olaylar: unknown[] }).olaylar).toHaveLength(1);
+    expect(runTool('get_event_log', { adet: 3 }, d)).toHaveProperty('kayit');
+    const ref = runTool('lookup_reference', { konu: 'CO2' }, d) as { konu: string; bilgiler: { kaynak: string }[] };
+    expect(ref.konu).toBe('co2');
+    expect(ref.bilgiler.some((b) => /OCHMO/.test(b.kaynak))).toBe(true);
+    expect((runTool('lookup_reference', { konu: 'radyasyon' }, d) as { bilgiler: { bilgi: string }[] }).bilgiler[0].bilgi).toMatch(/600 mSv/);
   });
 });
 
@@ -257,7 +353,25 @@ describe('api/astra.ts · sunucu fonksiyonu', () => {
     expect(res.status).toBe(200);
     expect(((await res.json()) as { text: string }).text).toBe('Yedek modelden cevap.');
     expect(f.mock.calls[0][0]).toContain('gemini-3.8-flash');
-    expect(f.mock.calls[1][0]).toContain('gemini-3.7-flash');
+    expect(f.mock.calls[1][0]).toContain('gemini-3.5-flash-lite');
+  });
+
+  it('Gemini: model hiç cevap vermezse süresi dolunca sıradaki modele geçer', async () => {
+    process.env.ASTRA_PROVIDER = 'gemini';
+    process.env.GEMINI_API_KEY = 'test';
+    process.env.GEMINI_MODEL_TIMEOUT_MS = '50';
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const f = vi
+      .fn(async (_url: string, _init: RequestInit) => Response.json({ candidates: [{ content: { parts: [{ text: 'Hızlı modelden cevap.' }] } }] }))
+      .mockImplementationOnce(
+        (_url: string, init: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))),
+      );
+    vi.stubGlobal('fetch', f);
+    const res = await handler.fetch(post({ mode: 'chat', question: 'Merhaba', context: {} }));
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { text: string }).text).toBe('Hızlı modelden cevap.');
+    expect(f).toHaveBeenCalledTimes(2);
   });
 
   it('Gemini: tüm modeller yoğunsa 502 döner (istemci yedek moda geçer); anahtar hatasında yedek model denenmez', async () => {
@@ -273,6 +387,98 @@ describe('api/astra.ts · sunucu fonksiyonu', () => {
     vi.stubGlobal('fetch', badKey);
     expect((await handler.fetch(post({ mode: 'chat', question: 'Merhaba', context: {} }))).status).toBe(502);
     expect(badKey).toHaveBeenCalledTimes(1);
+  });
+
+  it('önceki konuşmayı modele sırayla iletir; bozuk geçmişi yok sayar', async () => {
+    process.env.ASTRA_PROVIDER = 'gemini';
+    process.env.GEMINI_API_KEY = 'test';
+    const f = vi.fn(async (_url: string, _init: RequestInit) => Response.json({ candidates: [{ content: { parts: [{ text: 'Tamam.' }] } }] }));
+    vi.stubGlobal('fetch', f);
+    const history = [
+      { role: 'astra', text: 'başta asistan mesajı atılır' },
+      { role: 'user', text: "Elif'in nabzı kaç?" },
+      { role: 'astra', text: '69 bpm.' },
+      42,
+    ];
+    await handler.fetch(post({ mode: 'chat', question: 'Peki Kerem?', context: {}, history }));
+    const sent = JSON.parse(String(f.mock.calls[0][1].body));
+    expect(sent.contents.map((c: { role: string }) => c.role)).toEqual(['user', 'model', 'user']);
+    expect(sent.contents[2].parts[0].text).toBe('Peki Kerem?');
+
+    process.env.ASTRA_PROVIDER = 'claude';
+    process.env.ANTHROPIC_API_KEY = 'test';
+    const c = vi.fn(async (_url: string, _init: RequestInit) => Response.json({ content: [{ type: 'text', text: 'Tamam.' }] }));
+    vi.stubGlobal('fetch', c);
+    await handler.fetch(post({ mode: 'chat', question: 'Peki Kerem?', context: {}, history }));
+    expect(JSON.parse(String(c.mock.calls[0][1].body)).messages.map((m: { role: string }) => m.role)).toEqual(['user', 'assistant', 'user']);
+  });
+
+  it('Gemini araç döngüsü: aracı çalıştırır, sonucu modele verir, kullanılan aracı bildirir', async () => {
+    process.env.ASTRA_PROVIDER = 'gemini';
+    process.env.GEMINI_API_KEY = 'test';
+    const toolData = JSON.parse(JSON.stringify(buildToolData(makeDemoState())));
+    const f = vi
+      .fn(async (_url: string, _init: RequestInit) => Response.json({ candidates: [{ content: { parts: [{ text: "Kerem'in CO₂ kısmi basıncı 3,4 mmHg." }] } }] }))
+      .mockImplementationOnce(async () =>
+        Response.json({ candidates: [{ content: { role: 'model', parts: [{ functionCall: { name: 'get_crew_member', args: { ad: 'Kerem' } }, thoughtSignature: 'imza' }] } }] }),
+      );
+    vi.stubGlobal('fetch', f);
+    const res = await handler.fetch(post({ mode: 'chat', question: 'Kerem neden kritik?', context: {}, toolData }));
+    const out = (await res.json()) as { text: string; tools: { ad: string; girdi: Record<string, unknown> }[]; toolOutput: string };
+    expect(out.text).toContain('3,4 mmHg');
+    expect(out.tools).toEqual([{ ad: 'get_crew_member', girdi: { ad: 'Kerem' } }]);
+    expect(out.toolOutput).toContain('Kerem');
+    const first = JSON.parse(String(f.mock.calls[0][1].body));
+    expect(first.tools[0].functionDeclarations).toHaveLength(5);
+    expect(first.systemInstruction.parts[0].text).toContain('get_metric_trend');
+    const second = JSON.parse(String(f.mock.calls[1][1].body));
+    expect(second.contents.at(-2).parts[0].thoughtSignature).toBe('imza'); // imza aynen geri gider
+    expect(second.contents.at(-1).parts[0].functionResponse.name).toBe('get_crew_member');
+  });
+
+  it('Gemini araç tanımlarını reddederse araçsız ve ayrıntılı veriyle tekrar sorar', async () => {
+    process.env.ASTRA_PROVIDER = 'gemini';
+    process.env.GEMINI_API_KEY = 'test';
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const toolData = JSON.parse(JSON.stringify(buildToolData(makeDemoState())));
+    const f = vi
+      .fn(async (_url: string, _init: RequestInit) => Response.json({ candidates: [{ content: { parts: [{ text: 'Cevap.' }] } }] }))
+      .mockImplementationOnce(async () => new Response('{"error":{"message":"Invalid function declaration"}}', { status: 400 }));
+    vi.stubGlobal('fetch', f);
+    const res = await handler.fetch(post({ mode: 'chat', question: 'Kerem nasıl?', context: { ozet: 1 }, toolData }));
+    expect(res.status).toBe(200);
+    const retry = JSON.parse(String(f.mock.calls[1][1].body));
+    expect(retry.tools).toBeUndefined();
+    expect(retry.systemInstruction.parts[0].text).toContain('"ayrinti"');
+  });
+
+  it('Claude araç döngüsü: tool_use -> tool_result -> metin', async () => {
+    process.env.ASTRA_PROVIDER = 'claude';
+    process.env.ANTHROPIC_API_KEY = 'test';
+    const toolData = JSON.parse(JSON.stringify(buildToolData(makeDemoState())));
+    const c = vi
+      .fn(async (_url: string, _init: RequestInit) => Response.json({ content: [{ type: 'text', text: 'Kariyer limiti 600 mSv.' }] }))
+      .mockImplementationOnce(async () =>
+        Response.json({ stop_reason: 'tool_use', content: [{ type: 'tool_use', id: 't1', name: 'lookup_reference', input: { konu: 'radyasyon' } }] }),
+      );
+    vi.stubGlobal('fetch', c);
+    const res = await handler.fetch(post({ mode: 'chat', question: 'Radyasyon limiti ne?', context: {}, toolData }));
+    const out = (await res.json()) as { text: string; tools: { ad: string }[] };
+    expect(out.text).toContain('600 mSv');
+    expect(out.tools[0].ad).toBe('lookup_reference');
+    const first = JSON.parse(String(c.mock.calls[0][1].body));
+    expect(first.tools).toHaveLength(5);
+    const second = JSON.parse(String(c.mock.calls[1][1].body));
+    expect(second.messages.at(-1).content[0]).toMatchObject({ type: 'tool_result', tool_use_id: 't1' });
+  });
+
+  it('olay açıklamasında araç kullanılmaz (hız için tek adım)', async () => {
+    process.env.ASTRA_PROVIDER = 'gemini';
+    process.env.GEMINI_API_KEY = 'test';
+    const f = vi.fn(async (_url: string, _init: RequestInit) => Response.json({ candidates: [{ content: { parts: [{ text: 'Açıklama.' }] } }] }));
+    vi.stubGlobal('fetch', f);
+    await handler.fetch(post({ mode: 'incident', question: 'Olay', context: {}, toolData: { murettebat: {} } }));
+    expect(JSON.parse(String(f.mock.calls[0][1].body)).tools).toBeUndefined();
   });
 
   it('Claude: "thinking" alanı reddedilirse onsuz tekrar dener', async () => {
