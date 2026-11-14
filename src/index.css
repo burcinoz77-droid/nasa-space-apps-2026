@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 
+/* Renkler src/ui/theme.ts ile aynı; Tailwind sınıfları (bg-space-panel, text-calm ...) buradan gelir. */
 @theme {
   --color-space-bg: #070b1a;
   --color-space-panel: #0e1530;
@@ -9,7 +10,7 @@
   --color-caution: #fbbf24;
   --color-critical: #f87171;
   --color-ai: #a78bfa;
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
 html,
@@ -23,4 +24,79 @@ body {
   background: var(--color-space-bg);
   color: #e6edf7;
   font-family: var(--font-sans);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Projeksiyonda sayılar zıplamasın */
+.font-mono,
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Koyu kaydırma çubuğu */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-space-border) transparent;
+}
+
+/* Vücut haritasında KRİTİK bölge nabız gibi atar */
+@keyframes astra-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+.astra-pulse {
+  animation: astra-pulse 1.4s ease-in-out infinite;
+}
+
+/* Kritik bant ilk açıldığında üç kez parlar: görmezden gelinemesin (bant hep tam görünür, sadece hare atar) */
+@keyframes astra-alert-in {
+  0%,
+  30%,
+  60% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-critical) 75%, transparent);
+  }
+  15%,
+  45%,
+  75%,
+  100% {
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--color-critical) 0%, transparent);
+  }
+}
+.astra-alert {
+  animation: astra-alert-in 2.4s ease-out 1;
+}
+
+/* Açık kritik olay varken ekranın kenarında ince kırmızı ışık (ekranı kapatmaz) */
+@keyframes astra-edge {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 0 2px color-mix(in srgb, var(--color-critical) 55%, transparent),
+      inset 0 0 40px color-mix(in srgb, var(--color-critical) 12%, transparent);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 2px color-mix(in srgb, var(--color-critical) 25%, transparent),
+      inset 0 0 24px color-mix(in srgb, var(--color-critical) 5%, transparent);
+  }
+}
+.astra-critical-edge {
+  animation: astra-edge 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .astra-pulse,
+  .astra-alert,
+  .astra-critical-edge {
+    animation: none;
+  }
+  .astra-critical-edge {
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--color-critical) 50%, transparent);
+  }
 }
