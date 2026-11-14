@@ -37,6 +37,19 @@ sabitler: kariyer doz limiti 600 mSv (NASA-STD-3001), CO₂ dikkat/kritik sını
 STRESS, MULTI) güncel değerlerle; sohbette anahtar kelimeye göre (kim dinlenmeli, neden kritik,
 radyasyon, CO₂, gecikme, belirli bir ölçüm, ilaç, teşhis, komut, rol dışı istek).
 
+## Araç kullanımı, bağlam ve çok turlu sohbet
+
+Mentor önerisiyle ASTRA üç yetenekle çalışır:
+
+| Yetenek | Ne yapar | Nerede |
+| --- | --- | --- |
+| **Araç kullanımı (tool calling)** | Model, cevap için gereken ayrıntıyı 5 salt-okur araçla kendisi çeker: `get_crew_member` (bir astronotun 33 ölçümü, skorları, açık olayları), `get_metric_trend` (bir ölçümün son ölçümlerdeki gidişi: artıyor / azalıyor / sabit), `list_incidents`, `get_event_log`, `lookup_reference` (eşik, limit ve bilimsel kaynak). Gemini'de `functionCall`, Claude'da `tool_use` ile; en fazla 3 tur. Kullanılan araçlar cevabın altında "⚙ Kullanılan araçlar" satırında görünür. | `api/astra.ts` (`TOOLS`, `runTool`) |
+| **Bağlam (context)** | Her soruda kısa bir canlı veri özeti (herkes için 8 ana ölçüm, sorunlu kişilerin en çok sapan sinyalleri, açık olaylar, sabitler) + araçların okuduğu anlık veri kopyası + NASA ve hakemli kaynaklı bilgi tabanı. | `src/ai/context.ts`, `src/ai/tooldata.ts`, `src/ai/knowledge.ts` |
+| **Çok turlu sohbet (multi-turn)** | Son 4 mesaj modele gider; "Peki Kerem?" gibi devam soruları anlaşılır. | `src/ai/client.ts`, `api/astra.ts` (`cleanHistory`) |
+
+Araçlar hiçbir şeyi değiştiremez: sadece tarayıcının gönderdiği veri kopyasını okur. Model araç tanımlarını kabul
+etmezse sunucu araçsız ve ayrıntılı veriyle bir kez daha sorar. Olay açıklamaları hız için araçsız, tek adımdır.
+
 ## Üslup ve sohbet
 
 ASTRA resmî ve saygılı konuşur ("siz" dili, emoji ve günlük ifade yok) ama cevabın biçimini soruya göre

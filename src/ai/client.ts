@@ -4,7 +4,9 @@
 import { useAstra } from '../store';
 import type { AstraAnswer, AstraRequest } from '../types';
 import { fallbackAnswer } from './fallback';
+import { toolLabel } from './labels';
 import { checkAnswer } from './safety';
+import { buildToolData } from './tooldata';
 import { verifyNumbers } from './verify';
 
 const TIMEOUT_MS = 22_000; // sunucu en fazla 20 sn içinde ya cevap ya hata döner (3 model × 6 sn)
@@ -36,14 +38,20 @@ export async function askAstra(req: AstraRequest): Promise<AstraAnswer> {
     const res = await fetch('/api/astra', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(history.length ? { ...req, history } : req),
+      // Sohbette araçların okuyacağı anlık veri kopyası da gider (araçlar sunucuda çalışır).
+      body: JSON.stringify(req.mode === 'chat' ? { ...req, history, toolData: buildToolData(useAstra.getState()) } : req),
       signal: controller.signal,
     }).finally(() => clearTimeout(timer));
     if (!res.ok) {
       const detail = await res.text().catch(() => '');
       throw new Error(`HTTP ${res.status} ${detail.slice(0, 200)}`);
     }
-    const data = (await res.json()) as { text?: string; source: 'claude' | 'gemini' };
+    const data = (await res.json()) as {
+      text?: string;
+      source: 'claude' | 'gemini';
+      tools?: { ad: string; girdi?: Record<string, unknown> }[];
+      toolOutput?: string;
+    };
     const text = (data.text ?? '').trim();
     if (!text) throw new Error('boş cevap');
 
@@ -57,8 +65,10 @@ export async function askAstra(req: AstraRequest): Promise<AstraAnswer> {
     const answer: AstraAnswer = {
       text,
       source: data.source,
-      verified: verifyNumbers(text, req.context, req.question),
+      // Araç sonuçlarındaki sayılar da "veride var" sayılır: model onları araçla okudu.
+      verified: verifyNumbers(text, req.context, `${req.question} ${data.toolOutput ?? ''}`),
       latencyMs: elapsed(),
+      ...(data.tools?.length ? { tools: data.tools.map(toolLabel) } : {}),
     };
     cache.set(key, { at: Date.now(), answer });
     return answer;

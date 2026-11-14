@@ -37,6 +37,11 @@ export interface ContextOptions {
   question?: string;
   /** Olay açıklaması: olaydaki kişilerin tüm ölçümleri ve olayın ayrıntısı eklenir. */
   incident?: Incident;
+  /**
+   * Kısa özet: herkes için 8 ana ölçüm (+ sorunlu kişilerin en çok sapan sinyalleri).
+   * Sohbette kullanılır; ayrıntıyı model araçlarla (api/astra.ts) kendisi çeker.
+   */
+  compact?: boolean;
 }
 
 function metricLabel(key: MetricKey): string {
@@ -44,7 +49,7 @@ function metricLabel(key: MetricKey): string {
   return m ? `${m.label} (${m.unit})` : key;
 }
 
-function signalSummary(sig: MetricScore) {
+export function signalSummary(sig: MetricScore) {
   const m = METRIC_BY_KEY[sig.key];
   const d = m?.decimals ?? 1;
   return {
@@ -57,13 +62,13 @@ function signalSummary(sig: MetricScore) {
   };
 }
 
-function incidentSummary(i: Incident) {
+export function incidentSummary(i: Incident) {
   return {
     olayId: i.id,
     tur: INCIDENT_TR[i.type] ?? i.type,
     baslik: i.title,
     seviye: LEVEL_TR[i.level],
-    durum: i.status === 'acknowledged' ? 'mürettebat onayladı' : 'açık',
+    durum: i.status === 'acknowledged' ? 'mürettebat onayladı' : i.status === 'resolved' ? 'çözüldü' : 'açık',
     kisiler: i.crewIds.map(shortName),
     sinyaller: i.signals.slice(0, 4).map(signalSummary),
     otonomAdimlar: i.autoActions.map((a) => ACTION_TR[a] ?? a),
@@ -132,6 +137,7 @@ export function buildContext(s: AstraState, opts: ContextOptions = {}): Record<s
     ...(opts.incident ? { olayId: opts.incident.id, aciklanacakOlay: incidentSummary(opts.incident) } : {}),
   });
 
+  if (opts.compact) return make(true);
   // Önce tam hâli dene; çok uzunsa ayrıntılı kişileri de 8 ölçüme indir.
   const full = make(false);
   if (estimateTokens(full) <= MAX_CONTEXT_TOKENS) return full;

@@ -51,6 +51,11 @@ export function AstraMeta({ answer }: { answer: AstraAnswer }) {
       </span>
       {!offline && <span style={{ color: COLORS.textMuted }}>{fmt(answer.latencyMs / 1000, 1)} sn</span>}
       {!offline && <VerifiedBadge ok={answer.verified} />}
+      {!!answer.tools?.length && (
+        <span className="basis-full" style={{ color: COLORS.textMuted }} title="ASTRA bu cevap için veriyi şu araçlarla okudu (salt okunur).">
+          ⚙ Kullanılan araçlar: {answer.tools.join(' · ')}
+        </span>
+      )}
     </div>
   );
 }
