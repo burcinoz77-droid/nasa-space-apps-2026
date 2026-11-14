@@ -4,9 +4,11 @@
 import { CREW } from '../crew';
 import { GROUP_NAMES, METRICS, readMetric } from '../metrics';
 import type { AstraState } from '../store';
+import { CONDITION_DISCLAIMER, possibleConditions } from './conditions';
 import { incidentSummary, signalSummary } from './context';
 import { REFERENCES } from './knowledge';
 import { LEVEL_TR, shortName } from './labels';
+import { longHistory, longHistorySpanHours, MISSION_MIN_PER_TICK, personalNormal } from './memory';
 
 /** Geçmişten kaç ölçümde bir örnek alınır ve en fazla kaç nokta gönderilir. */
 const TREND_STRIDE = 6;
@@ -42,16 +44,21 @@ export function buildToolData(s: AstraState) {
           zorunluDinlenme: st?.restRequired ?? false,
           ekgRitmi: t ? (t.cardio.ecg_rhythm === 'sinus' ? 'sinüs (normal)' : 'düzensiz') : undefined,
           olcumler: t
-            ? METRICS.map((mi) => ({
-                anahtar: mi.key,
-                ad: mi.label,
-                birim: mi.unit,
-                grup: GROUP_NAMES[mi.group],
-                deger: round(readMetric(t, mi.key), mi.decimals),
-                ...(mi.cadence === 'daily' ? { olcumSikligi: 'günde bir' } : {}),
-              }))
+            ? METRICS.map((mi) => {
+                const pn = personalNormal(m.id, mi.key);
+                return {
+                  anahtar: mi.key,
+                  ad: mi.label,
+                  birim: mi.unit,
+                  grup: GROUP_NAMES[mi.group],
+                  deger: round(readMetric(t, mi.key), mi.decimals),
+                  ...(pn ? { kisiselNormal: round(pn.mean, mi.decimals) } : {}),
+                  ...(mi.cadence === 'daily' ? { olcumSikligi: 'günde bir' } : {}),
+                };
+              })
             : [],
           enCokSapanlar: st?.topSignals.slice(0, 3).map(signalSummary) ?? [],
+          olasiDurumlar: possibleConditions(s, m.id),
         },
       ];
     }),
@@ -71,10 +78,33 @@ export function buildToolData(s: AstraState) {
     }),
   );
 
+  // Uzun dönem: ASTRA hafızasından (src/ai/memory.ts) eşit aralıklı en fazla 12 nokta + özet.
+  const uzunGecmis = Object.fromEntries(
+    CREW.map((m) => [
+      m.id,
+      Object.fromEntries(
+        METRICS.map((mi) => {
+          const all = longHistory(m.id, mi.key);
+          if (all.length < 2) return [mi.key, undefined];
+          const step = Math.max(1, Math.ceil(all.length / 12));
+          const points = all.filter((_, i) => (all.length - 1 - i) % step === 0).map((v) => round(v, mi.decimals));
+          const mean = all.reduce((a, b) => a + b, 0) / all.length;
+          return [
+            mi.key,
+            { degerler: points, enDusuk: round(Math.min(...all), mi.decimals), enYuksek: round(Math.max(...all), mi.decimals), ortalama: round(mean, mi.decimals) },
+          ];
+        }).filter(([, v]) => v),
+      ),
+    ]),
+  );
+
   return {
     murettebat,
+    olasiDurumUyarisi: CONDITION_DISCLAIMER,
     gecmis,
-    gecmisAraligi: `son değerler eskiden yeniye; her ${TREND_STRIDE} ölçümde bir örnek`,
+    gecmisAraligi: `son değerler eskiden yeniye; her ${TREND_STRIDE} ölçümde bir örnek (1 ölçüm = ${MISSION_MIN_PER_TICK} dk görev süresi)`,
+    uzunGecmis,
+    uzunGecmisKapsami_saat: round(longHistorySpanHours(), 1),
     olaylar: s.incidents.slice(0, 15).map(incidentSummary),
     kayit: s.ledger.slice(0, 12).map((e) => ({ saat: new Date(e.at).toLocaleTimeString('tr-TR'), tur: e.kind, metin: e.text })),
     bilgi: REFERENCES,

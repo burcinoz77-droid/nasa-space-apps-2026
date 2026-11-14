@@ -14,14 +14,14 @@ const cache = new Map<string, { at: number; answer: AstraAnswer }>();
 const CACHE_MS = 60_000; // aynı soru 60 sn içinde tekrar gelirse kotayı harcama
 
 /**
- * Sohbetteki son 4 mesaj (devam soruları için: "Peki Kerem?"). Panel yeni soruyu
+ * Sohbetteki son 10 mesaj (devam soruları için: "Peki Kerem?"). Panel yeni soruyu
  * askAstra'dan önce sohbete eklediği için son mesaj sorunun kendisiyse çıkarılır.
  */
 function recentHistory(question: string): { role: 'user' | 'astra'; text: string }[] {
   const chat = useAstra.getState().chat;
   const last = chat[chat.length - 1];
   const previous = last && last.role === 'user' && last.text.trim() === question.trim() ? chat.slice(0, -1) : chat;
-  return previous.slice(-4).map((m) => ({ role: m.role, text: m.text.slice(0, 500) }));
+  return previous.slice(-10).map((m) => ({ role: m.role, text: m.text.slice(0, 500) }));
 }
 
 export async function askAstra(req: AstraRequest): Promise<AstraAnswer> {

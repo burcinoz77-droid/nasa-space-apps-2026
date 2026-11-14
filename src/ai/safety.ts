@@ -1,6 +1,9 @@
-// Parça 4 · Güvenlik süzgeci: modelin cevabı teşhis, ilaç ya da doz içeriyorsa gösterilmez.
-// client.ts cevabı göstermeden önce isSafeAnswer() çağırır; güvensizse yedek cevap gösterilir
-// ve konsola yazılır. Reddetme cümleleri ("Teşhis koyamam", "İlaç öneremem") güvenlidir.
+// Parça 4 · Güvenlik süzgeci: modelin cevabı ilaç ya da doz öneriyorsa veya KESİN teşhis koyuyorsa gösterilmez.
+// client.ts cevabı göstermeden önce checkAnswer() çağırır; güvensizse yedek cevap gösterilir ve konsola yazılır.
+//
+// Kural (ekip kararı): ASTRA olası durumları İHTİMAL diliyle söyleyebilir ("... ile uyumlu olabilir",
+// "... olasılığını düşündürüyor"); kesin ifade ("aritmi var", "kesinlikle hipoksi") kullanamaz.
+// Reddetme cümleleri ("Kesin teşhis koyamam", "İlaç öneremem") her zaman güvenlidir.
 
 /** Bu kalıplar nerede geçerse geçsin cevabı engeller (ilaç dozu ve doz talimatı). */
 const ALWAYS_BLOCK: RegExp[] = [
@@ -8,13 +11,22 @@ const ALWAYS_BLOCK: RegExp[] = [
   /doz(?:u|unu)?\s+(?:al|ver|uygula)(?:y?ın|y?in|sın|sin|malı|meli)/, // "doz alın", "dozu verin"
 ];
 
-/** Bu ifadeler bir reddetme cümlesinde geçmiyorsa cevabı engeller. */
-const MED_OR_DIAGNOSIS =
-  /(ilaç|ilac|tablet|kapsül|antibiyotik|ibuprofen|parasetamol|aspirin|ağrı kesici|enjeksiyon|teşhis|tanı koy|tanısı|aritmi(?:si)? var|aritmi geçiriyor|kalp krizi geçiriyor|kriz geçiriyor|enfeksiyon(?:u)? var)/;
+/** İlaç önerisi: reddetme cümlesi değilse engellenir. */
+const MEDICATION = /(ilaç|ilac|tablet|kapsül|antibiyotik|ibuprofen|parasetamol|aspirin|ağrı kesici|enjeksiyon)/;
+
+/** Hastalık ve teşhis ifadeleri: ihtimal dili ya da reddetme yoksa engellenir. */
+const CONDITION =
+  /(teşhis|tanı koy|tanısı|aritmi|ritim bozukluğu|kalp krizi|enfarktüs|hipoksi|hiperkapni|hipertermi|ısı çarpması|ısı stresi|dehidratasyon|anksiyete|depresyon|enfeksiyon|radyasyon hastalığı|sendrom)/;
+
+/** Kesinlik bildiren ifadeler: ihtimal dili olsa bile engellenir. */
+const DEFINITIVE = /(kesinlikle|şüphesiz|açıkça görül|tanısı konul|teşhis edil|teşhisi budur|kesin olarak)/;
+
+/** İhtimal dili. */
+const HEDGE = /(olabilir|olası|olasılı|ihtimal|düşündür|uyumlu|işaret edebilir|akla getir|şüphe|değerlendirilmeli|kesin değil|teşhis yerine geçmez)/;
 
 /** Reddetme ya da yönlendirme kalıpları ("öneremem", "koyamam", "yetkim yok"). */
 const REFUSAL =
-  /(öneremem|önermem|önermiyorum|öneremiyorum|veremem|koyamam|koymam|koyamıyorum|koymuyorum|söyleyemem|yapamam|edemem|değilim|yetkim yok|yetkisi yok|mümkün değil|uçuş doktorunun (?:işi|kararı|sorumluluğu|kararıdır))/;
+  /(öneremem|önermem|önermiyorum|öneremiyorum|veremem|koyamam|koymam|koyamıyorum|koymuyorum|söyleyemem|doğrulayamam|yapamam|edemem|değilim|yetkim yok|yetkisi yok|mümkün değil|uçuş doktorunun (?:işi|kararı|sorumluluğu|kararıdır))/;
 
 export interface SafetyResult {
   safe: boolean;
@@ -29,8 +41,13 @@ export function checkAnswer(text: string): SafetyResult {
   }
   const sentences = lower.split(/(?<=[.!?])\s+|\n+/);
   for (const s of sentences) {
-    const m = s.match(MED_OR_DIAGNOSIS);
-    if (m && !REFUSAL.test(s)) return { safe: false, reason: `teşhis/ilaç ifadesi: "${m[0]}"` };
+    const med = s.match(MEDICATION);
+    if (med && !REFUSAL.test(s)) return { safe: false, reason: `ilaç ifadesi: "${med[0]}"` };
+    const cond = s.match(CONDITION);
+    if (!cond) continue;
+    const def = s.match(DEFINITIVE);
+    if (def && !REFUSAL.test(s)) return { safe: false, reason: `kesin ifade: "${def[0]}"` };
+    if (!HEDGE.test(s) && !REFUSAL.test(s)) return { safe: false, reason: `ihtimal dili olmadan durum adı: "${cond[0]}"` };
   }
   return { safe: true };
 }

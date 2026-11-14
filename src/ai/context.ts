@@ -8,6 +8,7 @@ import { METRICS, METRIC_BY_KEY, readMetric, type MetricKey } from '../metrics';
 import { PARAMS } from '../sim/parameters';
 import type { AstraState } from '../store';
 import type { CrewId, Incident, MetricScore } from '../types';
+import { possibleConditions } from './conditions';
 import { ACTION_TR, crewInText, delayText, INCIDENT_TR, LEVEL_TR, SCENARIO_TR, shortName } from './labels';
 
 /** Normal durumdaki kişi için gönderilen 8 ana ölçüm. */
@@ -134,7 +135,14 @@ export function buildContext(s: AstraState, opts: ContextOptions = {}): Record<s
     },
     murettebat: CREW.map((m) => crewSummary(s, m.id, isDetailed(m.id), keysOnly)),
     acikOlaylar: openIncidents.map(incidentSummary),
-    ...(opts.incident ? { olayId: opts.incident.id, aciklanacakOlay: incidentSummary(opts.incident) } : {}),
+    ...(opts.incident
+      ? {
+          olayId: opts.incident.id,
+          aciklanacakOlay: incidentSummary(opts.incident),
+          // Olaydaki kişiler için veriye dayalı olası durumlar (kesin değil)
+          olasiDurumlar: Object.fromEntries(opts.incident.crewIds.map((id) => [shortName(id), possibleConditions(s, id).slice(0, 2).map((c) => ({ durum: c.durum, olasilik: c.olasilik }))])),
+        }
+      : {}),
   });
 
   if (opts.compact) return make(true);
