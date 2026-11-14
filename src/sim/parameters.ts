@@ -51,6 +51,7 @@ export const PARAMS = {
   heartRateEva: { value: 92, unit: 'bpm (EVA 90–150)', ...SRC.norsk2015 },
   hrvRmssdMean: { value: 42, unit: 'ms (SD 15, aralık 19–75)', ...SRC.nunan2010 },
   ecgEctopicNormal: { value: 1, unit: 'düzensiz atım/dk üst sınır', ...SRC.assumption },
+  ecgIrregularThreshold: { value: 6, unit: 'düzensiz atım/dk → ritim "irregular"', ...SRC.assumption },
   bpSysRest: { value: 112, unit: 'mmHg', ...SRC.norsk2015 },
   bpDiaRest: { value: 70, unit: 'mmHg', ...SRC.norsk2015 },
   bpDropInSpace: { value: 8, unit: 'mmHg (24 saatlik, sistolik)', ...SRC.norsk2015 },
@@ -194,7 +195,7 @@ export const CREW_TRAITS: Record<CrewId, CrewTraits> = {
   // Kerem: CO₂'ye iki kat tepki
   kerem: { ...NEUTRAL, co2Response: 2 },
   // Zeynep: nabzı düşük ve dayanıklı (pilot)
-  zeynep: { ...NEUTRAL, cardioResponse: 0.6, offsets: { 'cardio.hr_bpm': -8, 'cardio.hrv_rmssd_ms': 8 } },
+  zeynep: { ...NEUTRAL, cardioResponse: 0.6, offsets: { 'cardio.hr_bpm': -10, 'cardio.hrv_rmssd_ms': 8 } },
   emir: { ...NEUTRAL },
   deniz: { ...NEUTRAL },
   // Mert: metabolizması hızlı

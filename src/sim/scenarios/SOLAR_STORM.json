@@ -3,11 +3,20 @@
   "name": "Güneş fırtınası",
   "seed": 2024,
   "source": "DONKI SEP/FLR kayıtları, Mayıs 2024: https://ccmc.gsfc.nasa.gov/DONKI-API/get/SEP?startDate=2024-05-01&endDate=2024-05-31",
-  "note": "DONKI olayın zamanını verir, doz değerini vermez. Doz çarpanı varsayımdır.",
+  "note": "Olay sırası DONKI Mayıs 2024'ü izler (X3.9 patlama → >10 MeV → >100 MeV). DONKI olayın zamanını verir, doz değerini vermez: doz çarpanları (Kokpit ×25 sonra ×60, yüzey ×5) varsayımdır. Stres tepkisi (GSR, kortizol, nabız) varsayımdır; Elif radyasyona hassastır.",
   "events": [
-    { "atTick": 0, "type": "FLARE_X", "text": "X3.9 güneş patlaması: parçacık gelebilir, sığınağı hazırla" },
-    { "atTick": 15, "type": "SPE_ONSET", "doseRateMultiplier": 25, "assumption": true, "text": "GOES >10 MeV parçacık olayı başladı" },
-    { "atTick": 60, "type": "SPE_PEAK", "doseRateMultiplier": 60, "assumption": true, "text": ">100 MeV parçacık olayı" },
-    { "atTick": 120, "type": "SPE_END", "doseRateMultiplier": 1, "text": "Parçacık akısı normale döndü" }
+    { "atTick": 0, "untilTick": 10, "type": "FLARE_X", "text": "X3.9 güneş patlaması: parçacık gelebilir, sığınağı hazırla" },
+    { "atTick": 10, "untilTick": 40, "type": "SPE_ONSET", "text": "GOES >10 MeV parçacık olayı başladı" },
+    { "atTick": 40, "untilTick": 100, "type": "SPE_PEAK", "text": ">100 MeV yüksek enerjili parçacık olayı" },
+    { "atTick": 100, "untilTick": 130, "type": "SPE_END", "text": "Parçacık akısı normale dönüyor" }
+  ],
+  "effects": [
+    { "metric": "env.doseRate_uSv_h", "crew": "KOKPIT", "mul": 25, "startTick": 10, "rampTicks": 5, "endTick": 100 },
+    { "metric": "env.doseRate_uSv_h", "crew": "KOKPIT", "mul": 36, "startTick": 40, "rampTicks": 5, "endTick": 100 },
+    { "metric": "env.doseRate_uSv_h", "crew": "GEZEGEN", "mul": 5, "startTick": 10, "rampTicks": 5, "endTick": 100 },
+    { "metric": "resp.gsr_uS", "crew": "ALL", "add": 2, "startTick": 10, "rampTicks": 15, "endTick": 110, "trait": "radiationResponse" },
+    { "metric": "biochem.sweatCortisol_ng_mL", "crew": "ALL", "add": 15, "startTick": 10, "rampTicks": 20, "endTick": 110, "trait": "radiationResponse" },
+    { "metric": "cardio.hr_bpm", "crew": "ALL", "add": 6, "startTick": 10, "rampTicks": 15, "endTick": 110, "trait": "radiationResponse" },
+    { "metric": "cog.panasNegative", "crew": "ALL", "add": 5, "startTick": 20, "rampTicks": 20, "endTick": 110, "trait": "radiationResponse" }
   ]
 }
