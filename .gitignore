@@ -10,18 +10,25 @@ __pycache__/
 .venv/
 venv/
 env/
-.env
 *.egg-info/
 
 # Jupyter
 .ipynb_checkpoints/
 
+# Gizli anahtarlar — ASLA commit etmeyin
+.env
+.env.*
+!.env.example
+*.local
+.vercel
+
 # Node / web
 node_modules/
 dist/
+dist-ssr/
 build/
 .next/
-npm-debug.log*
+*.log
 
 # Large data files (share via link instead)
 *.h5

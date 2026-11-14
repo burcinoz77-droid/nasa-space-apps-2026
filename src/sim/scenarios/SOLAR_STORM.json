@@ -1,0 +1,13 @@
+{
+  "id": "SOLAR_STORM",
+  "name": "Güneş fırtınası",
+  "seed": 2024,
+  "source": "DONKI SEP/FLR kayıtları, Mayıs 2024: https://ccmc.gsfc.nasa.gov/DONKI-API/get/SEP?startDate=2024-05-01&endDate=2024-05-31",
+  "note": "DONKI olayın zamanını verir, doz değerini vermez. Doz çarpanı varsayımdır.",
+  "events": [
+    { "atTick": 0, "type": "FLARE_X", "text": "X3.9 güneş patlaması: parçacık gelebilir, sığınağı hazırla" },
+    { "atTick": 15, "type": "SPE_ONSET", "doseRateMultiplier": 25, "assumption": true, "text": "GOES >10 MeV parçacık olayı başladı" },
+    { "atTick": 60, "type": "SPE_PEAK", "doseRateMultiplier": 60, "assumption": true, "text": ">100 MeV parçacık olayı" },
+    { "atTick": 120, "type": "SPE_END", "doseRateMultiplier": 1, "text": "Parçacık akısı normale döndü" }
+  ]
+}

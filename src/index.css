@@ -1,0 +1,26 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-space-bg: #070b1a;
+  --color-space-panel: #0e1530;
+  --color-space-border: #1e2a4a;
+  --color-calm: #38bdf8;
+  --color-safe: #34d399;
+  --color-caution: #fbbf24;
+  --color-critical: #f87171;
+  --color-ai: #a78bfa;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-space-bg);
+  color: #e6edf7;
+  font-family: var(--font-sans);
+}
