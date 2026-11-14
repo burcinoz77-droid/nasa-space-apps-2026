@@ -243,6 +243,38 @@ describe('api/astra.ts · sunucu fonksiyonu', () => {
     expect(sent.systemInstruction.parts[0].text).toContain('"gorevGunu":180');
   });
 
+  it('Gemini: model yoğunsa (503) yedek modele geçer', async () => {
+    process.env.ASTRA_PROVIDER = 'gemini';
+    process.env.GEMINI_API_KEY = 'test';
+    delete process.env.GEMINI_MODEL;
+    delete process.env.GEMINI_FALLBACK_MODELS;
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const f = vi
+      .fn(async (_url: string, _init: RequestInit) => Response.json({ candidates: [{ content: { parts: [{ text: 'Yedek modelden cevap.' }] } }] }))
+      .mockImplementationOnce(async () => new Response('{"error":{"code":503,"message":"high demand"}}', { status: 503 }));
+    vi.stubGlobal('fetch', f);
+    const res = await handler.fetch(post({ mode: 'chat', question: 'Merhaba', context: {} }));
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { text: string }).text).toBe('Yedek modelden cevap.');
+    expect(f.mock.calls[0][0]).toContain('gemini-3.8-flash');
+    expect(f.mock.calls[1][0]).toContain('gemini-3.7-flash');
+  });
+
+  it('Gemini: tüm modeller yoğunsa 502 döner (istemci yedek moda geçer); anahtar hatasında yedek model denenmez', async () => {
+    process.env.ASTRA_PROVIDER = 'gemini';
+    process.env.GEMINI_API_KEY = 'test';
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const busy = vi.fn(async (_url: string, _init: RequestInit) => new Response('{"error":{"code":503}}', { status: 503 }));
+    vi.stubGlobal('fetch', busy);
+    expect((await handler.fetch(post({ mode: 'chat', question: 'Merhaba', context: {} }))).status).toBe(502);
+    expect(busy).toHaveBeenCalledTimes(3);
+
+    const badKey = vi.fn(async (_url: string, _init: RequestInit) => new Response('{"error":{"code":400,"message":"API key not valid"}}', { status: 400 }));
+    vi.stubGlobal('fetch', badKey);
+    expect((await handler.fetch(post({ mode: 'chat', question: 'Merhaba', context: {} }))).status).toBe(502);
+    expect(badKey).toHaveBeenCalledTimes(1);
+  });
+
   it('Claude: "thinking" alanı reddedilirse onsuz tekrar dener', async () => {
     process.env.ASTRA_PROVIDER = 'claude';
     process.env.ANTHROPIC_API_KEY = 'test';

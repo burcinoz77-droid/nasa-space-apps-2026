@@ -44,7 +44,8 @@ radyasyon, CO₂, gecikme, belirli bir ölçüm, ilaç, teşhis, komut, rol dı�
 ```
 ASTRA_PROVIDER=gemini          # demo günü: claude
 GEMINI_API_KEY=...
-GEMINI_MODEL=gemini-3.8-flash  # 429 gelirse: gemini-3.5-flash-lite
+GEMINI_MODEL=gemini-3.8-flash
+GEMINI_FALLBACK_MODELS=gemini-3.7-flash,gemini-3.5-flash-lite  # ana model 503/429 verirse sırayla denenir
 ANTHROPIC_API_KEY=...
 CLAUDE_MODEL=claude-haiku-5-5
 ```

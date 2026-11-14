@@ -41,8 +41,35 @@ function buildSystem(body: Body): string {
   return SYSTEM_PROMPT.replace('{veri}', data) + (body.mode === 'incident' ? INCIDENT_RULES : '');
 }
 
-async function callGemini(system: string, question: string, signal: AbortSignal, withThinking = true): Promise<string> {
-  const model = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+/** Modelin geçici olarak cevap veremediği durumlar: yoğunluk (503), kota (429), sunucu hatası (500), model yok (404). */
+class ModelUnavailableError extends Error {}
+const RETRY_WITH_NEXT_MODEL = new Set([404, 429, 500, 503]);
+
+/**
+ * Önce GEMINI_MODEL'i dener; o model yoğunsa ya da kotası dolduysa sıradaki yedek modele geçer.
+ * Yedekler GEMINI_FALLBACK_MODELS ile değiştirilebilir (virgülle ayrılmış). Ücretsiz katmanda
+ * "This model is currently experiencing high demand" (503) demo sırasında da görülebilir.
+ */
+async function callGemini(system: string, question: string, signal: AbortSignal): Promise<string> {
+  const primary = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+  const fallbacks = (process.env.GEMINI_FALLBACK_MODELS ?? 'gemini-3.7-flash,gemini-3.5-flash-lite')
+    .split(',')
+    .map((m) => m.trim())
+    .filter((m) => m && m !== primary);
+  let lastError: unknown;
+  for (const model of [primary, ...fallbacks]) {
+    try {
+      return await callGeminiModel(model, system, question, signal);
+    } catch (err) {
+      lastError = err;
+      if (!(err instanceof ModelUnavailableError) || signal.aborted) throw err;
+      console.warn(`[ASTRA] ${model} şu an cevap veremiyor (${err.message.slice(0, 80)}); sıradaki model deneniyor.`);
+    }
+  }
+  throw lastError;
+}
+
+async function callGeminiModel(model: string, system: string, question: string, signal: AbortSignal, withThinking = true): Promise<string> {
   const generationConfig: Record<string, unknown> = { maxOutputTokens: 1024 };
   if (withThinking) generationConfig.thinkingConfig = { thinkingLevel: 'low' };
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
@@ -58,8 +85,9 @@ async function callGemini(system: string, question: string, signal: AbortSignal,
   if (!res.ok) {
     const detail = await res.text();
     // Model "thinkingConfig" alanını tanımazsa bir kez onsuz dene
-    if (res.status === 400 && withThinking && /thinking/i.test(detail)) return callGemini(system, question, signal, false);
-    throw new Error(`gemini ${res.status}: ${detail.slice(0, 300)}`);
+    if (res.status === 400 && withThinking && /thinking/i.test(detail)) return callGeminiModel(model, system, question, signal, false);
+    const message = `gemini ${model} ${res.status}: ${detail.slice(0, 300)}`;
+    throw RETRY_WITH_NEXT_MODEL.has(res.status) ? new ModelUnavailableError(message) : new Error(message);
   }
   const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] } }[] };
   const parts = data.candidates?.[0]?.content?.parts ?? [];
