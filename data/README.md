@@ -15,3 +15,11 @@ Güneş fırtınası senaryosu (`src/sim/scenarios/SOLAR_STORM.json`) olay sıra
 | 13 May 2024 14:00 | GOES >10 MeV ikinci dalga (SEP 30817) |
 
 DONKI olayın zamanını verir, doz değerini vermez. Senaryodaki doz çarpanları varsayımdır.
+
+## Görüntü
+
+| Dosya | Ne | Kaynak |
+| --- | --- | --- |
+| `public/media/sdo-x39-2024-05-10.mp4` | 10 Mayıs 2024 X3.9 güneş patlaması, NASA SDO AIA 304 Å. Orijinal 40 sn / 50 MB videodan 06.29–08.05 TAI arası 16 sn kesit, 720×720, sessiz. | NASA SVS 5286: https://svs.gsfc.nasa.gov/5286/ · Görüntü: NASA/SDO |
+
+NASA görüntüleri telifli değildir, kaynak gösterilerek kullanılır. NASA logosu kullanılmaz.

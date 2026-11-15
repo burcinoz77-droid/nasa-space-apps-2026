@@ -5,7 +5,8 @@ import { SCENARIOS } from '../../sim/scenario';
 import { PARAMS, SIM, type Param } from '../../sim/parameters';
 import { useAstra } from '../../store';
 import type { ScenarioId, Telemetry } from '../../types';
-import { COLORS, fmt } from '../theme';
+import { CINEMATIC_EVENT } from '../cinematic/StormCinematic';
+import { alpha, COLORS, fmt } from '../theme';
 
 const EMPTY: Telemetry[] = [];
 
@@ -122,6 +123,13 @@ export function Ayarlar() {
           <p className="mt-2 text-xs" style={{ color: COLORS.textMuted }}>
             Aynı seed: demo her seferinde aynı veriyi baştan üretir.
           </p>
+          <button
+            onClick={() => window.dispatchEvent(new Event(CINEMATIC_EVENT))}
+            className="mt-3 w-full rounded-lg px-3 py-2 hover:bg-white/10"
+            style={{ background: alpha(COLORS.caution, 0.12), color: COLORS.caution }}
+          >
+            ▶ Fırtına sinematiğini tekrar oynat
+          </button>
         </section>
       </div>
 
