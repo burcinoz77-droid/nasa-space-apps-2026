@@ -142,7 +142,9 @@ Astronaut View → **Tests** tab. Items are taken verbatim from the official sca
 
 All astronaut data is synthetic (simulation). Parameters come from NASA and peer-reviewed sources;
 the source of every constant is written in `src/sim/parameters.ts`, and the link check is in
-`data/SOURCE_CHECK.md`. Values without a source are marked "assumption" in the interface.
+`data/SOURCE_CHECK.md`. 16 values have no published source; they were added by the team as assumptions and are marked "assumption" in the interface.
+
+**CO₂ thresholds:** the WARNING limit of 3.0 mmHg is NASA's 1-hour average limit (NASA-STD-3001 V2 6004, OCHMO-TB-004), and NASA's 7-day average limit is 2.5 mmHg. The CAUTION threshold of 2.3 mmHg is not in OCHMO-TB-004: it is an early-warning margin chosen by the team below the 2.5 mmHg limit.
 
 | NASA data and standards used | Where |
 | --- | --- |
@@ -154,6 +156,24 @@ the source of every constant is written in `src/sim/parameters.ts`, and the link
 | Curiosity RAD (Mars cruise and surface dose rate) | Radiation values |
 | NASA 3D Resources, "Astronaut" model (DigitalSpace Corporation, [link](https://github.com/nasa/NASA-3D-Resources/tree/master/3D%20Models/Astronaut)) | 3D astronaut on the Astronaut View |
 
+## Open-source libraries
+
+The code was written with AI assistants (see below), and that code is built on these open-source libraries. All are used under their licenses; none of their code was changed.
+
+| Library | Used for | License |
+| --- | --- | --- |
+| React, React DOM | Interface | MIT |
+| three.js (with Google's Draco decoder, bundled in three.js) | 3D astronaut on the Astronaut View | MIT (Draco: Apache 2.0) |
+| Recharts | Charts and trend lines | MIT |
+| Zustand | Shared app state | MIT |
+| Barlow, Barlow Semi Condensed (via Fontsource) | Typeface, works offline | SIL Open Font License 1.1 |
+| Vite, @vitejs/plugin-react | Development server and build | MIT |
+| Tailwind CSS | Styling | MIT |
+| TypeScript | Type checking | Apache 2.0 |
+| Vitest, oxlint | Tests and lint | MIT |
+
+Exact versions are in `package.json` and `package-lock.json`.
+
 ## AI use disclosure
 
 As required by the NASA Space Apps rules, the data, tools and AI used are listed here.
@@ -163,7 +183,7 @@ As required by the NASA Space Apps rules, the data, tools and AI used are listed
 - The language model only reads: it explains incidents, answers questions and states data-based possible conditions as possibilities. It cannot raise alerts or change telemetry, incidents or autonomous actions. Answers with a definitive diagnosis or medication are stopped by the safety filter; the numbers in an answer are checked against the data.
 
 **During development**
-- Anthropic Claude: used as an assistant for planning, coding, translation and source research in all four parts (simulation, Layer 1, interface, ASTRA) (see the `Co-Authored-By` lines in the commits). The generated code was reviewed by the team and verified with tests (`npm run test`).
+- Anthropic Claude and Google Gemini: used as assistants for planning, coding, translation and source research in all four parts (simulation, Layer 1, interface, ASTRA); the code was generated with them (see the `Co-Authored-By` lines in the commits). The team reviewed the generated code and verified it with tests (`npm run test`). No other AI tools were used.
 - Layer 1's thresholds and rules were chosen by the team and documented with their sources (`src/engine/config.ts`).
 
 **Data and images**
