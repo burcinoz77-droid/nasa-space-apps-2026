@@ -1,59 +1,67 @@
 # Berat · Part 3 · Interface
 
-Owner: @beyazitberatyusuf-afk · Branch: `berat/arayuz`
+Owner: @beyazitberatyusuf-afk · Branches: `berat/arayuz`, `berat/arayuz-son` (merged in PR #17), `berat/tema-mavi` (open PR #26)
 
-The code is not in this folder; it lives in the shared structure: `src/App.tsx`, `src/index.css`, `src/ui/` (except Reports, Settings and Tasks).
-The interface produces no data and makes no decisions: it only reads from `useAstra` and calls `controls.setScenario / acknowledge / reset`.
+The code is not in this folder. It sits in the shared structure: `src/App.tsx`, `src/index.css` and `src/ui/` (except Reports, Settings and Tasks).
+The UI produces no data and makes no decisions. It only reads from `useAstra` and calls `controls.setScenario / acknowledge / reset`.
 
-## What was built
+## What is in `main`
 
-| Step | Where | Note |
+| Part | Where | What it does |
 | --- | --- | --- |
-| Shared components | `src/ui/components/` | `Card`, `StatTile`, `Sparkline` (Recharts) + `TrendLine` (lightweight SVG), `SourceBadge`, `ProgressRing`, `LevelBadge`, `BodyMap`, `Icons` |
-| App shell | `src/App.tsx` | Orbitalis logo, ASTRA-MED OS, 6 pages; bottom left "Comm with Earth" (`ship.commDelayOneWay_s` → 12 min 30 s) and "Reset simulation"; in the top bar the scenario menu (active = `ship.scenario`), live clock + Mission Day, bell (number of open incidents, red if Warning, click for Reports), profile card. During the first 30 readings "Baseline 12/30" shows under the clock: start a scenario after that |
-| Mission Status | `src/ui/pages/MissionStatus.tsx` | Status strip (crew, average health, mission status: red "Intervention needed" if a Warning incident is open, Mission Day), crew table, orbit display, mission progress ring (Day 180 / ~900, NASA DRA 5.0) |
-| Astronaut View | `src/ui/pages/AstronautView.tsx` | Astronaut pills, body map, health card (score, heart rate, temperature, SpO₂ + heart rate chart), stress factors (radiation dose rate + total dose / 600 mSv bar, CO₂ with threshold lines, sleep, PVT), tabs: Overview / Health / Performance / Environment |
-| Crew | `src/ui/pages/Crew.tsx` | Two crew headers (with average health), 6 cards: role, unit, sensitivity, score, level, heart rate chart. Clicking a card opens that person's Astronaut View (the selected person is kept in `App.tsx`) |
-| Incident experience | `src/ui/components/IncidentBanner.tsx` | Warning incident: sticky red banner at the top (title, affected people, autonomous action "Ventilation increased · automatic", **Acknowledge**); below it the signals (value + unit + personal baseline + z) and Part 4's purple ASTRA explanation. Once acknowledged it becomes a thin strip. Caution: a single amber line, expanded with "Details". As soon as a scenario starts, a blue "Vehicle event" advisory line appears |
-| Format and accessibility | `src/ui/theme.ts`, `src/ui/format.ts` | Numbers in English format (`36.8 °C`, `87%`, `12 min 30 s`); every level has color + symbol + label (● NOMINAL, ▲ CAUTION, ■ WARNING); smallest text 14 px; `prefers-reduced-motion` supported |
+| App shell | `src/App.tsx` | Orbitalis logo and ASTRA-MED OS, six pages in the left rail. Bottom left: **Comm with Earth** (one-way delay from `ship.commDelayOneWay_s`, 12 min 30 s, round trip 25 min) and **Reset simulation**. Top bar: live clock with **Mission Day**, bell (open incident count, red when there is a WARNING, opens Reports), crew member card. During the first 30 readings, **Baseline 12/30** shows under the clock; start a scenario after it fills. |
+| Mission Status | `src/ui/pages/MissionStatus.tsx` | Status strip: crew online, average health (Layer 1 score of 6 crew), mission status (open WARNING → "Action required"), Mission Day 180 / ~900 with progress bar. Crew table split into orbit crew and surface crew (heart rate, SpO₂, temperature, health). Wireframe Mars orbit display: the ARES-1 marker carries the orbit crew's status color, the EVA marker the surface crew's. Habitat environment (cabin and suits: ppCO₂, oxygen, pressure, radiation dose rate) and recent log. |
+| Astronaut View | `src/ui/pages/AstronautView.tsx` | Crew selector, 3D body map, health card (score, heart rate, temperature, SpO₂ and heart rate trend), radiation (dose rate, cumulative dose against the 600 mSv career limit), cabin CO₂ with CAUTION and WARNING thresholds, sleep, reaction test (PVT). Tabs: Overview, Health, Performance, Environment. |
+| 3D astronaut | `src/ui/components/Astronaut3D.tsx` | three.js model (`src/ui/assets/astronaut.glb`, Draco decoder bundled, works offline), loaded only when the page opens. Rotates slowly, can be dragged, slows down under the cursor. Regions: **Head** (cognition and eyes), **Chest** (heart and breathing), **Lower body** (metabolism, sweat and heat), and the **Environment** ring under the feet. Hover shows the region's risk; click opens all its readings. Falls back to a 2D drawing without WebGL. |
+| Crew | `src/ui/pages/Crew.tsx` | Orbit crew (IVA) and surface crew (EVA) with team averages; six cards with role, unit, health score, level and heart rate trend. A click opens that person's Astronaut View. |
+| Incident banner | `src/ui/components/IncidentBanner.tsx` | WARNING: sticky red band with title, affected crew, the autonomous action (e.g. "Ventilation increased · automatic") and **Acknowledge**. Below it the triggering signals (value, unit, personal baseline, z) and ASTRA's explanation from Part 4. After Acknowledge it shrinks to a thin strip. CAUTION: one amber line, opened with **Details**. As soon as a scenario starts, a blue **Vehicle event** line appears. |
+| Shared components | `src/ui/components/` | `Card`, `StatTile`, `Sparkline` + `TrendLine`, `SourceBadge`, `ProgressRing`, `LevelBadge`, `BodyMap`, `OrbitalDisplay`, `Icons` |
+| Format and accessibility | `src/ui/theme.ts`, `src/ui/format.ts` | Numbers in en-US (`36.8 °C`, `87%`, `12 min 30 s`). Every level is color + symbol + text (● NOMINAL, ▲ CAUTION, ■ WARNING), so it still reads without color. Red is only used for WARNING. `prefers-reduced-motion` is respected. Font: Barlow / Barlow Semi Condensed (`@fontsource`, offline). |
 
-The source badge (`SourceBadge`) is next to every number: NASA-STD-3001 / OSDR / Curiosity RAD / NASA HRP / peer-reviewed study (e.g. "Norsk 2015") / gray "Assumption". Clicking opens the source link from `PARAMS`. For the surface crew the dose rate badge switches to the surface measurement (Mars surface RAD), and the pressure and O₂ badges to the suit source.
+Every number has a source badge (`SourceBadge`): NASA-STD-3001, OSDR, Curiosity RAD, NASA HRP or a peer-reviewed study, and a grey "Assumption" when there is none. It opens the source link from `PARAMS`. For the surface crew the dose rate badge switches to the Mars surface RAD measurement, and the pressure and O₂ badges to the suit source.
 
-## Version 2 (Mission Status and 3D astronaut)
+## Added by the team on top of these screens
 
-- **Mission Status** moved to a mission control console layout: one-piece status strip, crew table (heart rate trend, SpO₂, temperature), wireframe Mars orbit display (the spacecraft marker carries the orbit crew's status color, the EVA marker the surface crew's), habitable environment (cabin and suits) and latest log entries.
-- On the **Astronaut View** the body map became a 3D astronaut model (`src/ui/components/Astronaut3D.tsx`, three.js, loaded separately when the page opens). The model rotates slowly and can be dragged with the mouse. Regions: **head** (helmet: cognitive and eyes), **chest** (torso, arms, backpack: heart and breathing), **lower body** (hips and legs: metabolism, sweat and heat) and the **environment** ring under the feet. Hovering over a region shows a risk box (level, score, most deviating metric); clicking opens all metrics of the region. Without WebGL it falls back to a 2D drawing.
-- The model is `src/ui/assets/astronaut.glb`; the Draco decoder comes from the three package. Both are bundled into the build, no internet needed.
-- Typeface: Barlow / Barlow Semi Condensed (`@fontsource`, offline).
+- **Azra (Part 4):** scenarios moved into a muted **Simulation ▾** menu, source badges turned into small grey (i) icons, reference range indicator ("normal 96–100 ✓"), **Ask ASTRA** button, psychological test suggestions on Astronaut View.
+- **Burcin (Part 1):** English UI with NASA terminology (PR #29), helmet **Visor view** (HUD) for the surface crew with an "On EVA" tag, scenario cinematics and the jury demo tour.
 
-## How to try it
+## Next version: health console v4 (PR #26, open)
+
+On branch `berat/tema-mavi`, not in `main` yet. It turns Mission Status into a single-screen crew health console in a NASA style:
+
+- Palette based on NASA blue (#0B3D91); fonts from the NASA Horizon Design System (Inter, Public Sans, DM Mono). Colors follow NASA-STD-3001 Vol. 2: red only for WARNING, yellow for CAUTION, blue for advisories.
+- Panels: mission status with medical bay (beds 0/4), ASTRA messages, medical kit / diagnoses / treatment (ISS medications, Wotring 2015), crew grid with EVA tags, selected crew member with 3D model and health data.
+- **Ground · MCC-Houston** thread: messages to the Flight Surgeon reach Earth after the light-time delay. Rule-based replies follow the scenario. ASTRA chat sits in the same panel.
+- Top bar: ground link (AOS/LOS) and one-way light time.
+
+The PR was built before PR #29. The English part is already in `main`, so the branch needs to be updated against `main` before it can merge.
+
+## How to try
 
 ```bash
+cd nasa-space-apps-2026
 npm install
 npm run dev          # http://localhost:5173
 ```
 
-1. Leave the app open for ~40 s (until "Baseline 30/30" under the clock is full).
-2. Choose **CO₂ failure** from the **Simulation ▾** menu: a blue "Vehicle event" line right away, an amber CAUTION after ~18 s, a red WARNING banner after ~40 s and "Ventilation increased · automatic".
-3. Click **Kerem** in the banner → Kerem's Astronaut View; the chest and the environment ring change color on the body map.
-4. **Acknowledge** → the banner becomes a thin strip and a "Crew acknowledged" row appears in Reports.
-5. **EVA overexertion** → Mert reaches Warning; the heart rate chart turns red and deviating metrics are marked with ■ on the Health tab.
+If the terminal says "Port 5173 is in use", an older dev server is still running: open the address the terminal prints, or close the old terminals first.
 
-## Check results (Sunday morning step)
+1. Leave the app open for about 40 s until **Baseline 30/30** fills under the clock.
+2. **Simulation ▾ → CO₂ failure:** the cinematic plays, then the blue **Vehicle event** line appears. As ppCO₂ climbs, Layer 1 raises CAUTION, then the red WARNING band with "Ventilation increased · automatic".
+3. Click **Kerem** in the band → Kerem's Astronaut View; Chest and the Environment ring change color on the body map.
+4. **Acknowledge** → the band shrinks to a strip and Reports shows "Crew acknowledged: …".
+5. **Simulation ▾ → EVA overexertion** → Mert goes to WARNING; the heart rate trend turns red and the deviating readings are marked ■. After the cinematic, Mert's helmet visor opens on its own.
 
-Six pages and two scenarios were opened in headless Chrome at 1280×800 and 1024×768:
+## Checks (15 Nov)
 
-- No horizontal overflow, no text below 14 px (except Settings, see below), no console errors.
-- No "ISS", "408 km" or NASA logo on screen (except the source table in Settings, see below).
-- "Acknowledge" is written to the incident log.
-- Merged and tested together with Part 4's branch (`azra/ai`, PR #3): it builds, the tests pass, and the purple ASTRA explanation appears under the banner.
+Headless Chrome at 1280×800 and 1024×768, all six pages:
+
+- No horizontal overflow and no console errors.
+- Text below 14 px only in the (i) source icons, the ▾ menu arrow, the "On EVA" tag and the Settings source table.
+- On `main` at PR #31, `npx tsc -b` is clean and 176 tests pass.
 
 ## Notes for the team
 
-- **Merge order** as in the plan: Part 1 → 2 → 4 → **3 last**. The ASTRA explanation is loaded with a glob from `AstraSlot.tsx` (the same method as Reports); the build does not break even before Part 4 is merged.
-- **10-second criterion (Part 1 + 2):** the interface renders the state on every reading (1.2 s); the blue vehicle event line appears within 1.2 s. But Layer 1's incident in the CO₂ failure is raised after ~18 s (Caution) and ~40 s (Warning), because ppCO₂ rises over 90 readings and there is the 3-consecutive-reading rule. If a faster demo is wanted, `rampTicks` in `CO2_SCRUBBER_FAIL.json` can be shortened.
-- **Settings (Part 1):** the source table had "ISS RR-19 median" and "OSDR EDA (ISS environmental data)" and some 12 px (`text-xs`) text; worth checking against the "no ISS on screen" and "smallest text 14 px" criteria.
-- **New constant:** the mission duration (~900 days, NASA Mars DRA 5.0) is in `src/ui/params.ts`, in `PARAMS` format. Part 1 can move it to `parameters.ts` if wanted.
-- **Body map thresholds:** domain score < 85 → CAUTION, < 60 → WARNING (`theme.ts`). It was measured that no domain fell below 88 over 5 minutes on a nominal day; no false alarms. Layer 1 still raises the actual alert.
-- `LevelBadge` is now 14 px; Reports and Tasks benefit too. The existing names in `theme.ts` (`COLORS`, `fmt`, `LEVEL_*`) did not change, only additions.
-- We did not have the code of the prototype in screenshots 2–7; the pages were developed from the kit's v0 following the plan.
+- **Body map thresholds:** a region score below 85 is CAUTION and below 60 is WARNING (`theme.ts`). In an earlier 5-minute nominal run no region dropped below 88, so there were no false alarms. Layer 1 still raises the actual alerts.
+- **Mission duration** (~900 days, NASA Mars DRA 5.0) is in `src/ui/params.ts` in `PARAMS` format. Part 1 can move it into `parameters.ts` if wanted.
+- The existing names in `theme.ts` (`COLORS`, `fmt`, `LEVEL_*`) were kept; new ones were only added. `LevelBadge` is 14 px, so Reports and Tasks benefit too.
