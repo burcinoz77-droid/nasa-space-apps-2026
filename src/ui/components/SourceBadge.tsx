@@ -13,15 +13,15 @@ import { alpha, COLORS } from '../theme';
 
 type UiParamKey = keyof typeof UI_PARAMS;
 
-/** "Norsk vd. 2015, J Physiol" -> "Norsk 2015"; NASA kaynakları kısa adıyla. */
+/** "Norsk et al. 2015, J Physiol" -> "Norsk 2015"; NASA kaynakları kısa adıyla. */
 function shortSource(p: Param): string {
-  if (p.assumption) return 'Varsayım';
+  if (p.assumption) return 'Assumption';
   const s = p.source;
   if (/NASA-STD-3001|OCHMO/.test(s)) return 'NASA-STD-3001';
   if (/Apollo/.test(s)) return 'NASA Apollo';
   if (/Artemis I/.test(s)) return 'NASA Artemis I';
   if (/^NIH/.test(s)) return 'NIH';
-  if (/^ISS gürültü/.test(s)) return 'ISS gürültü';
+  if (/^ISS noise/.test(s)) return 'ISS noise';
   const fr = s.match(/^Frontiers.*?(\d{4})/);
   if (fr) return `Frontiers ${fr[1]}`;
   if (/OSDR/.test(s)) return 'OSDR';
@@ -31,8 +31,8 @@ function shortSource(p: Param): string {
   if (/DRA 5\.0/.test(s)) return 'NASA DRA 5.0';
   if (/NTRS/.test(s)) return 'NASA NTRS';
   if (/JEMS/.test(s)) return 'JEMS';
-  if (/^Ter biyobelirte/.test(s)) return 'Ter tablosu';
-  const m = s.match(/^([A-ZÇĞİÖŞÜ][\p{L}-]+)(?:\s+vd\.)?\s+(\d{4})/u);
+  if (/^Sweat biomarker/.test(s)) return 'Sweat table';
+  const m = s.match(/^([A-ZÇĞİÖŞÜ][\p{L}-]+)(?:\s+et al\.)?\s+(\d{4})/u);
   if (m) return `${m[1]} ${m[2]}`;
   return s.length > 18 ? `${s.slice(0, 17)}…` : s;
 }
@@ -54,14 +54,14 @@ export function SourceBadge({ metric, param, crewId }: { metric?: MetricKey; par
   if (!p) return null;
   const label = shortSource(p);
   const title = p.assumption
-    ? `Varsayım: NASA ya da hakemli bir kaynağı yok${p.url ? ` (bağlam: ${p.source})` : ''}. ${p.label}`
-    : `Kaynak: ${label} · ${p.source} — ${p.label}. Tıklayınca kaynak açılır.`;
+    ? `Assumption: no NASA or peer-reviewed source${p.url ? ` (context: ${p.source})` : ''}. ${p.label}`
+    : `Source: ${label} · ${p.source} — ${p.label}. Click to open the source.`;
   // Sade görünüm: kaynaklı sayıda küçük gri ⓘ, varsayımda küçük gri "varsayım" yazısı (çerçevesiz).
   // Kaynağın adı imleç üstüne gelince görünür; tıklayınca kaynak yeni sekmede açılır.
   if (p.assumption)
     return (
       <span className="shrink-0 font-sans text-xs whitespace-nowrap italic" style={{ color: alpha(COLORS.textMuted, 0.75) }} title={title}>
-        varsayım
+        assumption
       </span>
     );
   const cls = 'inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full font-sans text-[11px] leading-none transition-colors';

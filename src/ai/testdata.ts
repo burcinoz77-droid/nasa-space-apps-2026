@@ -25,7 +25,13 @@ function crewTests(id: CrewId, a: AstraState) {
     psikolojikDurum: {
       seviye: LEVEL[ps.seviye],
       ozet: ps.ozet,
-      etkenler: ps.etkenler.map((f) => ({ ad: f.ad, deger: f.deger, seviye: LEVEL[f.seviye], ...(f.not ? { not: f.not } : {}), ...(f.varsayim ? { esik: 'varsayım' } : {}) })),
+      etkenler: ps.etkenler.map((f) => ({
+        ad: f.ad,
+        deger: f.deger,
+        seviye: LEVEL[f.seviye],
+        ...(f.not ? { not: f.not } : {}),
+        ...(f.varsayim ? { esik: 'assumption' } : {}),
+      })),
     },
     sonuclar: {
       yorgunluk_SamnPerelli: sp.map((r) => ({ puan: r.puan, ifade: spLabel(r.puan), once_saat: hoursAgo(r.tick, ts.tick) })),
@@ -53,8 +59,14 @@ function crewTests(id: CrewId, a: AstraState) {
       pvtOrtalama_ms: diff(pvt[0]?.meanRt_ms, pvt[1]?.meanRt_ms),
       pvtDikkatKaybi: diff(pvt[0]?.lapses, pvt[1]?.lapses),
     },
-    katman1eGidenPvt: activePvt(id, ts) ? 'evet: son PVT-B sonucu simüle değerin yerine Katman 1\'e gidiyor' : 'hayır: son 1 görev gününde PVT-B yok, simüle değer kullanılıyor',
-    bekleyenTestler: dueTests(id, a, ts).map((d) => ({ test: TEST_INFO[d.kind].ad, oncelik: d.oncelik, neden: d.neden })),
+    katman1eGidenPvt: activePvt(id, ts)
+      ? 'yes: the latest PVT-B result goes to Layer 1 instead of the simulated value'
+      : 'no: no PVT-B in the last mission day, the simulated value is used',
+    bekleyenTestler: dueTests(id, a, ts).map((d) => ({
+      test: TEST_INFO[d.kind].ad,
+      oncelik: d.oncelik === 'öncelikli' ? 'priority' : 'routine',
+      neden: d.neden,
+    })),
   };
 }
 
@@ -63,16 +75,16 @@ export function buildTestData(a: AstraState = useAstra.getState()) {
   const cmp = crewComparison(CREW_IDS);
   return {
     aciklama:
-      'Psikolojik testler: Samn-Perelli yorgunluk ölçeği (1–7, yüksek = daha yorgun, öz bildirim), NASA-TLX iş yükü (Raw TLX 0–100, altı alt ölçeğin ortalaması, yüksek = daha yüksek yük, öz bildirim) ve PVT-B tepki testi (3 dk, nesnel). Puanları kod hesaplar. Test soruları resmi maddelerdir; yapay zekâ yazmaz.',
+      'Psychological tests: Samn-Perelli fatigue scale (1–7, higher = more tired, self-report), NASA-TLX workload (Raw TLX 0–100, mean of six subscales, higher = higher load, self-report) and PVT-B reaction test (3 min, objective). Scores are computed by code. Test items are the official scale items; the AI does not write them.',
     kurallar: {
-      rutin: `Her test ${days(ROUTINE_TICKS)} görev gününde bir (ISS'te Reaction Self Test sıklığı, Jones vd. 2022).`,
-      kisaUyku: `Dün gece uyku ${SHORT_SLEEP_H} saatten azsa ve son 24 görev saatinde yapılmadıysa yorgunluk ve PVT-B öncelikli (Jones vd. 2022).`,
-      bilisselSapma: "Katman 1 bilişsel ölçümlerde sapma görürse yorgunluk ve PVT-B öncelikli (proje kuralı).",
-      isYukuTetik: 'Gezegen yüzeyindeki (EVA) ya da açık olaydaki kişiye NASA-TLX öncelikli (varsayım kuralı).',
-      yorgunlukEsigi: `Samn-Perelli ${SP_CAUTION}–${SP_CRITICAL - 1} dikkat, ${SP_CRITICAL} kritik (varsayım; ölçek ifadelerine göre).`,
-      isYukuEsigi: `NASA-TLX'in resmi eşiği yok; ${TLX_CAUTION} ve üzeri dikkat (varsayım).`,
-      pvt: `PVT-B'de ${PVT.lapseMs} ms ve üzeri tepki dikkat kaybıdır, ${PVT.falseStartMs} ms'den kısa tepki erken basmadır (Basner vd. 2011). Ölçülen PVT-B sonucu ${days(PVT_HOLD_TICKS)} görev günü boyunca Katman 1'e gider; PVT seviyesini Katman 1 belirler.`,
-      not: 'Öz bildirim testleri teşhis değildir. Uyarıyı yalnızca Katman 1 açar.',
+      rutin: `Each test once every ${days(ROUTINE_TICKS)} mission days (ISS Reaction Self Test frequency, Jones et al. 2022).`,
+      kisaUyku: `If last night's sleep was under ${SHORT_SLEEP_H} hours and no test in the last 24 mission hours, fatigue and PVT-B are a priority (Jones et al. 2022).`,
+      bilisselSapma: 'If Layer 1 sees cognitive deviations, fatigue and PVT-B are a priority (project rule).',
+      isYukuTetik: 'NASA-TLX is a priority for anyone on the surface (EVA) or in an open event (assumed rule).',
+      yorgunlukEsigi: `Samn-Perelli ${SP_CAUTION}–${SP_CRITICAL - 1} caution, ${SP_CRITICAL} warning (assumption, based on the scale wording).`,
+      isYukuEsigi: `NASA-TLX has no official threshold; ${TLX_CAUTION} or higher is caution (assumption).`,
+      pvt: `In the PVT-B a reaction of ${PVT.lapseMs} ms or longer is a lapse and one shorter than ${PVT.falseStartMs} ms is a false start (Basner et al. 2011). A measured PVT-B result goes to Layer 1 for ${days(PVT_HOLD_TICKS)} mission day(s); Layer 1 sets the PVT level.`,
+      not: 'Self-report tests are not a diagnosis. Only Layer 1 opens alerts.',
     },
     kisiler: Object.fromEntries(CREW.map((m) => [m.id, crewTests(m.id, a)])),
     karsilastirma: {

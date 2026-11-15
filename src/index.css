@@ -1,27 +1,43 @@
 @import 'tailwindcss';
 
-/* Yazı tipi: Barlow (arayüz) ve Barlow Semi Condensed (sayılar, tabular rakam). Paketin içinde: internetsiz çalışır. */
-@import '@fontsource/barlow/400.css';
-@import '@fontsource/barlow/500.css';
-@import '@fontsource/barlow/600.css';
-@import '@fontsource/barlow/700.css';
-@import '@fontsource/barlow-semi-condensed/500.css';
-@import '@fontsource/barlow-semi-condensed/600.css';
-@import '@fontsource/barlow-semi-condensed/700.css';
+/* Yazı tipleri NASA Horizon Design System'den (nasa.gov/nasa-brand-center): Inter başlıklar, Public Sans metin,
+   DM Mono sayılar ve küçük veri etiketleri. Paketin içinde: internetsiz çalışır. */
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/public-sans/400.css';
+@import '@fontsource/public-sans/500.css';
+@import '@fontsource/public-sans/600.css';
+@import '@fontsource/public-sans/700.css';
+@import '@fontsource/dm-mono/400.css';
+@import '@fontsource/dm-mono/500.css';
 
-/* Renkler src/ui/theme.ts ile aynı; Tailwind sınıfları (bg-space-panel, text-calm ...) buradan gelir. */
+/* Renkler src/ui/theme.ts ile aynı; Tailwind sınıfları (bg-space-panel, text-calm ...) buradan gelir.
+   NASA tarzı: kenar ve üst bant NASA amblem mavisi, paneller koyu lacivert, yazı beyaz.
+   Renk sadece anlam taşır (NASA-STD-3001 Cilt 2, Ek F): kırmızı uyarı, sarı dikkat, mavi bilgi, yeşil normal. */
 @theme {
-  --color-space-bg: #070b1a;
-  --color-space-panel: #0e1530;
-  --color-space-border: #1e2a4a;
-  --color-calm: #38bdf8;
-  --color-safe: #34d399;
-  --color-caution: #fbbf24;
-  --color-critical: #f87171;
-  --color-ai: #a78bfa;
-  --font-sans: 'Barlow', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  /* "mono" sınıfı sayılar içindir: dar, tabular rakamlı Barlow Semi Condensed (kokpit göstergeleri gibi) */
-  --font-mono: 'Barlow Semi Condensed', 'Barlow', ui-monospace, monospace;
+  --color-space-bg: #071b3f;
+  --color-space-panel: #0c2858;
+  --color-space-border: #1e4c94;
+  --color-chrome: #0b3d91; /* NASA amblem mavisi: yan menü ve üst bant */
+  --color-select: #1a5bc4; /* seçili sekme / kişi (beyaz yazıyla 6,3:1) */
+  --color-calm: #6fb3ff; /* bilgi mavisi (panel üstünde 6,5:1) */
+  --color-safe: #4bdb8a;
+  --color-caution: #ffd23f;
+  --color-critical: #ff8a80;
+  --color-alarm: #c8281d; /* kritik dolgu (ters video), beyaz yazıyla 5,6:1 */
+  --color-ai: #bba6ff;
+  --color-glow: #1c68e3;
+  /* Tailwind'in gri (slate) tonları lacivert temaya çekildi */
+  --color-slate-100: #ffffff;
+  --color-slate-200: #e6eefb;
+  --color-slate-300: #cfdcf2;
+  --color-slate-400: #b9cbea;
+  --color-slate-500: #98b0d8;
+  --color-slate-600: #7590bd;
+  --font-sans: 'Public Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Inter', 'Public Sans', system-ui, sans-serif;
+  /* "mono" sınıfı sayılar içindir: NASA standardı sayı ve tablolarda sabit genişlikli yazı ister */
+  --font-mono: 'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 }
 
 html,
@@ -32,8 +48,8 @@ body,
 
 body {
   margin: 0;
-  background: var(--color-space-bg);
-  color: #e6edf7;
+  background-color: var(--color-space-bg);
+  color: #ffffff;
   font-family: var(--font-sans);
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
@@ -45,7 +61,22 @@ body {
   font-variant-numeric: tabular-nums;
 }
 .font-mono {
-  letter-spacing: 0.01em;
+  letter-spacing: -0.01em;
+}
+
+/* Başlıklar Inter (NASA HDS) */
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* Klavye odağı her yerde görünür */
+:focus-visible {
+  outline: 2px solid var(--color-calm);
+  outline-offset: 2px;
 }
 
 /* Yörünge ekranının zemini: ince ölçü ızgarası, kenarlara doğru söner (vektör ekran hissi) */
@@ -122,5 +153,53 @@ body {
   }
   .astra-critical-edge {
     box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--color-critical) 50%, transparent);
+  }
+}
+
+/* Konsol düzeni (Kokpit sayfası). Paneller 1 px aralıkla yan yana: arada çizgi kalır, kart gölgesi yok.
+   Geniş ekranda tek ekrana sığar (NASA-STD-3001: işin gerektirdiği bilgi başka ekrana gitmeden görünsün);
+   dar ekranda sayfa aşağı kayar. Alan adları: mis görev, ai ASTRA, med revir, det seçili astronot,
+   crew astronotlar, earth ana istasyon. */
+.astra-console {
+  display: grid;
+  flex: none; /* kayan düzende sayfa yüksekliğine sığmak için sıkışmasın */
+  gap: 1px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'mis' 'ai' 'crew' 'det' 'med' 'earth';
+}
+/* Kayan düzende paneller doğal boyunda; sadece akış panelleri sabit yükseklikte kendi içinde kayar */
+.astra-console > section > .tile-body {
+  overflow: visible;
+}
+.astra-console > section[data-area='ai'] > .tile-body {
+  max-height: 400px;
+  overflow: auto;
+}
+.astra-console > section[data-area='earth'] > .tile-body {
+  flex: none;
+  height: 440px;
+}
+@media (min-width: 900px) {
+  .astra-console {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas: 'mis ai' 'crew det' 'med det' 'earth earth';
+  }
+}
+/* Tek ekran düzeni: geniş ve yeterince yüksek ekranda (1440×900, 1920×1080) */
+@media (min-width: 1280px) and (min-height: 860px) {
+  .astra-console {
+    flex: 1 1 auto;
+    min-height: 680px;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.12fr) minmax(0, 1.2fr);
+    grid-template-rows: minmax(0, 0.86fr) minmax(0, 1.14fr);
+    grid-template-areas: 'mis ai med det' 'crew crew earth det';
+  }
+  .astra-console > section > .tile-body,
+  .astra-console > section[data-area='ai'] > .tile-body,
+  .astra-console > section[data-area='earth'] > .tile-body {
+    flex: 1 1 0%;
+    overflow: auto;
+    max-height: none;
+    height: auto;
   }
 }

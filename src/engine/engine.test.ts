@@ -92,10 +92,10 @@ describe('Katman 1 · kişisel baseline', () => {
     const before = h.run(BASELINE_WINDOW - 1);
     // Kalibrasyon sürerken z-skoru yok: herkes %100, seviye normal
     expect(Object.values(before.statuses).every((s) => s.healthScore === 100 && s.level === 'normal')).toBe(true);
-    expect(h.ledger().some((e) => e.text.includes('baseline\'lar kuruldu'))).toBe(false);
+    expect(h.ledger().some((e) => e.text.includes('Personal baselines set'))).toBe(false);
 
     h.step(); // 30. ölçüm
-    expect(h.ledger().filter((e) => e.text.includes('baseline\'lar kuruldu'))).toHaveLength(1);
+    expect(h.ledger().filter((e) => e.text.includes('Personal baselines set'))).toHaveLength(1);
 
     // 31. ölçümden itibaren Elif'in nabzı +30 bpm: z hesaplanır, ama baseline ortalaması değişmez
     const out = h.run(20, { elif: { 'cardio.hr_bpm': 98 } });
@@ -160,7 +160,7 @@ describe('Katman 1 · erken uyarı (ardışık ölçüm kuralı)', () => {
     expect(inc.level).toBe('critical');
     expect(inc.signals[0]).toMatchObject({ key: 'env.ppCO2_mmHg', value: 3.1 });
     expect(h.actions().map((a) => a.type)).toEqual(['INCREASE_VENTILATION']);
-    expect(h.ledger().find((e) => e.kind === 'AUTO_ACTION')!.text).toContain('Havalandırma artırıldı');
+    expect(h.ledger().find((e) => e.kind === 'AUTO_ACTION')!.text).toContain('Ventilation increased');
   });
 
   it('aynı olay ikinci kez açılmaz, otonom adım olay başına bir kez', () => {
@@ -191,7 +191,7 @@ describe('Katman 1 · erken uyarı (ardışık ölçüm kuralı)', () => {
     expect(out.incidents[0].status).toBe('resolved');
     const resolved = h.ledger().filter((e) => e.kind === 'INCIDENT_RESOLVED');
     expect(resolved).toHaveLength(1);
-    expect(resolved[0].text).toMatch(/^Çözüldü/);
+    expect(resolved[0].text).toMatch(/^Resolved/);
   });
 
   it('resmi normal aralıktaki değer uyarı vermez: EtCO₂ 44 mmHg (normal 35–45) sorun değil, 48 mmHg sorun', () => {
@@ -239,7 +239,7 @@ describe('Katman 1 · olay kuralları', () => {
     const out = h.run(3, { elif: { 'env.sleepLastNight_h': 5.1, 'cog.pvtMeanRt_ms': 300, 'cog.bsi18_gsi': 10 } });
     const inc = out.incidents.find((i) => i.type === 'FATIGUE')!;
     expect(inc).toMatchObject({ level: 'caution', crewIds: ['elif'], autoActions: ['MANDATORY_REST'] });
-    expect(inc.title).toContain('uyku + tepki süresi');
+    expect(inc.title).toContain('sleep + reaction time');
     expect(out.statuses.elif.restRequired).toBe(true);
     expect(out.statuses.kerem.restRequired).toBe(false);
   });
@@ -259,7 +259,7 @@ describe('Katman 1 · olay kuralları', () => {
     expect(c.incidents[0]).toMatchObject({ type: 'HYPOXIA', level: 'caution' });
     const k = h.run(3, { deniz: { 'cardio.spo2_pct': 88 } });
     expect(k.incidents[0]).toMatchObject({ type: 'HYPOXIA', level: 'critical', autoActions: [] });
-    expect(k.incidents[0].title).toContain('medikal kontrol önerilir');
+    expect(k.incidents[0].title).toContain('medical check recommended');
     expect(h.actions()).toHaveLength(0);
   });
 
@@ -268,7 +268,7 @@ describe('Katman 1 · olay kuralları', () => {
     expect(h.step().incidents).toHaveLength(0);
     const out = h.run(3, {}, { zeynep: 'irregular' });
     expect(out.incidents[0]).toMatchObject({ type: 'CARDIO', level: 'caution', crewIds: ['zeynep'] });
-    expect(out.incidents[0].title).toBe("Zeynep: EKG'de düzensiz atımlar görülüyor, medikal kontrol önerilir");
+    expect(out.incidents[0].title).toBe('Zeynep: irregular beats on ECG, medical check recommended');
   });
 
   it('STRESS: GSR + ter kortizolü + PANAS olumsuz üçü birden dikkatteyse', () => {
@@ -284,7 +284,7 @@ describe('Katman 1 · olay kuralları', () => {
     const out = h.run(3, { mert: { 'cardio.hr_bpm': 125, 'resp.rr_bpm': 32 } });
     const multi = out.incidents.find((i) => i.type === 'MULTI')!;
     expect(multi).toMatchObject({ level: 'critical', crewIds: ['mert'] });
-    expect(multi.title).toBe('Mert: kalp-damar ve solunum-metabolik alanlarında aynı anda kritik sapma');
+    expect(multi.title).toBe('Mert: simultaneous warning-level deviation in cardiovascular and respiratory/metabolic');
   });
 
   it('toplam doz ≥ 480 mSv dikkat (kariyer limitinin %80\'i), sığınak açmaz', () => {

@@ -2,54 +2,55 @@
 // güvensizse yedek cevap gösterilir, sebep ve orijinal cevap konsola yazılır.
 //
 // Tasarım: SADECE gerçekten tehlikeli üç şeyi engeller, geri kalan her şey serbesttir.
-//   1) İlaç ya da doz önerisi:        "400 mg verin", "ağrı kesici alsın", "dozu alın"
-//   2) Kesin teşhis:                  "Kerem'de hipoksi var", "kesinlikle kalp krizi geçiriyor"
-//   3) Kesin dışlama (yanlış güven):  "kalp krizi değil", "aritmi yok"
-// Kelimenin geçmesi tek başına sorun değildir: "kesin bir teşhis olmayıp", "İlaç öneremem",
-// "... ile uyumlu olabilir", "teşhis yerine geçmez" gibi cümleler her zaman geçer.
+//   1) İlaç ya da doz önerisi:        "give 400 mg", "she should take a painkiller", "take the dose"
+//   2) Kesin teşhis:                  "Kerem has hypoxia", "he is definitely having a heart attack"
+//   3) Kesin dışlama (yanlış güven):  "this is not a heart attack", "there is no arrhythmia"
+// Kelimenin geçmesi tek başına sorun değildir: "this is not a definitive diagnosis", "I cannot recommend medication",
+// "... may be consistent with ...", "this does not replace a diagnosis" gibi cümleler her zaman geçer.
 // Yeni bir yanlış engelleme görülürse cümleyi ai.test.ts'teki "geçmeli" listesine ekleyin.
-
-const W = '[a-zçğıöşü]'; // Türkçe harf (ek sınırı için)
+// (Uygulama İngilizce olduğu için süzgeç İngilizce kelimelerle çalışır; docs/GLOSSARY.md.)
 
 /** İlaç ve tıbbi uygulama adları. */
-const MEDICATION = new RegExp(
-  `(ilaç|ilac|tablet|kapsül|hap(?!${W})|antibiyotik|ibuprofen|parasetamol|aspirin|ağrı kesici|ateş düşürücü|enjeksiyon|iğne(?!${W})|serum)`,
-);
+const MEDICATION =
+  /\b(medication|medicine|drugs?|tablets?|pills?|capsules?|antibiotics?|ibuprofen|acetaminophen|paracetamol|aspirin|painkillers?|pain relievers?|analgesics?|antipyretics?|injections?|iv fluids?|saline|sedatives?|sleeping pills?|zolpidem|melatonin|promethazine|ondansetron)\b/;
 
 /**
- * Öneri ya da talimat bildiren fiiller, tam kelime olarak ("verin", "alsın", "kullanılmalı").
- * Açık liste: "için", "alınan", "önerilir" gibi sık kelimeler yanlışlıkla yakalanmasın.
+ * Öneri ya da talimat bildiren fiiller, tam kelime olarak ("give", "should take", "administer").
+ * Açık liste: "for", "taken", "recommended" gibi sık kelimeler yanlışlıkla yakalanmasın.
  */
-const ADVISE = new RegExp(
-  `(?<!${W})(verin|versin|verilsin|verilmeli|verilmelidir|verilebilir|verebilirsiniz|vermelisiniz|alın|alsın|alınmalı|alınmalıdır|alınabilir|almalı|almalıdır|alabilir|kullanın|kullansın|kullanılmalı|kullanılmalıdır|kullanılabilir|kullanmalı|kullanabilir|içsin|içmeli|içirin|içirilmeli|uygulayın|uygulansın|uygulanmalı|uygulanabilir|başlayın|başlansın|başlanmalı|başlanabilir|öneriyorum|önerebilirim|öneririz)(?!${W})`,
-);
+const ADVISE =
+  /\b(give|gives|given to|administer|administered|prescribe|prescribed|take|takes|should take|must take|can take|may take|use|should use|start|start on|apply|swallow|inject|i recommend|i suggest|i advise|we recommend|is recommended|are recommended|should be given|should be taken|should receive)\b/;
 
 /** İlaç cümlesini güvenli yapan olumsuzluk ya da reddetme. */
-const MED_REFUSAL = /(öneremem|önermem|öneremiyorum|önermiyorum|veremem|söyleyemem|yetkim yok|yetkili değil|vermeyin|kullanmayın|almayın|içmeyin|önerilmez|uygun değil)/;
+const MED_REFUSAL =
+  /\b(cannot|can't|can not|won't|will not|do not|don't|does not|must not|should not|never|not able to|not authori[sz]ed|not my role|only the flight surgeon|flight surgeon decides|flight surgeon's decision|is not recommended|not appropriate)\b/;
 
 /** Durum ve hastalık adları. */
 const CONDITION =
-  '(aritmi|ritim bozukluğu|kalp krizi|enfarktüs|hipoksi|hiperkapni|hipertermi|ısı çarpması|dehidratasyon|anksiyete|depresyon|enfeksiyon|radyasyon hastalığı|akut radyasyon sendromu|sendrom)';
+  '(arrhythmia|rhythm disorder|heart attack|myocardial infarction|infarction|hypoxia|hypoxemia|hypercapnia|hyperthermia|heat stroke|heatstroke|dehydration|anxiety disorder|anxiety|depression|infection|radiation sickness|acute radiation syndrome|syndrome)';
 
-/** "X var / X geçiriyor / X tespit edildi" — soru biçimi ("geçiriyor mu") hariç. */
+/** "X has hypoxia / is having a heart attack / was diagnosed with X" — soru cümlesi hariç. */
 const DEFINITE_CLAIM = new RegExp(
-  `${CONDITION}${W}*\\s+(var|vardır|geçiriyor|geçirmektedir|yaşıyor|yaşamaktadır|tespit edildi|teşhis edildi|kesinleşti)(?!${W})(?!\\s+m[ıiuü](?!${W}))`,
+  `\\b(has|have|is having|are having|is suffering from|suffers from|is experiencing|was diagnosed with|diagnosed with|is in|has developed|developed)\\s+(an?\\s+|acute\\s+)?${CONDITION}\\b|\\b${CONDITION}\\s+(is|was|has been)\\s+(confirmed|detected|diagnosed|present|occurring)\\b`,
 );
 
-/** Hayati durumlar: bunlar için kesin dışlama ("kalp krizi değil") yanlış güven verir. */
-const LIFE_THREATENING = '(kalp krizi|enfarktüs|aritmi|ritim bozukluğu|inme|felç)';
+/** Hayati durumlar: bunlar için kesin dışlama ("not a heart attack") yanlış güven verir. */
+const LIFE_THREATENING = '(heart attack|myocardial infarction|infarction|arrhythmia|rhythm disorder|stroke)';
 
-/** "kalp krizi değil / aritmi yok / kalp krizi geçirmiyor" — sadece hayati durumlar için. */
+/** "this is not a heart attack / there is no arrhythmia / heart attack ruled out" — sadece hayati durumlar için. */
 const DEFINITE_EXCLUSION = new RegExp(
-  `${LIFE_THREATENING}${W}*\\s+(yok|yoktur|değil|değildir|geçirmiyor|geçirmemektedir)(?!${W})(?!\\s+m[ıiuü](?!${W}))`,
+  `\\b(is not|isn't|is no|not|no|there is no|there's no|without)\\s+(an?\\s+|sign of\\s+(an?\\s+)?)?${LIFE_THREATENING}\\b|\\b${LIFE_THREATENING}\\s+(is|has been|can be)\\s+(ruled out|excluded)\\b|\\bruled out\\s+(an?\\s+)?${LIFE_THREATENING}\\b`,
 );
 
 /** Kesinlik sözcükleri; bir durum adıyla aynı cümlede geçerse kesin iddiadır. */
-const CERTAINTY = /(kesinlikle|şüphesiz|hiç şüphe yok|tanısı konuldu|teşhis edildi|kesin olarak)/;
+const CERTAINTY = /\b(definitely|certainly|undoubtedly|without (a |any )?doubt|no doubt|diagnosed|confirmed diagnosis|for sure|clearly has)\b/;
 
 /** Cümleyi ihtimal ya da reddetme hâline getiren ifadeler. */
 const SOFTENER =
-  /(olabilir(?!sin)|olası|olasılı|ihtimal|düşündür|uyumlu|işaret edebilir|akla getir|şüphe(?!siz)|değerlendirilmeli|söyleyemem|doğrulayamam|koyamam|bilemem|dışlayamam|kesin değil|teşhis yerine geçmez|emin olamam)/;
+  /\b(may|might|could|possible|possibly|possibility|likely|unlikely|consistent with|suggests?|suggestive|raises?|points? to|concern|suspect|suspected|should be evaluated|cannot say|can't say|cannot confirm|can't confirm|cannot diagnose|can't diagnose|cannot rule out|can't rule out|not certain|not definitive|uncertain|does not replace|is not a diagnosis|not a diagnosis)\b/;
+
+/** Cümle soru mu? ("Is Kerem having a heart attack?") */
+const isQuestion = (s: string) => /\?\s*$/.test(s.trim());
 
 export interface SafetyResult {
   safe: boolean;
@@ -57,22 +58,25 @@ export interface SafetyResult {
 }
 
 export function checkAnswer(text: string): SafetyResult {
-  const lower = text.toLocaleLowerCase('tr-TR');
+  const lower = text.toLocaleLowerCase('en-US');
 
   // Doz sayısı ya da doz talimatı: her zaman engellenir
-  const dose = lower.match(new RegExp(`\\d\\s*(mg|mcg|miligram|mikrogram|ünite)(?!${W})`)) ?? lower.match(/doz(?:u|unu)?\s+(?:al|ver|uygula|artır)/);
-  if (dose) return { safe: false, reason: `doz ifadesi: "${dose[0]}"` };
+  const dose =
+    lower.match(/\d\s*(mg|mcg|µg|milligrams?|micrograms?|units?|ml)\b/) ??
+    lower.match(/\b(take|give|administer|increase|double)\s+(the|a|one|two)?\s*doses?\b/);
+  if (dose) return { safe: false, reason: `dose phrase: "${dose[0]}"` };
 
   for (const s of lower.split(/(?<=[.!?;])\s+|\n+/)) {
+    if (isQuestion(s)) continue;
     const med = s.match(MEDICATION);
-    if (med && ADVISE.test(s) && !MED_REFUSAL.test(s)) return { safe: false, reason: `ilaç önerisi: "${med[0]}"` };
+    if (med && ADVISE.test(s) && !MED_REFUSAL.test(s)) return { safe: false, reason: `medication advice: "${med[0]}"` };
 
     const claim = s.match(DEFINITE_CLAIM) ?? s.match(DEFINITE_EXCLUSION);
-    if (claim && !SOFTENER.test(s)) return { safe: false, reason: `kesin ifade: "${claim[0]}"` };
+    if (claim && !SOFTENER.test(s)) return { safe: false, reason: `definitive statement: "${claim[0]}"` };
 
     const certain = s.match(CERTAINTY);
-    if (certain && new RegExp(CONDITION).test(s) && !/(söyleyemem|koyamam|doğrulayamam|bilemem)/.test(s)) {
-      return { safe: false, reason: `kesinlik sözcüğü: "${certain[0]}"` };
+    if (certain && new RegExp(CONDITION).test(s) && !/\b(cannot|can't|unable to|not able to)\s+(say|confirm|diagnose|know)\b/.test(s)) {
+      return { safe: false, reason: `certainty word: "${certain[0]}"` };
     }
   }
   return { safe: true };

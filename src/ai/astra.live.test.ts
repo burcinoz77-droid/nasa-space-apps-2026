@@ -82,7 +82,7 @@ describe.skipIf(!LIVE)('ASTRA canlı model testi', () => {
 
     // Ek: araç kullanımı ve çok turlu sohbet (mentor isteği). Gidiş sorusu get_metric_trend gerektirir.
     {
-      const question = "Kerem'in CO₂ değeri son ölçümlerde artıyor mu?";
+      const question = "Is Kerem's CO₂ rising over the last samples?";
       const context = buildContext(useAstra.getState(), { question, compact: true });
       const r = await ask('chat', question, context);
       const problems = check(r, context, question, 4);

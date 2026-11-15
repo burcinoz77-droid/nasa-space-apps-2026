@@ -24,7 +24,36 @@ Kaynak rozeti (`SourceBadge`) her sayının yanında: NASA-STD-3001 / OSDR / Cur
 - **Kokpit** görev kontrol konsolu düzenine geçti: tek parça durum şeridi, mürettebat tablosu (nabız trendi, SpO₂, sıcaklık), tel çerçeve Mars yörünge ekranı (gemi işareti Kokpit ekibinin, EVA işareti Gezegen ekibinin durum rengini taşır), yaşam ortamı (kabin ve giysiler) ve son kayıtlar.
 - **Astronot Ekranı**'nda vücut haritası 3B astronot modeli oldu (`src/ui/components/Astronaut3D.tsx`, three.js, sayfa açılınca ayrı yüklenir). Model yavaşça döner, fareyle sürüklenir. Bölgeler: **baş** (kask: bilişsel ve göz), **göğüs** (gövde, kollar, sırt çantası: kalp ve solunum), **alt gövde** (kalça ve bacaklar: metabolizma, ter ve ısı) ve ayak altındaki **çevre** halkası. İmleç bir bölgenin üstüne gelince risk kutusu (seviye, skor, en çok sapan ölçüm) çıkar; tıklayınca bölgenin bütün ölçümleri açılır. WebGL yoksa 2B çizime düşer.
 - Model `src/ui/assets/astronaut.glb`; Draco kod çözücüsü three paketinden gelir. İkisi de derlemeye gömülü, internet gerekmez.
-- Yazı tipi Barlow / Barlow Semi Condensed (`@fontsource`, çevrimdışı).
+- Yazı tipi Barlow / Barlow Semi Condensed (`@fontsource`, çevrimdışı). Sürüm 4'te NASA HDS yazı tiplerine geçildi.
+
+## Sürüm 3 (canlı mavi tema, sade düzen)
+
+- **Tema:** zemin siyaha yakın lacivert yerine koyu okyanus mavisi, paneller bir ton açık mavi, vurgu parlak gök mavisi (`theme.ts`, `index.css`). Tailwind'in gri tonları mavi temaya çekildi. Seviye renkleri (yeşil / amber / kırmızı) aynı anlamda kaldı.
+- **Sade gezinme:** 5 sayfa (Kokpit, Mürettebat, Görevler, Raporlar, Ayarlar); her birinin altında ne işe yaradığını söyleyen kısa satır. Seçili sayfa ve senaryo düz parlak mavi.
+- **Mürettebat sayfası:** eski "Astronot Ekranı" ve "Astronotlar" birleşti. Üstte 6 kişi kartı (ekip ekip), altta seçili kişinin 3B vücut haritası ve bölgesinin bütün ölçümleri, sağda sağlık ve stres kartları. Alttaki sekmeler kaldırıldı; ölçümlerin tamamı bölge panelinde. Azra'nın resmi normal aralık göstergesi (`RangeNote`) bölge panelinin her satırına taşındı.
+
+## Sürüm 4 (NASA tarzı sağlık konsolu)
+
+Ekibin taslağına göre Kokpit tek ekranlık bir konsola dönüştü; renk ve yazı NASA'nın kendi standartlarından alındı.
+
+- **Renk:** yan menü ve üst bant NASA amblem mavisi (`#0B3D91`), paneller koyu lacivert, yazı beyaz. Renk yalnızca anlam taşır: kırmızı uyarı, sarı dikkat, mavi bilgi, yeşil normal (NASA-STD-3001 Cilt 2, Ek F). Kritik bant "ters video": kırmızı zemin, beyaz yazı. Yazı/zemin kontrastı en az 6:1.
+- **Yazı tipi:** NASA Horizon Design System'in üç ailesi: Inter (başlık), Public Sans (metin), DM Mono (sayılar). Barlow paketleri kaldırıldı; **`npm install` gerekir**.
+- **Gezinme:** solda dar menü: Konsol, Görevler, Raporlar, altta Ayarlar ve Sıfırla. Üst bant her sayfada aynı: sayfa adı, saat ve görev günü, konum, Dünya bağlantısı, gecikme, senaryo, açık olaylar.
+- **Konsol panelleri** (`src/ui/console/`): Kokpit (görev durumu, görev günü, ekip konumu, revir 0/4, kabin CO₂/O₂) · ASTRA iletileri (açık olaylar, Onayla, mor ASTRA açıklaması, son kayıtlar) · Revir (ilaç durumu, teşhisler, tedavi) · Astronotlar (gemide / uzay yürüyüşünde) · Ana istasyon (Dünya) · seçili astronotun 3B modeli, önemli durumu ve sağlık verileri.
+- **Ana istasyon:** Elif (sağlık sorumlusu) Houston'daki uçuş cerrahına yazar; "durumunu ekle" seçili kişinin özetini hazırlar. Mesaj `commDelayOneWay_s` gecikmeyle gider, yanıt aynı gecikmeyle döner (görev saatiyle; simülasyon hızlandırılmış olduğundan birkaç saniye). Cerrahın yanıtı kişinin en ağır olayına göre (`src/ui/medical.ts`) ve senaryo için üretilir; doz yazmaz. Aynı panelin **ASTRA** sekmesi Parça 4'ün sohbetidir (ortak geçmiş). İlacı yalnızca cerrah söyler; ASTRA teşhis koymaz, ilaç önermez.
+- **Revir:** ilaç kiti ISS'te en sık kullanılan gruplara göre (uyku, ağrı, burun tıkanıklığı, alerji; Wotring 2015, FASEB J). Miktarlar senaryo varsayımı; eşiğin altı sarı. Cerrahın talimatı "Uygulandı" diye işaretlenince ilaç stoktan düşer. Revir doluluğu = zorunlu dinlenmedeki kişi sayısı.
+- **Psikolojik testler (Azra, PR #20):** seçili astronotun başlığındaki **Testler** düğmesi (ASTRA'nın önerdiği test sayısıyla) Azra'nın test panelini geniş bir pencerede açar. Bölge listesindeki PVT satırı değerin PVT-B testinden mi simülasyondan mı geldiğini yazar.
+- Mürettebat sayfası konsola katıldı (seçili kişi sağ sütunda). Yörünge ekranı, `Card`, `StatTile`, `ProgressRing` kullanılmadığı için silindi. Konsolda yüzen "ASTRA'ya sor" düğmesi gizli (sohbet panelin içinde); diğer sayfalarda duruyor.
+- Geniş ve yüksek ekranda (≥1280×860) konsol tek ekrana sığar; daha küçük ekranda iki sütun olur ve sayfa kayar.
+
+## Sürüm 5 (İngilizce, NASA terimleri)
+
+- Uygulamanın ekranda görünen bütün metni İngilizce: dört parçanın sayfaları, olay kayıtları, sinematikler, kask vizörü, ASTRA'nın komutları, araç açıklamaları, yedek cevapları ve güvenlik süzgeci. Terimler NASA kullanımına göre; tek kaynak `docs/GLOSSARY.md` (ör. KRİTİK/DİKKAT/NORMAL → WARNING/CAUTION/NOMINAL, Onayla → Acknowledge, uçuş cerrahı → Flight Surgeon, Dünya bağlantısı → AOS/LOS, gecikme → OWLT, CO₂ temizleyici → CDRA).
+- Sayı biçimi İngilizce: `36.8 °C`, `87%`, `12 min 30 s`, `1,344`; saat 24 saatlik. ASTRA'nın sayı doğrulaması (`verify.ts`) yeni biçime göre.
+- Güvenlik süzgeci (`safety.ts`) İngilizce ilaç, doz ve kesin teşhis kalıplarını arar; testteki "geçmeli / engellemeli" cümleleri İngilizce karşılıklarıyla güncellendi.
+- Psikolojik testler resmi İngilizce maddelerle (NASA-TLX, Samn-Perelli).
+- Kod yorumları ve README'ler Türkçe kaldı. `types.ts`'teki alan adları değişmedi; ASTRA'ya giden JSON'daki Türkçe alan adları da aynı (talimat modele bunların anlamını söylüyor).
+- Testler: 165 test geçiyor.
 
 ## Nasıl denenir
 
@@ -33,11 +62,11 @@ npm install
 npm run dev          # http://localhost:5173
 ```
 
-1. Uygulamayı ~40 sn açık bırakın (saatin altındaki "Baseline 30/30" dolsun).
-2. Üst bardaki **CO₂ arızası** hapına basın: hemen mavi "Gemi olayı" satırı, ~18 sn sonra amber DİKKAT, ~40 sn sonra kırmızı KRİTİK bant ve "Havalandırma artırıldı · otomatik".
-3. Banttaki **Kerem**'e basın → Kerem'in Astronot Ekranı; vücut haritasında göğüs ve çevre halkası renk değiştirir.
-4. **Onayla** → bant ince şeride döner, Raporlar'da "Mürettebat onayladı" satırı çıkar.
-5. **EVA aşırı efor** → Mert kritik; nabız grafiği kırmızı, Sağlık sekmesinde sapan ölçümler ■ ile işaretli.
+1. Uygulamayı ~40 sn açık bırakın (üst banttaki "baseline 30/30" dolsun).
+2. Üst banttaki **Simulation** listesinden **CO₂ scrubber failure (CDRA)**'yı seçin: hemen mavi "Gemi olayı" satırı, ~18 sn sonra sarı DİKKAT, ~40 sn sonra kırmızı KRİTİK bant ve "Havalandırma artırıldı · otomatik".
+3. Astronotlar panelinde **Kerem**'e basın → sağda Kerem'in 3B modeli; çevre halkası kırmızı, "Önemli durum" CO₂.
+4. Ana istasyon panelinde **+ Kerem durumunu ekle** → **Gönder**: mesaj "Dünya'ya gidiyor", birkaç saniye sonra cerrahın yanıtı gelir; Revir › Tedavi'de "Uygulandı olarak işaretle" → parasetamol stoğu 1 azalır.
+5. **Onayla** → bant ince şeride döner, Raporlar'da "Mürettebat onayladı" satırı çıkar.
 
 ## Kontrol sonuçları (Pazar sabahı adımı)
 

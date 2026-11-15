@@ -1,10 +1,10 @@
 // Parça 4 · Uydurma sayı kontrolü: cevaptaki her sayı, modele gönderilen veride var mı?
 // Hepsi varsa yeşil "Sayılar doğrulandı" rozeti gösterilir; yoksa amber "Sayıları kontrol et".
-// Türkçe biçim de tanınır: "36,8 °C", "%87", "12 dk 30 sn".
+// İngilizce biçim: "36.8 °C", "87%", "12 min 30 s"; binlik ayırıcı virgül ("1,344" -> 1344).
 
-/** Metindeki sayıları bulur. İşaret dikkate alınmaz ("6-44 dk" -> 6 ve 44). */
+/** Metindeki sayıları bulur. İşaret dikkate alınmaz ("6-44 min" -> 6 ve 44). */
 export function numbersIn(text: string): number[] {
-  return (text.match(/\d+(?:[.,]\d+)?/g) ?? []).map((s) => Number(s.replace(',', '.')));
+  return (text.match(/\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?/g) ?? []).map((s) => Number(s.replace(/,/g, '')));
 }
 
 /**

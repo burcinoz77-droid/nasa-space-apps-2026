@@ -1,12 +1,12 @@
 {
   "id": "MARS_DAY_180",
-  "name": "Mars 180. gün yükü",
+  "name": "Mars Day 180 workload",
   "seed": 180,
-  "source": "Barger vd. 2014 (uzayda uyku 6,09 sa); Jones vd. 2022 (uyku eksikliği PVT'yi bozar, stresi artırır)",
-  "note": "Altı ay izolasyon ve uyku borcunun birikmiş etkisi. Elif tam şiddette (tablodaki değerler), diğerleri yarı şiddette yaşar (fatigueResponse). Uyku, PVT, PANAS, BSI-18 günlük ölçümdür: yeni değere kayar ve orada kalır. Etki büyüklükleri varsayımdır.",
+  "source": "Barger et al. 2014 (sleep in space 6.09 h); Jones et al. 2022 (sleep loss degrades PVT and raises stress)",
+  "note": "Cumulative effect of six months of isolation and sleep debt. Elif is affected at full strength (table values), the others at half strength (fatigueResponse). Sleep, PVT, PANAS and BSI-18 are daily measures: they shift to a new value and stay there. Effect sizes are assumptions.",
   "events": [
-    { "atTick": 0, "untilTick": 60, "type": "WORKLOAD", "text": "180. gün: yoğun bilimsel program, üst üste kısa uykular" },
-    { "atTick": 60, "type": "SLEEP_DEBT", "text": "Birikmiş uyku borcu: bilişsel testlerde düşüş" }
+    { "atTick": 0, "untilTick": 60, "type": "WORKLOAD", "text": "Mission Day 180: heavy science schedule, repeated short sleep" },
+    { "atTick": 60, "type": "SLEEP_DEBT", "text": "Accumulated sleep debt: decline in cognitive tests" }
   ],
   "effects": [
     { "metric": "env.sleepLastNight_h", "crew": "ALL", "to": 5.0, "rampTicks": 20, "trait": "fatigueResponse" },

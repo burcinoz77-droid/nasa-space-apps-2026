@@ -39,7 +39,7 @@ export function usePhases<P extends string>(order: readonly P[], limits: Record<
 export function fmtMinSec(s: number): string {
   const m = Math.floor(s / 60);
   const r = Math.round(s % 60);
-  return `${m} dk ${r} sn`;
+  return `${m} min ${r} s`;
 }
 
 /** Jüri demo turunu başlatır: window.dispatchEvent(new Event(DEMO_EVENT)) */

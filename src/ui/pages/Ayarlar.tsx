@@ -20,11 +20,41 @@ interface ScenarioButton {
 }
 
 const BUTTONS: ScenarioButton[] = [
-  { id: 'SOLAR_STORM', label: 'Güneş fırtınası başlat', who: 'Tüm mürettebat (Kokpit en çok)', what: 'Doz hızı ×25, sonra ×60. DONKI Mayıs 2024 olay sırası.', color: COLORS.caution },
-  { id: 'MARS_DAY_180', label: 'Mars 180. gün yükü', who: 'Elif tam, diğerleri yarı şiddette', what: 'Uyku 5 saate iner, PVT uzar, ruh hali düşer.', color: COLORS.caution },
-  { id: 'CO2_SCRUBBER_FAIL', label: 'CO₂ temizleyici arızası', who: 'Kokpit ekibi, Kerem iki kat', what: 'Kabin ppCO₂ 1,9 → 5,3 mmHg. Solunum ve nabız artar.', color: COLORS.critical },
-  { id: 'EVA_OVEREXERTION', label: 'EVA aşırı efor', who: 'Mert (Gezegen ekibi)', what: 'Nabız 155, çekirdek sıcaklık 39,2 °C, laktat 22 mM.', color: COLORS.critical },
-  { id: 'NORMAL', label: 'Tüm mürettebatı stabilize et', who: 'Herkes', what: 'Senaryo etkileri kalkar, değerler kişisel normale döner.', color: COLORS.normal },
+  {
+    id: 'SOLAR_STORM',
+    label: 'Start solar particle event',
+    who: 'All crew (orbit crew most)',
+    what: 'Dose rate ×25, then ×60. DONKI May 2024 event sequence.',
+    color: COLORS.caution,
+  },
+  {
+    id: 'MARS_DAY_180',
+    label: 'Mars Day 180 workload',
+    who: 'Elif at full strength, others at half',
+    what: 'Sleep falls to 5 h, PVT lengthens, mood drops.',
+    color: COLORS.caution,
+  },
+  {
+    id: 'CO2_SCRUBBER_FAIL',
+    label: 'CO₂ scrubber failure (CDRA)',
+    who: 'Orbit crew, Kerem twice as strongly',
+    what: 'Cabin ppCO₂ 1.9 → 5.3 mmHg. Breathing and heart rate rise.',
+    color: COLORS.critical,
+  },
+  {
+    id: 'EVA_OVEREXERTION',
+    label: 'EVA overexertion',
+    who: 'Mert (surface crew)',
+    what: 'Heart rate 155, core temperature 39.2 °C, lactate 22 mM.',
+    color: COLORS.critical,
+  },
+  {
+    id: 'NORMAL',
+    label: 'Stabilize all crew',
+    who: 'Everyone',
+    what: 'Scenario effects are removed and values return to personal baselines.',
+    color: COLORS.normal,
+  },
 ];
 
 const SPEEDS = [800, 1200, 2500];
@@ -32,7 +62,9 @@ const PARAM_LIST: Param[] = Object.values(PARAMS);
 
 function SourceCell({ p }: { p: Param }) {
   const badge = p.assumption ? (
-    <span className="ml-2 rounded px-1.5 py-0.5 text-xs" style={{ color: COLORS.offline, border: `1px solid ${COLORS.offline}` }}>Varsayım</span>
+    <span className="ml-2 rounded px-1.5 py-0.5 text-xs" style={{ color: COLORS.offline, border: `1px solid ${COLORS.offline}` }}>
+      Assumption
+    </span>
   ) : null;
   if (!p.url) return <span style={{ color: COLORS.textMuted }}>{p.source}{badge}</span>;
   return (
@@ -54,14 +86,14 @@ export function Ayarlar() {
     <div className="grid gap-4 lg:grid-cols-3">
       <section className="rounded-2xl border border-space-border bg-space-panel p-4 lg:col-span-2">
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="font-semibold">Kriz senaryoları</h2>
+          <h2 className="font-semibold">Contingency scenarios</h2>
           <span className="text-sm" style={{ color: COLORS.textMuted }}>
-            Aktif: <span style={{ color: COLORS.text }}>{activeName}</span>
+            Active: <span style={{ color: COLORS.text }}>{activeName}</span>
           </span>
         </div>
         {!baselineReady && (
           <p className="mb-3 rounded-lg border px-3 py-2 text-sm" style={{ borderColor: COLORS.calm, color: COLORS.calm }}>
-            Kişisel baseline kuruluyor ({samples}/{SIM.baselineWindow} ölçüm). Senaryoyu bundan sonra başlatın; yoksa Katman 1 anomaliyi normal sanar.
+            Setting personal baselines ({samples}/{SIM.baselineWindow} samples). Start a scenario after that; otherwise Layer 1 learns the anomaly as normal.
           </p>
         )}
         <div className="grid gap-3 sm:grid-cols-2">
@@ -88,21 +120,25 @@ export function Ayarlar() {
 
       <div className="flex flex-col gap-4">
         <section className="rounded-2xl border border-space-border bg-space-panel p-4">
-          <h2 className="mb-3 font-semibold">Telemetri örnekleme hızı</h2>
+          <h2 className="mb-3 font-semibold">Telemetry sample rate</h2>
           <div className="flex gap-2">
             {SPEEDS.map((ms) => (
-              <button key={ms} onClick={() => controls.setSpeed(ms)} className={`rounded-lg px-3 py-2 font-mono ${tickMs === ms ? 'bg-calm/20 text-calm' : 'bg-white/5'}`}>
-                {fmt(ms / 1000, 1)} sn
+              <button
+                key={ms}
+                onClick={() => controls.setSpeed(ms)}
+                className={`rounded-lg px-3 py-2 font-mono ${tickMs === ms ? 'bg-calm/20 text-calm' : 'bg-white/5'}`}
+              >
+                {fmt(ms / 1000, 1)} s
               </button>
             ))}
           </div>
           <p className="mt-3 text-xs" style={{ color: COLORS.textMuted }}>
-            1 ölçüm = {SIM.missionMinutesPerTick} dk görev süresi (demo hızlandırması).
+            1 sample = {SIM.missionMinutesPerTick} min of mission time (demo acceleration).
           </p>
         </section>
 
         <section className="rounded-2xl border border-space-border bg-space-panel p-4">
-          <h2 className="mb-2 font-semibold">Aktif olaylar</h2>
+          <h2 className="mb-2 font-semibold">Active events</h2>
           {ship && ship.activeEvents.length > 0 ? (
             <ul className="space-y-1 text-sm">
               {ship.activeEvents.map((e) => (
@@ -110,7 +146,9 @@ export function Ayarlar() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm" style={{ color: COLORS.textMuted }}>Olay yok.</p>
+            <p className="text-sm" style={{ color: COLORS.textMuted }}>
+              No events.
+            </p>
           )}
           {ship && SCENARIOS[ship.scenario]?.note && (
             <p className="mt-3 text-xs" style={{ color: COLORS.textMuted }}>{SCENARIOS[ship.scenario]?.note}</p>
@@ -119,10 +157,10 @@ export function Ayarlar() {
 
         <section className="rounded-2xl border border-space-border bg-space-panel p-4">
           <button onClick={() => controls.reset()} className="w-full rounded-lg bg-white/5 px-3 py-2 hover:bg-white/10">
-            Simülasyonu sıfırla
+            Reset simulation
           </button>
           <p className="mt-2 text-xs" style={{ color: COLORS.textMuted }}>
-            Aynı seed: demo her seferinde aynı veriyi baştan üretir.
+            Same seed: the demo regenerates the same data every time.
           </p>
           <div className="mt-3 flex flex-col gap-2">
             <button
@@ -130,7 +168,7 @@ export function Ayarlar() {
               className="w-full rounded-lg px-3 py-2.5 font-semibold hover:brightness-110"
               style={{ background: alpha(COLORS.ai, 0.25), color: COLORS.text, border: `1px solid ${COLORS.ai}` }}
             >
-              ★ Jüri demosu (≈2 dk, baştan sona otomatik)
+              ★ Judges' demo (≈2 min, fully automatic)
             </button>
             {(Object.keys(SHOWS) as ScenarioId[]).map((id) => (
               <button
@@ -139,7 +177,7 @@ export function Ayarlar() {
                 className="w-full rounded-lg px-3 py-2 hover:bg-white/10"
                 style={{ background: alpha(COLORS.caution, 0.12), color: COLORS.caution }}
               >
-                ▶ Sinematik: {SCENARIOS[id]?.name ?? id}
+                ▶ Cinematic: {SCENARIOS[id]?.name ?? id}
               </button>
             ))}
           </div>
@@ -148,19 +186,19 @@ export function Ayarlar() {
 
       <section className="rounded-2xl border border-space-border bg-space-panel p-4 lg:col-span-3">
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="font-semibold">Veri kaynakları</h2>
+          <h2 className="font-semibold">Data sources</h2>
           <span className="text-xs" style={{ color: COLORS.textMuted }}>
-            {PARAM_LIST.length} parametre · {PARAM_LIST.filter((p) => p.assumption).length} varsayım · tüm astronot verisi simülasyondur
+            {PARAM_LIST.length} parameters · {PARAM_LIST.filter((p) => p.assumption).length} assumptions · all astronaut data is simulated
           </span>
         </div>
         <div className="max-h-96 overflow-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-space-panel text-left" style={{ color: COLORS.textMuted }}>
               <tr>
-                <th className="py-1 pr-3 font-normal">Parametre</th>
-                <th className="py-1 pr-3 font-normal">Değer</th>
-                <th className="py-1 pr-3 font-normal">Normal aralık</th>
-                <th className="py-1 font-normal">Kaynak</th>
+                <th className="py-1 pr-3 font-normal">Parameter</th>
+                <th className="py-1 pr-3 font-normal">Value</th>
+                <th className="py-1 pr-3 font-normal">Reference range</th>
+                <th className="py-1 font-normal">Source</th>
               </tr>
             </thead>
             <tbody>
@@ -180,7 +218,9 @@ export function Ayarlar() {
           </table>
         </div>
         <p className="mt-3 text-xs" style={{ color: COLORS.textMuted }}>
-          Güneş fırtınası olay zamanları NASA DONKI Mayıs 2024 kayıtlarından alındı (data/donki_sep_2024-05.json). DONKI doz değeri vermez: fırtına zirvesi çarpanı Curiosity'nin Mars yolculuğu ölçümüne, sığınak çarpanı Artemis I ölçümüne dayanır; başlangıç ve yüzey çarpanları varsayımdır. "Normal aralık" sütunundaki aralıktaki değerler için Katman 1 uyarı vermez.
+          Solar particle event times come from NASA DONKI records for May 2024 (data/donki_sep_2024-05.json). DONKI gives no dose values: the storm peak
+          multiplier is based on Curiosity's Mars cruise measurements and the shelter multiplier on Artemis I measurements; the onset and surface multipliers
+          are assumptions. Layer 1 raises no alert for values inside the "Reference range" column.
         </p>
       </section>
     </div>

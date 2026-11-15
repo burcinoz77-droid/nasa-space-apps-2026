@@ -1,16 +1,18 @@
-// Parça 3 · Astronot Ekranı'nın vücut paneli: 3B astronot (yoksa 2B yedek çizim), bölge seçici ve seçili bölgenin
-// ayrıntısı. İmleç bir bölgenin üstüne gelince risk kutusu çıkar (seviye, skor, bölgedeki en çok sapan ölçüm);
-// tıklayınca aşağıda o bölgenin bütün ölçümleri açılır.
-import { lazy, Suspense, useMemo, useState } from 'react';
+// Parça 3 · Konsolun seçili astronot sütunu: 3B astronot (yoksa 2B yedek çizim), bölge seçici ve seçili bölgenin
+// sağlık verileri. İmleç bir bölgenin üstüne gelince risk kutusu çıkar (seviye, skor, bölgedeki en çok sapan ölçüm);
+// tıklayınca aşağıda o bölgenin bütün ölçümleri açılır. slot: bölge seçiciyle ölçümler arasına (örn. "Önemli durum").
+import { lazy, type ReactNode, Suspense, useMemo, useState } from 'react';
 import { METRIC_BY_KEY, readMetric } from '../../metrics';
+import { activePvt, missionAgo, useTests } from '../../psych/store';
 import { useAstra } from '../../store';
 import type { CrewId, CrewStatus, Level, MetricScore, Telemetry } from '../../types';
-import { REGION_BY_ID, REGIONS, regionState, worstRegion, type RegionId, type TabId } from '../bodyRegions';
+import { REGION_BY_ID, REGIONS, regionState, worstRegion, type RegionId } from '../bodyRegions';
 import { fmtMetric, fmtZ } from '../format';
 import { alpha, COLORS, fmt, LEVEL_COLOR, LEVEL_ICON, LEVEL_LABEL } from '../theme';
 import type { HoverInfo } from './Astronaut3D';
 import { BodyMap } from './BodyMap';
 import { LevelBadge } from './LevelBadge';
+import { RangeNote } from './RangeNote';
 import { SourceBadge } from './SourceBadge';
 import { TrendLine } from './Sparkline';
 
@@ -36,12 +38,14 @@ export function BodyPanel({
   crewId,
   status,
   t,
-  onOpenTab,
+  slot,
+  height = 340,
 }: {
   crewId: CrewId;
   status: CrewStatus | undefined;
   t: Telemetry | undefined;
-  onOpenTab: (tab: TabId) => void;
+  slot?: ReactNode;
+  height?: number;
 }) {
   const [webgl] = useState(hasWebGL);
   const [failed, setFailed] = useState(false);
@@ -55,8 +59,8 @@ export function BodyPanel({
   const use3D = webgl && !failed;
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="astra-scope relative h-[340px] overflow-hidden rounded-lg border border-space-border" onMouseLeave={() => setHover(null)}>
+    <div className="@container flex flex-col gap-3">
+      <div className="astra-scope relative overflow-hidden rounded-md border border-space-border" style={{ height }} onMouseLeave={() => setHover(null)}>
         {use3D ? (
           <Suspense fallback={<BodyMap status={status} selected={selected} onSelect={setPicked} />}>
             <Astronaut3D levels={levels} selected={selected} onHover={setHover} onSelect={setPicked} onError={() => setFailed(true)} />
@@ -67,13 +71,11 @@ export function BodyPanel({
           </div>
         )}
         {hover && <RiskTip hover={hover} status={status} t={t} />}
-        <div className="pointer-events-none absolute bottom-2 left-3 text-sm text-slate-400">
-          {use3D ? 'Sürükleyerek döndürün, bölgeye tıklayın' : 'Bölgeye tıklayın'}
-        </div>
+        <div className="pointer-events-none absolute bottom-2 left-3 text-sm text-slate-400">{use3D ? 'Drag to rotate, click a region' : 'Click a region'}</div>
       </div>
 
       {/* Bölge seçici: klavyeyle ve 3B olmadan da çalışır */}
-      <div className="grid grid-cols-4 gap-1.5" role="tablist" aria-label="Vücut bölgesi">
+      <div className="grid grid-cols-2 gap-1.5 @[440px]:grid-cols-4" role="tablist" aria-label="Body region">
         {REGIONS.map((r) => {
           const s = regionState(status, r.id);
           const c = s.level ? LEVEL_COLOR[s.level] : COLORS.offline;
@@ -85,19 +87,21 @@ export function BodyPanel({
               role="tab"
               aria-selected={on}
               onClick={() => setPicked(r.id)}
-              className="min-w-0 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/5"
+              className="min-w-0 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-white/5"
               style={{ boxShadow: `inset 0 0 0 1px ${on ? c : alpha(COLORS.text, 0.08)}`, backgroundColor: on ? alpha(c, 0.1) : undefined }}
             >
               <span className="block truncate text-sm font-semibold text-slate-100">{r.name}</span>
               <span className="block font-mono text-sm whitespace-nowrap" style={{ color: c }}>
-                {s.level ? LEVEL_ICON[s.level] : '—'} %{fmt(s.score)}
+                {s.level ? LEVEL_ICON[s.level] : '—'} {fmt(s.score)}%
               </span>
             </button>
           );
         })}
       </div>
 
-      <RegionDetail crewId={crewId} region={selected} status={status} t={t} onOpenTab={onOpenTab} />
+      {slot}
+
+      <RegionDetail crewId={crewId} region={selected} status={status} t={t} />
     </div>
   );
 }
@@ -114,7 +118,7 @@ function RiskTip({ hover, status, t }: { hover: HoverInfo; status: CrewStatus | 
   const top = Math.max(8, Math.min(hover.y - 24, hover.h - 150));
   return (
     <div
-      className="pointer-events-none absolute z-10 rounded-lg border px-3 py-2 shadow-xl"
+      className="pointer-events-none absolute z-10 rounded-md border px-3 py-2 shadow-xl"
       style={{
         left,
         top,
@@ -127,11 +131,11 @@ function RiskTip({ hover, status, t }: { hover: HoverInfo; status: CrewStatus | 
       <div className="flex items-baseline justify-between gap-2">
         <span className="font-semibold text-slate-100">{r.name}</span>
         <span className="font-mono font-semibold" style={{ color: c }}>
-          %{fmt(s.score)}
+          {fmt(s.score)}%
         </span>
       </div>
       <div className="font-mono text-sm font-semibold" style={{ color: c }}>
-        {s.level ? `${LEVEL_ICON[s.level]} ${LEVEL_LABEL[s.level]} risk` : 'veri yok'}
+        {s.level ? `${LEVEL_ICON[s.level]} ${LEVEL_LABEL[s.level]}` : 'no data'}
       </div>
       <div className="text-sm text-slate-400">{r.detail}</div>
       {sig && t && (
@@ -140,43 +144,33 @@ function RiskTip({ hover, status, t }: { hover: HoverInfo; status: CrewStatus | 
           <span className="font-mono" style={{ color: sig.level !== 'normal' ? LEVEL_COLOR[sig.level] : COLORS.text }}>
             {fmtMetric(sig.key, readMetric(t, sig.key))}
           </span>
-          <span className="text-slate-400"> (normal {fmtMetric(sig.key, sig.mean)})</span>
+          <span className="text-slate-400"> (baseline {fmtMetric(sig.key, sig.mean)})</span>
         </div>
       )}
-      <div className="mt-1 text-sm text-slate-500">Ayrıntı için tıklayın</div>
+      <div className="mt-1 text-sm text-slate-500">Click for details</div>
     </div>
   );
 }
 
-/** Seçili bölgenin bütün ölçümleri. */
-function RegionDetail({
-  crewId,
-  region,
-  status,
-  t,
-  onOpenTab,
-}: {
-  crewId: CrewId;
-  region: RegionId;
-  status: CrewStatus | undefined;
-  t: Telemetry | undefined;
-  onOpenTab: (tab: TabId) => void;
-}) {
+/** Seçili bölgenin bütün ölçümleri. Sayfadaki tek ölçüm listesi budur (ayrı sekme yok). */
+function RegionDetail({ crewId, region, status, t }: { crewId: CrewId; region: RegionId; status: CrewStatus | undefined; t: Telemetry | undefined }) {
   const r = REGION_BY_ID[region];
   const s = regionState(status, region);
   const hist = useAstra((st) => st.history[crewId] ?? EMPTY);
   return (
-    <div className="rounded-lg border border-space-border bg-white/[0.02]">
+    <div className="@container rounded-md border border-space-border bg-white/[0.03]">
       <div className="flex items-center justify-between gap-2 border-b border-space-border px-3 py-2">
         <div className="min-w-0">
-          <div className="font-semibold text-slate-100">
-            {r.name} <span className="font-normal text-slate-400">· {r.detail}</span>
+          <h3 className="font-semibold text-slate-100">
+            Health data · {r.name} <span className="font-sans font-normal text-slate-400">· {r.detail}</span>
+          </h3>
+          <div className="text-sm text-slate-400">
+            {r.metrics.length} measures, data {r.groups}
           </div>
-          <div className="text-sm text-slate-400">Veri {r.groups}</div>
         </div>
         <div className="flex shrink-0 flex-col items-end">
           <span className="font-mono text-lg leading-tight font-semibold" style={{ color: s.level ? LEVEL_COLOR[s.level] : COLORS.offline }}>
-            %{fmt(s.score)}
+            {fmt(s.score)}%
           </span>
           <LevelBadge level={s.level} />
         </div>
@@ -187,35 +181,42 @@ function RegionDetail({
           const sig = status?.topSignals.find((x) => x.key === k);
           const l = sig?.level;
           const off = l && l !== 'normal';
+          const v = t ? readMetric(t, k) : undefined;
           return (
             <li key={k} className="flex min-w-0 items-center gap-2 border-b border-space-border/60 py-1.5 last:border-b-0">
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm text-slate-300" title={m.label}>
+                <span className="block truncate text-sm text-slate-200" title={m.label}>
                   {m.label}
                 </span>
-                {sig && (
-                  <span className="block text-sm text-slate-500">
-                    normal {fmtMetric(k, sig.mean)} · {fmtZ(sig.z)}
-                  </span>
-                )}
+                <span className="block truncate text-sm text-slate-400">
+                  {sig ? `baseline ${fmtMetric(k, sig.mean)} · ${fmtZ(sig.z)}` : ''}
+                  <RangeNote crewId={crewId} k={k} value={v} />
+                  {k === 'cog.pvtMeanRt_ms' && <PvtSource crewId={crewId} />}
+                </span>
               </span>
-              <span className="hidden min-[1400px]:block">
-                <TrendLine values={hist.map((x) => readMetric(x, k))} color={off ? LEVEL_COLOR[l] : COLORS.calm} width={56} height={20} />
+              <span className="hidden @[440px]:block">
+                <TrendLine values={hist.map((x) => readMetric(x, k))} color={off ? LEVEL_COLOR[l] : COLORS.calm} width={56} height={20} minSpan={0} />
               </span>
               <span className="shrink-0 text-right font-mono whitespace-nowrap" style={{ color: off ? LEVEL_COLOR[l] : COLORS.text }}>
                 {off && <span className="mr-1 text-sm">{LEVEL_ICON[l]}</span>}
-                {t ? fmtMetric(k, readMetric(t, k)) : '—'}
+                {t ? fmtMetric(k, v) : '—'}
               </span>
               <SourceBadge metric={k} crewId={crewId} />
             </li>
           );
         })}
       </ul>
-      <div className="border-t border-space-border px-3 py-1.5">
-        <button type="button" onClick={() => onOpenTab(r.tab)} className="rounded-md px-1.5 py-0.5 text-sm text-calm hover:bg-calm/10">
-          Grafiklerle aşağıdaki sekmede aç
-        </button>
-      </div>
     </div>
+  );
+}
+
+/** PVT değeri astronotun yaptığı PVT-B testinden mi geliyor, simülasyondan mı? (Parça 4, PR #20) */
+function PvtSource({ crewId }: { crewId: CrewId }) {
+  const tick = useTests((s) => s.tick);
+  const pvt = useTests(() => activePvt(crewId));
+  return (
+    <span className="ml-1.5" style={{ color: pvt ? COLORS.calm : COLORS.textMuted }}>
+      {pvt ? `PVT-B test · ${missionAgo(pvt.tick, tick)}` : 'simulated · no test'}
+    </span>
   );
 }

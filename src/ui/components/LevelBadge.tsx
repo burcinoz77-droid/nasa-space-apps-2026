@@ -6,7 +6,7 @@ export function LevelBadge({ level, pill = false }: { level: Level | undefined; 
   if (!level)
     return (
       <span className="font-mono text-sm font-semibold whitespace-nowrap" style={{ color: COLORS.offline }}>
-        ● VERİ YOK
+        ● NO DATA
       </span>
     );
   const color = LEVEL_COLOR[level];

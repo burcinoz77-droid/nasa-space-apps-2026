@@ -76,27 +76,38 @@ export function dueTests(crewId: CrewId, a: AstraState = useAstra.getState(), ts
       out.push({
         kind,
         oncelik: 'öncelikli',
-        neden: `Dün gece uyku ${fmt(sleep, 1)} sa (6 saatten az). ISS verisinde kısa uyku daha yavaş tepki ve daha fazla yorgunlukla ilişkili bulundu.`,
+        neden: `Slept ${fmt(sleep, 1)} h last night (under 6 h). In ISS data, short sleep was linked to slower reactions and more fatigue.`,
         kaynak: TEST_SOURCES.jones2022,
       });
       continue;
     }
     if (!recent && kind !== 'TLX' && cog) {
-      out.push({ kind, oncelik: 'öncelikli', neden: 'Katman 1 bilişsel ölçümlerde kişisel normalden sapma görüyor; nesnel bir tepki testi ve yorgunluk puanı durumu netleştirir.' });
+      out.push({
+        kind,
+        oncelik: 'öncelikli',
+        neden: 'Layer 1 sees cognitive measures deviating from the personal baseline; an objective reaction test and a fatigue rating will clarify.',
+      });
       continue;
     }
     if (!recent && kind === 'TLX' && (onSurface || inIncident)) {
       out.push({
         kind,
         oncelik: 'öncelikli',
-        neden: onSurface ? 'Gezegen yüzeyinde EVA çalışması: görev sonrası iş yükünü ölçmek için (varsayım kuralı).' : 'Açık bir olay var: olay sonrası iş yükünü ölçmek için (varsayım kuralı).',
+        neden: onSurface
+          ? 'EVA work on the Mars surface: to measure post-task workload (assumed rule).'
+          : 'There is an open event: to measure post-event workload (assumed rule).',
       });
       continue;
     }
     if (last === undefined) {
-      out.push({ kind, oncelik: 'rutin', neden: 'Henüz yapılmadı: kişisel karşılaştırma için ilk ölçüm gerekli.' });
+      out.push({ kind, oncelik: 'rutin', neden: 'Not done yet: a first measurement is needed for personal comparison.' });
     } else if (since >= ROUTINE_TICKS) {
-      out.push({ kind, oncelik: 'rutin', neden: 'Son testten bu yana 4 görev günü geçti (ISS\'te Reaction Self Test 4 günde bir yapıldı).', kaynak: TEST_SOURCES.jones2022 });
+      out.push({
+        kind,
+        oncelik: 'rutin',
+        neden: '4 mission days since the last test (on ISS the Reaction Self Test was done every 4 days).',
+        kaynak: TEST_SOURCES.jones2022,
+      });
     }
   }
   return out.sort((x, y) => (x.oncelik === y.oncelik ? 0 : x.oncelik === 'öncelikli' ? -1 : 1));
@@ -107,11 +118,11 @@ function spFactor(sp: SpResult | undefined, prev: SpResult | undefined, now: num
   const seviye: Level = sp.puan >= SP_CRITICAL ? 'critical' : sp.puan >= SP_CAUTION ? 'caution' : 'normal';
   const change = prev ? sp.puan - prev.puan : 0;
   return {
-    ad: 'Yorgunluk (Samn-Perelli)',
-    kisa: 'yorgunluk',
+    ad: 'Fatigue (Samn-Perelli)',
+    kisa: 'fatigue',
     deger: `${sp.puan}/7 · ${spLabel(sp.puan)}`,
     seviye,
-    not: `${missionAgo(sp.tick, now)}${prev ? `; öncekine göre ${change === 0 ? 'aynı' : change > 0 ? `${change} basamak daha yorgun` : `${-change} basamak daha dinç`}` : ''}`,
+    not: `${missionAgo(sp.tick, now)}${prev ? `; vs previous: ${change === 0 ? 'same' : change > 0 ? `${change} step${change > 1 ? 's' : ''} more tired` : `${-change} step${-change > 1 ? 's' : ''} fresher`}` : ''}`,
     varsayim: seviye !== 'normal',
   };
 }
@@ -121,11 +132,11 @@ function tlxFactor(tlx: TlxResult | undefined, prev: TlxResult | undefined, now:
   const top = tlxHighest(tlx.ratings);
   const change = prev ? Math.round((tlx.raw - prev.raw) * 10) / 10 : undefined;
   return {
-    ad: 'İş yükü (NASA-TLX)',
-    kisa: 'iş yükü',
-    deger: `${fmt(tlx.raw, 1)}/100 · en yüksek: ${top.ad} ${top.puan}`,
+    ad: 'Workload (NASA-TLX)',
+    kisa: 'workload',
+    deger: `${fmt(tlx.raw, 1)}/100 · highest: ${top.ad} ${top.puan}`,
     seviye: tlx.raw >= TLX_CAUTION ? 'caution' : 'normal',
-    not: `${missionAgo(tlx.tick, now)}${change !== undefined ? `; öncekine göre ${change === 0 ? 'aynı' : `${change > 0 ? '+' : ''}${fmt(change, 1)} puan`}` : ''}`,
+    not: `${missionAgo(tlx.tick, now)}${change !== undefined ? `; vs previous: ${change === 0 ? 'same' : `${change > 0 ? '+' : ''}${fmt(change, 1)} points`}` : ''}`,
     varsayim: tlx.raw >= TLX_CAUTION,
   };
 }
@@ -135,11 +146,11 @@ function pvtFactor(a: AstraState, crewId: CrewId, pvt: PvtResult | undefined, no
   const st = a.statuses[crewId];
   const levels = st?.topSignals.filter((s) => s.key === 'cog.pvtMeanRt_ms' || s.key === 'cog.pvtLapses').map((s) => s.level) ?? [];
   return {
-    ad: 'Tepki (PVT-B)',
-    kisa: 'tepki hızı',
-    deger: `ort. ${pvt.meanRt_ms} ms · ${pvt.lapses} dikkat kaybı · ${pvt.falseStarts} erken basma`,
+    ad: 'Reaction (PVT-B)',
+    kisa: 'reaction speed',
+    deger: `mean ${pvt.meanRt_ms} ms · ${pvt.lapses} lapses · ${pvt.falseStarts} false starts`,
     seviye: worstLevel(...levels),
-    not: `${missionAgo(pvt.tick, now)}; sonuç Katman 1'e gitti, seviyeyi Katman 1 belirler`,
+    not: `${missionAgo(pvt.tick, now)}; result sent to Layer 1, which sets the level`,
   };
 }
 
@@ -155,21 +166,21 @@ export function psychState(crewId: CrewId, a: AstraState = useAstra.getState(), 
   const cogScore = a.statuses[crewId]?.domainScores.cog;
   if (cogScore !== undefined) {
     etkenler.push({
-      ad: 'Katman 1 bilişsel alan',
-      kisa: 'Katman 1 bilişsel alanı',
-      deger: `%${Math.round(cogScore)}`,
+      ad: 'Layer 1 cognitive domain',
+      kisa: 'Layer 1 cognitive domain',
+      deger: `${Math.round(cogScore)}%`,
       seviye: worstLevel(scoreLevel(cogScore), ...(a.statuses[crewId]?.topSignals.filter((s) => COG_KEYS.includes(s.key)).map((s) => s.level) ?? [])),
-      not: `sürekli izlenen ölçümler (PVT, ruh hali ve stres skorları, konuşma). ${LICENSED_NOTE}`,
+      not: `continuously monitored measures (PVT, mood and stress scores, speech). ${LICENSED_NOTE}`,
     });
   }
   const seviye = worstLevel(...etkenler.map((f) => f.seviye));
   const name = shortName(crewId);
   const bad = etkenler.filter((f) => f.seviye !== 'normal').map((f) => f.kisa);
   const ozet = !guncelTest
-    ? `${name} için son 4 görev gününde test yok; durum yalnızca Katman 1'in sürekli ölçümlerine dayanıyor.`
+    ? `No tests for ${name} in the last 4 mission days; status relies only on Layer 1's continuous measures.`
     : bad.length
-      ? `${name}: ${bad.length > 1 ? `${bad.slice(0, -1).join(', ')} ve ${bad[bad.length - 1]}` : bad[0]} izlenmeli.`
-      : `${name}: test sonuçları ve bilişsel ölçümler olağan aralıkta.`;
+      ? `${name}: monitor ${bad.length > 1 ? `${bad.slice(0, -1).join(', ')} and ${bad[bad.length - 1]}` : bad[0]}.`
+      : `${name}: test results and cognitive measures within the usual range.`;
   return { seviye, ozet, etkenler, guncelTest };
 }
 

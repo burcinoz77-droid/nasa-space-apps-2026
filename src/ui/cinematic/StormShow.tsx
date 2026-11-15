@@ -56,8 +56,8 @@ export function StormShow({ onClose }: { onClose: () => void }) {
     <Stage
       fading={phase === 'outro'}
       onClose={onClose}
-      label="Güneş fırtınası sinematiği"
-      credit={`${videoOk ? 'Görüntü: NASA/SDO · ' : ''}Olay zamanları: NASA DONKI · Doz: ARES-1 simülasyonu (canlı)`}
+      label="Solar particle event cinematic"
+      credit={`${videoOk ? 'Imagery: NASA/SDO · ' : ''}Event times: NASA DONKI · Dose: ARES-1 simulation (live)`}
     >
       <Particles active={phase !== 'flare'} shielded={phase === 'response' && sheltered} />
       {/* Güneş: gerçek SDO görüntüsü (tam ekrandan sol köşeye küçülür) */}
@@ -93,14 +93,14 @@ export function StormShow({ onClose }: { onClose: () => void }) {
       {/* 1 · Patlama yazısı */}
       <Caption show={phase === 'flare'} pos="bottom-left">
         <div className="font-mono text-xs tracking-[0.3em]" style={{ color: COLORS.caution }}>
-          {videoOk ? 'GERÇEK GÖRÜNTÜ · NASA/SDO · AIA 304 Å' : 'CANLANDIRMA · VERİ: NASA DONKI'}
+          {videoOk ? 'REAL IMAGERY · NASA/SDO · AIA 304 Å' : 'ANIMATION · DATA: NASA DONKI'}
         </div>
-        <div className="mt-2 text-3xl font-bold md:text-4xl">X3.9 güneş patlaması</div>
+        <div className="mt-2 text-3xl font-bold md:text-4xl">X3.9 solar flare</div>
         <div className="mt-1 text-lg" style={{ color: COLORS.text }}>
-          10 Mayıs 2024 · 06.54 UTC
+          10 May 2024 · 06:54 UTC
         </div>
         <div className="mt-3 max-w-md text-sm" style={{ color: COLORS.textMuted }}>
-          Bu gerçek olay. Simülasyonumuz NASA DONKI kayıtlarındaki bu fırtınanın, Mars yolundaki ARES-1'e çarptığı anı canlandırıyor.
+          This is a real event. Our simulation shows the moment this storm, from NASA DONKI records, hits ARES-1 on its way to Mars.
         </div>
       </Caption>
 
@@ -110,34 +110,34 @@ export function StormShow({ onClose }: { onClose: () => void }) {
       {/* 2 · Yolculuk */}
       <Caption show={phase === 'travel'} pos="top">
         <div className="font-mono text-xs tracking-[0.3em]" style={{ color: COLORS.caution }}>
-          PARÇACIK BULUTU YOLDA · GOES &gt;10 MeV
+          PARTICLE CLOUD INBOUND · GOES &gt;10 MeV
         </div>
-        <div className="mt-2 text-2xl font-bold md:text-3xl">ARES-1, Mars yörüngesi · görevin 180. günü</div>
+        <div className="mt-2 text-2xl font-bold md:text-3xl">ARES-1, Mars orbit · Mission Day 180</div>
         <div className="mt-2 text-base" style={{ color: COLORS.textMuted }}>
-          Dünya'ya mesaj gecikmesi <b style={{ color: COLORS.text }}>{fmtMinSec(delay)}</b>: yer kontrolün uyarısı geldiğinde iş işten geçmiş olur.
+          One-way light time to Earth <b style={{ color: COLORS.text }}>{fmtMinSec(delay)}</b>: by the time a warning from MCC arrives, it is too late.
         </div>
       </Caption>
 
       {/* 3 · Çarpma: canlı doz sayacı */}
       <Caption show={phase === 'impact' || phase === 'response'} pos="top-right">
         <div className="font-mono text-xs tracking-[0.3em]" style={{ color: hot ? COLORS.critical : COLORS.normal }}>
-          CANLI ÖLÇÜM · KOKPİT DOZ HIZI
+          LIVE TELEMETRY · VEHICLE DOSE RATE
         </div>
         <div className="mt-1 font-mono text-6xl font-bold tabular-nums md:text-7xl" style={{ color: hot ? COLORS.critical : COLORS.normal, transition: 'color .6s' }}>
           {fmt(dose, 0)}
         </div>
         <div className="font-mono text-lg" style={{ color: COLORS.text }}>
-          µSv/sa · normalin <b>{fmt(multiplier, 0)}</b> katı
+          µSv/h · <b>{fmt(multiplier, 0)}</b>× normal
         </div>
         <div className="mt-2 font-mono text-sm" style={{ color: COLORS.textMuted }}>
-          Mars yüzeyi (atmosfer kalkanı): {fmt(surfaceDose, 0)} µSv/sa
+          Mars surface (atmospheric shielding): {fmt(surfaceDose, 0)} µSv/h
         </div>
         <div className="font-mono text-sm" style={{ color: COLORS.textMuted }}>
-          Elif'in toplam dozu: {fmt(cumulative, 1)} / 600 mSv kariyer limiti
+          Elif's cumulative dose: {fmt(cumulative, 1)} / 600 mSv career limit
         </div>
         {sheltered && (
           <div className="mt-2 text-sm font-semibold" style={{ color: COLORS.normal }}>
-            Sığınakta doz hızı yaklaşık %70 düşer (varsayım)
+            In the storm shelter the dose rate drops by about 70% (assumption)
           </div>
         )}
       </Caption>
@@ -146,17 +146,17 @@ export function StormShow({ onClose }: { onClose: () => void }) {
       <Caption show={phase === 'response'} pos="bottom-left">
         <div className="rounded-xl border p-4" style={{ borderColor: alpha(COLORS.critical, 0.6), background: alpha('#02040b', 0.75) }}>
           <div className="font-mono text-xs tracking-[0.25em]" style={{ color: COLORS.critical }}>
-            ASTRA · KATMAN 1 · {incident ? 'KRİTİK OLAY AÇILDI' : 'ANOMALİ TESPİT EDİLİYOR'}
+            ASTRA · LAYER 1 · {incident ? 'WARNING EVENT OPENED' : 'DETECTING ANOMALY'}
           </div>
-          <div className="mt-1 text-xl font-bold">Radyasyon: doz hızı kişisel normalin çok üstünde</div>
+          <div className="mt-1 text-xl font-bold">Radiation: dose rate far above personal baseline</div>
           <div className="mt-3 flex items-center gap-2 text-base" style={{ color: sheltered ? COLORS.normal : COLORS.textMuted }}>
             <span>{sheltered ? '✓' : '…'}</span>
             <span>
-              Otonom adım: <b>radyasyon sığınağına geçiş</b> {sheltered ? '(başlatıldı)' : '(bekleniyor)'}
+              Automatic action: <b>storm shelter ingress</b> {sheltered ? '(started)' : '(pending)'}
             </span>
           </div>
           <div className="mt-1 text-sm" style={{ color: COLORS.textMuted }}>
-            İnsan onayı beklemeden, önceden onaylı güvenli adım. Son karar mürettebatta.
+            A pre-approved safing action that does not wait for human approval. The final decision stays with the crew.
           </div>
         </div>
       </Caption>
@@ -211,7 +211,7 @@ function Ship({ show, hot, sheltered }: { show: boolean; hot: boolean; sheltered
           </g>
         ))}
         <text x="470" y="440" textAnchor="middle" fill={COLORS.textMuted} fontSize="15">
-          Gezegen ekibi · yüzey · atmosfer kalkanı
+          Surface crew · atmospheric shielding
         </text>
 
         {/* Yörüngedeki ARES-1 */}
@@ -222,7 +222,7 @@ function Ship({ show, hot, sheltered }: { show: boolean; hot: boolean; sheltered
           {/* Sığınak bölmesi (su duvarlı) */}
           <rect x="20" y="-16" width="62" height="32" rx="8" fill={sheltered ? alpha(COLORS.normal, 0.25) : '#0f172a'} stroke={sheltered ? COLORS.normal : '#475569'} strokeDasharray="4 3" />
           <text x="51" y="40" textAnchor="middle" fill={sheltered ? COLORS.normal : COLORS.textMuted} fontSize="12">
-            sığınak
+            shelter
           </text>
           {/* Kokpit ekibi: sığınağa kayar */}
           {STRIPES.map((stripe, i) => (
@@ -239,7 +239,7 @@ function Ship({ show, hot, sheltered }: { show: boolean; hot: boolean; sheltered
           {sheltered && <circle r="120" fill="url(#shield)" />}
         </g>
         <text x="150" y="80" textAnchor="middle" fill={COLORS.text} fontSize="17" fontWeight="700">
-          ARES-1 · Kokpit ekibi
+          ARES-1 · orbit crew
         </text>
       </svg>
     </div>
