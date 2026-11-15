@@ -20,8 +20,13 @@ Plan gereği kod bu klasörde değil, ortak uygulamanın içinde. Parça 4'ün d
 | `src/ai/*.test.ts`, `src/psych/psych.test.ts` | Testler (`npm run test`) ve canlı model testi |
 | `docs/`, `README.md` | ASTRA belgeleri, test tablosu, yapay zekâ beyanı |
 
-## Sıradaki adımlar
+## Durum
 
-1. `.env` dosyasına `GEMINI_API_KEY` yaz, `npm run dev`, sohbette hazır sorulardan birine bas.
-2. 10 soruyu gerçek modelle test et: `docs/test-sorulari.md`.
-3. Pazar 12.00: `.env` ve Vercel'de `ASTRA_PROVIDER=claude` + `ANTHROPIC_API_KEY`, Vercel'de Redeploy, testi tekrar çalıştır.
+- ASTRA yayında Gemini ile çalışıyor (Vercel ve Cloudflare); Claude'a geçiş seçeneği kodda duruyor ama kullanılmadı.
+- Yerelde denemek için: `.env` dosyasına `GEMINI_API_KEY` yaz, `npm run dev`, sohbette hazır sorulardan birine bas.
+- Canlı model testi (10 soru): `docs/test-sorulari.md`.
+
+## Kalan işler
+
+1. 30 saniyelik demo videosu (İngilizce altyazılı) ve en fazla 7 slaytlık İngilizce sunum.
+2. Video ve sunum linklerini ana `README.md`'deki iki tabloya eklemek.

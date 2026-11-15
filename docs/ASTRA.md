@@ -43,7 +43,7 @@ Mentor önerisiyle ASTRA üç yetenekle çalışır:
 
 | Yetenek | Ne yapar | Nerede |
 | --- | --- | --- |
-| **Araç kullanımı (tool calling)** | Model, cevap için gereken ayrıntıyı 6 salt-okur araçla kendisi çeker: `get_crew_member` (bir astronotun 36 ölçümü kişisel normalleriyle, skorları, açık olayları), `get_metric_trend` (yakın ve uzun dönem gidiş: artıyor / azalıyor / sabit), `assess_possible_conditions` (veriye dayalı olası durumlar), `list_incidents`, `get_event_log`, `lookup_reference` (eşik, limit ve bilimsel kaynak). Gemini'de `functionCall`, Claude'da `tool_use` ile; en fazla 3 tur. Kullanılan araçlar cevabın altında "⚙ Kullanılan araçlar" satırında görünür. | `api/astra.ts` (`TOOLS`, `runTool`) |
+| **Araç kullanımı (tool calling)** | Model, cevap için gereken ayrıntıyı 10 salt-okur araçla kendisi çeker: `get_crew_member` (bir astronotun ölçümleri kişisel normalleriyle, skorları, açık olayları), `get_metric_trend` (yakın ve uzun dönem gidiş: artıyor / azalıyor / sabit), `assess_possible_conditions` (veriye dayalı olası durumlar), `list_incidents`, `get_event_log`, `lookup_reference` (eşik, limit ve bilimsel kaynak); psikolojik testler için `get_test_results` (son sonuçlar ve değişim), `get_psych_state` (psikolojik durum ve etkenleri), `get_test_schedule` (kimin hangi testi ne zaman yapması gerektiği) ve `compare_crew_tests` (ekip karşılaştırması). Gemini'de `functionCall`, Claude'da `tool_use` ile; en fazla 3 tur. Kullanılan araçlar cevabın altında "⚙ Kullanılan araçlar" satırında görünür. | `api/astra.ts` (`TOOLS`, `runTool`) |
 | **Bağlam (context)** | Her soruda kısa bir canlı veri özeti (herkes için 8 ana ölçüm, sorunlu kişilerin en çok sapan sinyalleri, açık olaylar, sabitler) + araçların okuduğu anlık veri kopyası + NASA ve hakemli kaynaklı bilgi tabanı. | `src/ai/context.ts`, `src/ai/tooldata.ts`, `src/ai/knowledge.ts` |
 | **Çok turlu sohbet (multi-turn)** | Son 10 mesaj modele gider; "Peki Kerem?" gibi devam soruları anlaşılır. Sohbet sayfa yenilense de devam eder. | `src/ai/client.ts`, `api/astra.ts` (`cleanHistory`) |
 
@@ -105,7 +105,7 @@ anlaşılır. Örnek cevaplar `api/astra.ts` içindeki `SYSTEM_PROMPT`'ta.
 `.env` (yerel) ve Vercel ortam değişkenleri:
 
 ```
-ASTRA_PROVIDER=gemini          # demo günü: claude
+ASTRA_PROVIDER=gemini          # yayında Gemini kullanıldı; claude isteğe bağlı
 GEMINI_API_KEY=...
 GEMINI_MODEL=gemini-3.8-flash
 GEMINI_FALLBACK_MODELS=gemini-3.5-flash-lite,gemini-3.7-flash  # ana model 503/429 verirse ya da 12 sn cevap vermezse sırayla denenir
