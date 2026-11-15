@@ -29,7 +29,7 @@ const SRC = {
   jones2022: { source: 'Jones vd. 2022 (NASA Reaction Self Test)', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC8919197' },
   basner2011: { source: 'Basner vd. 2011, PVT-B', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC3197786' },
   franke2017: { source: 'Franke vd. 2017, BSI-18 normları', url: 'https://bmcmedresmethodol.biomedcentral.com/articles/10.1186/s12874-016-0283-3' },
-  watson1988: { source: 'Watson vd. 1988, PANAS', url: 'https://ogg.osu.edu/media/documents/MB%20Stream/PANAS.pdf' },
+  watson1988: { source: 'Watson vd. 1988, PANAS', url: 'https://doi.org/10.1037/0022-3514.54.6.1063' },
   hrpSans: { source: 'NASA HRP SANS riski', url: 'https://www.nasa.gov/reference/risk-of-spaceflight-associated-neuro-ocular-syndrome-sans' },
   swri: { source: 'Curiosity RAD, Zeitlin vd. 2013 (SwRI)', url: 'https://www.swri.org/newsroom/press-releases/swri-led-team-calculates-the-radiation-exposure-associated-trip-mars' },
   ochmoRad: { source: 'NASA-STD-3001 (OCHMO radyasyon özeti)', url: 'https://www.nasa.gov/sites/default/files/atoms/files/radiation_protection_technical_brief_ochmo.pdf' },
