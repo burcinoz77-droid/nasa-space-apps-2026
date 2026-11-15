@@ -5,6 +5,7 @@ import { SCENARIOS } from '../../sim/scenario';
 import { PARAMS, SIM, type Param } from '../../sim/parameters';
 import { useAstra } from '../../store';
 import type { ScenarioId, Telemetry } from '../../types';
+import { DEMO_EVENT } from '../cinematic/phases';
 import { CINEMATIC_EVENT, SHOWS } from '../cinematic/shows';
 import { alpha, COLORS, fmt } from '../theme';
 
@@ -124,6 +125,13 @@ export function Ayarlar() {
             Aynı seed: demo her seferinde aynı veriyi baştan üretir.
           </p>
           <div className="mt-3 flex flex-col gap-2">
+            <button
+              onClick={() => window.dispatchEvent(new Event(DEMO_EVENT))}
+              className="w-full rounded-lg px-3 py-2.5 font-semibold hover:brightness-110"
+              style={{ background: alpha(COLORS.ai, 0.25), color: COLORS.text, border: `1px solid ${COLORS.ai}` }}
+            >
+              ★ Jüri demosu (≈2 dk, baştan sona otomatik)
+            </button>
             {(Object.keys(SHOWS) as ScenarioId[]).map((id) => (
               <button
                 key={id}
