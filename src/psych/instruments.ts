@@ -48,6 +48,13 @@ export const TEST_INFO: Record<TestKind, { ad: string; kisa: string; sure: strin
   },
 };
 
+// ---------------------------------------------------------------- Lisanslı ölçeklerin simüle puanları
+// Simülasyondaki (Parça 1) PANAS ve BSI-18 puanları gerçek ölçüm değildir; soruları kullanılmaz, sadece puan simüle edilir.
+// İki ölçek de lisanslıdır; gerçek sistemde bu puanları toplamak için lisans gerekir. ASTRA ve Testler sekmesi bunu belirtir.
+export const LICENSED_SIM_KEYS: readonly string[] = ['cog.panasPositive', 'cog.panasNegative', 'cog.bsi18_gsi'];
+export const LICENSED_NOTE = 'PANAS ve BSI-18 puanları simüledir; gerçek sistemde lisanslı ölçek gerekir.';
+export const LICENSED_NOTE_LONG = `${LICENSED_NOTE.slice(0, -1)} (PANAS: APA telifi, BSI-18: Pearson'un ticari ölçeği).`;
+
 // ---------------------------------------------------------------- Samn-Perelli (7 basamak)
 // Maddeler: Samn & Perelli 1982. Uç ifadeler PMC9286802'de, tüm basamaklar havacılık çalışmalarında aynen geçer.
 export const SP_LEVELS: { puan: number; tr: string; en: string }[] = [

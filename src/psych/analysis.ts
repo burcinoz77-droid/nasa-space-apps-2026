@@ -6,7 +6,7 @@ import { CREW_BY_ID } from '../crew';
 import { useAstra, type AstraState } from '../store';
 import type { CrewId, Level, MetricKey } from '../types';
 import { fmt, scoreLevel, worstLevel } from '../ui/theme';
-import { TEST_INFO, TEST_SOURCES, TLX_ITEMS, type TestKind, type TestSource } from './instruments';
+import { LICENSED_NOTE, TEST_INFO, TEST_SOURCES, TLX_ITEMS, type TestKind, type TestSource } from './instruments';
 import { spLabel, tlxHighest } from './scoring';
 import { activePvt, DAY_TICKS, missionAgo, resultsOf, useTests, type PvtResult, type SpResult, type TestResult, type TlxResult } from './store';
 
@@ -159,7 +159,7 @@ export function psychState(crewId: CrewId, a: AstraState = useAstra.getState(), 
       kisa: 'Katman 1 bilişsel alanı',
       deger: `%${Math.round(cogScore)}`,
       seviye: worstLevel(scoreLevel(cogScore), ...(a.statuses[crewId]?.topSignals.filter((s) => COG_KEYS.includes(s.key)).map((s) => s.level) ?? [])),
-      not: 'sürekli izlenen ölçümler (PVT, ruh hali ve stres skorları, konuşma)',
+      not: `sürekli izlenen ölçümler (PVT, ruh hali ve stres skorları, konuşma). ${LICENSED_NOTE}`,
     });
   }
   const seviye = worstLevel(...etkenler.map((f) => f.seviye));

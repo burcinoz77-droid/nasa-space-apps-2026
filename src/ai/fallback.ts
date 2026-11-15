@@ -13,7 +13,7 @@ import { boneLossEstimate } from './knowledge';
 import { ACTION_DONE_TR, crewInText, delayText, LEVEL_TR, shortName, valueText } from './labels';
 import { baselineReady } from './memory';
 import { crewComparison, dueTests, psychState } from '../psych/analysis';
-import type { TestKind } from '../psych/instruments';
+import { LICENSED_NOTE, LICENSED_SIM_KEYS, type TestKind } from '../psych/instruments';
 import { spLabel, tlxHighest } from '../psych/scoring';
 import { resultsOf } from '../psych/store';
 
@@ -453,12 +453,17 @@ function metricText(s: AstraState, crew: CrewId[], keys: MetricKey[]): string {
   if (crew.length) {
     const id = crew[0];
     const parts = keys.map((k) => `${label(k)} ${valueText(k, metricNow(s, id, k) ?? NaN)}`);
-    return sentences(`${shortName(id)} için ${list(parts)}.`, rangeSentence(s, [id], keys[0]), statusSentence(s, id, false));
+    return sentences(
+      `${shortName(id)} için ${list(parts)}.`,
+      keys.some((k) => LICENSED_SIM_KEYS.includes(k)) && LICENSED_NOTE,
+      rangeSentence(s, [id], keys[0]),
+      statusSentence(s, id, false),
+    );
   }
   const key = keys[0];
   const ids = CREW_IDS.filter((id) => s.telemetry[id]);
   const parts = ids.map((id) => `${shortName(id)} ${valueText(key, metricNow(s, id, key) ?? NaN)}`);
-  return sentences(`${METRIC_BY_KEY[key].label}: ${list(parts)}.`, rangeSentence(s, ids, key));
+  return sentences(`${METRIC_BY_KEY[key].label}: ${list(parts)}.`, LICENSED_SIM_KEYS.includes(key) && LICENSED_NOTE, rangeSentence(s, ids, key));
 }
 
 /** Resmi normal aralığı olan ölçümde: herkes aralıktaysa bunu, değilse aralık dışındakileri söyler. */

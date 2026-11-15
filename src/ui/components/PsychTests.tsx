@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { shortName } from '../../ai/labels';
 import { dueTests, psychState, type DueTest } from '../../psych/analysis';
-import { PVT, SP_LEVELS, SP_PROMPT, TEST_INFO, TEST_SOURCES, TLX_ITEMS, TLX_PROMPT, TLX_STEP, type TestKind, type TlxKey } from '../../psych/instruments';
+import { LICENSED_NOTE_LONG, PVT, SP_LEVELS, SP_PROMPT, TEST_INFO, TEST_SOURCES, TLX_ITEMS, TLX_PROMPT, TLX_STEP, type TestKind, type TlxKey } from '../../psych/instruments';
 import { rawTlx, scorePvt, spLabel, tlxHighest, type PvtScore } from '../../psych/scoring';
 import { activePvt, missionAgo, useTests, type TestResult } from '../../psych/store';
 import { useAstra } from '../../store';
@@ -519,7 +519,7 @@ function Sources() {
           </a>
         </span>
       ))}
-      . Türkçe metinler ekibin çevirisidir (resmi Türkçe sürüm değildir). PANAS (telifli) ve BSI-18 (ticari) test olarak kullanılmadı.
+      . Türkçe metinler ekibin çevirisidir (resmi Türkçe sürüm değildir). PANAS (telifli) ve BSI-18 (ticari) test olarak kullanılmadı; {LICENSED_NOTE_LONG}
     </div>
   );
 }

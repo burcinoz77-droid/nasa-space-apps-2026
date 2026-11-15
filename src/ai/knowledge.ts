@@ -2,7 +2,7 @@
 // sorularında lookup_reference aracıyla buradan okur ve kaynağı belirtir.
 // Sayılar planın "Veri ve kaynaklar" tablosundan ve src/sim/parameters.ts'ten gelir; yeni sayı uydurulmaz.
 // "Varsayım" yazanların NASA ya da hakemli bir kaynağı yoktur.
-import { TEST_SOURCES } from '../psych/instruments';
+import { LICENSED_NOTE_LONG, TEST_SOURCES } from '../psych/instruments';
 import { PARAMS } from '../sim/parameters';
 
 export interface Fact {
@@ -111,6 +111,7 @@ export const REFERENCES: ReferenceTopic[] = [
       { bilgi: `PVT'de ${val('pvtLapseThreshold', 355)} ms ve üzerindeki tepkiler dikkat kaybı sayılır.`, ...src('pvtLapseThreshold', 'Basner vd. 2011, PVT-B') },
       { bilgi: 'PANAS olumlu duygu ortalaması 33,3, olumsuz duygu ortalaması 17,4 (10–50 ölçeği).', ...src('panasPositiveMean', 'Watson vd. 1988, PANAS') },
       { bilgi: 'Katman 1, GSR, ter kortizolü ve PANAS olumsuz duygunun üçü birlikte yükselirse stres olayı açar.', kaynak: 'Katman 1 kuralı' },
+      { bilgi: LICENSED_NOTE_LONG, kaynak: 'Proje notu (simülasyon)' },
     ],
   },
   {

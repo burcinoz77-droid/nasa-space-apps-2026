@@ -1,6 +1,7 @@
 // Parça 4 · Psikolojik testler: puanlama, Katman 1'e giden PVT-B, test planı, psikolojik durum ve ASTRA araçları.
 import { beforeEach, describe, expect, it } from 'vitest';
 import { runTool } from '../../api/astra';
+import { buildContext } from '../ai/context';
 import { fallbackAnswer } from '../ai/fallback';
 import { answerSources } from '../ai/sources';
 import { countSentences, makeDemoState, runSimulation } from '../ai/testing';
@@ -10,7 +11,7 @@ import { createSimulation } from '../sim';
 import { useAstra } from '../store';
 import type { CrewId } from '../types';
 import { dueTests, psychState, ROUTINE_TICKS } from './analysis';
-import { PVT, SP_LEVELS, TLX_ITEMS } from './instruments';
+import { LICENSED_NOTE, PVT, SP_LEVELS, TLX_ITEMS } from './instruments';
 import { rawTlx, scorePvt, tlxHighest, type TlxRatings } from './scoring';
 import { activePvt, applyTestResults, DAY_TICKS, PVT_HOLD_TICKS, useTests } from './store';
 
@@ -191,6 +192,18 @@ describe('ASTRA · test araçları ve yedek mod', () => {
   it('hiç test yokken uydurmaz', () => {
     makeDemoState();
     expect(ask('Psikolojik test sonuçları ne durumda?')).toMatch(/Henüz kimse psikolojik test yapmadı/);
+  });
+
+  it('PANAS ve BSI-18 simüle; ASTRA bunu belirtir (lisanslı ölçek)', () => {
+    makeDemoState();
+    const mood = ask("Elif'in ruh hali nasıl?");
+    expect(mood).toContain(LICENSED_NOTE);
+    expect(countSentences(mood)).toBeLessThanOrEqual(4);
+    const data = buildToolData(useAstra.getState());
+    const panas = data.murettebat.elif.olcumler.find((m) => m.anahtar === 'cog.panasPositive')!;
+    expect(panas).toMatchObject({ not: LICENSED_NOTE });
+    expect(data.murettebat.elif.olcumler.find((m) => m.anahtar === 'cardio.hr_bpm')).not.toHaveProperty('not');
+    expect(JSON.stringify(buildContext(useAstra.getState()))).toContain('lisanslı ölçek');
   });
 
   it('cevap altında test kaynakları gösterilir', () => {
