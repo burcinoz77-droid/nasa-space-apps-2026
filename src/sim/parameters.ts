@@ -131,8 +131,15 @@ export const PARAMS = {
 export type ParamKey = keyof typeof PARAMS;
 
 /** Bir ölçümün kaynak rozeti için: hangi parametreye dayanıyor? (Parça 3'ün SourceBadge'i bunu kullanabilir) */
-export function sourceForMetric(key: MetricKey): Param & { key: ParamKey } {
-  const k = NORMALS[key].param;
+// Gezegen ekibi uzay yürüyüşünde: bu ölçümlerin kaynağı EVA değeridir
+const EVA_PARAMS: Partial<Record<MetricKey, ParamKey>> = {
+  'cardio.hr_bpm': 'heartRateEva',
+  'resp.rr_bpm': 'respRateEva',
+  'resp.minuteVent_L_min': 'minuteVentEva',
+};
+
+export function sourceForMetric(key: MetricKey, location?: CrewLocation): Param & { key: ParamKey } {
+  const k = (location === 'GEZEGEN' ? EVA_PARAMS[key] : undefined) ?? NORMALS[key].param;
   return { key: k, ...PARAMS[k] };
 }
 
