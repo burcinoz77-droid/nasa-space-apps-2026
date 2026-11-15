@@ -56,7 +56,7 @@
     {
       "metric": "env.doseRate_uSv_h",
       "crew": "KOKPIT",
-      "mul": 36,
+      "mul": 6,
       "startTick": 40,
       "rampTicks": 5,
       "endTick": 100

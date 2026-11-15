@@ -194,6 +194,14 @@ describe('Katman 1 · erken uyarı (ardışık ölçüm kuralı)', () => {
     expect(resolved[0].text).toMatch(/^Çözüldü/);
   });
 
+  it('resmi normal aralıktaki değer uyarı vermez: EtCO₂ 44 mmHg (normal 35–45) sorun değil, 48 mmHg sorun', () => {
+    const inRange = h.run(6, { KOKPIT: { 'resp.etco2_mmHg': 44 } });
+    expect(inRange.statuses.elif.level).toBe('normal');
+    expect(inRange.statuses.elif.domainScores.resp).toBe(100);
+    const out = h.run(6, { KOKPIT: { 'resp.etco2_mmHg': 48 } });
+    expect(out.statuses.elif.level).not.toBe('normal');
+  });
+
   it('mürettebat onayı: olay "acknowledged" olur, kayda ACK düşer, ikinci onay boş döner', () => {
     const out = h.run(3, { KOKPIT: { 'env.ppCO2_mmHg': 3.1 } });
     const id = out.incidents[0].id;

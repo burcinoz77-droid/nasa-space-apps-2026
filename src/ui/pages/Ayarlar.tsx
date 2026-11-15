@@ -138,6 +138,7 @@ export function Ayarlar() {
               <tr>
                 <th className="py-1 pr-3 font-normal">Parametre</th>
                 <th className="py-1 pr-3 font-normal">Değer</th>
+                <th className="py-1 pr-3 font-normal">Normal aralık</th>
                 <th className="py-1 font-normal">Kaynak</th>
               </tr>
             </thead>
@@ -148,6 +149,9 @@ export function Ayarlar() {
                   <td className="py-1.5 pr-3 font-mono whitespace-nowrap">
                     {fmt(p.value, Number.isInteger(p.value) ? 0 : 2)} <span style={{ color: COLORS.textMuted }}>{p.unit}</span>
                   </td>
+                  <td className="py-1.5 pr-3 font-mono whitespace-nowrap">
+                    {p.normalRange ? `${fmt(p.normalRange[0], Number.isInteger(p.normalRange[0]) ? 0 : 1)}–${fmt(p.normalRange[1], Number.isInteger(p.normalRange[1]) ? 0 : 1)}` : '—'}
+                  </td>
                   <td className="py-1.5"><SourceCell p={p} /></td>
                 </tr>
               ))}
@@ -155,7 +159,7 @@ export function Ayarlar() {
           </table>
         </div>
         <p className="mt-3 text-xs" style={{ color: COLORS.textMuted }}>
-          Güneş fırtınası olay zamanları NASA DONKI Mayıs 2024 kayıtlarından alındı (data/donki_sep_2024-05.json). DONKI doz değeri vermez; doz çarpanları varsayımdır.
+          Güneş fırtınası olay zamanları NASA DONKI Mayıs 2024 kayıtlarından alındı (data/donki_sep_2024-05.json). DONKI doz değeri vermez: fırtına zirvesi çarpanı Curiosity'nin Mars yolculuğu ölçümüne, sığınak çarpanı Artemis I ölçümüne dayanır; başlangıç ve yüzey çarpanları varsayımdır. "Normal aralık" sütunundaki aralıktaki değerler için Katman 1 uyarı vermez.
         </p>
       </section>
     </div>
