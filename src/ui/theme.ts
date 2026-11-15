@@ -1,21 +1,24 @@
 // Renk sistemi (Sahibi: Parça 3). Renk = anlam. Başka dosyada renk kodu yazmayın, buradan alın.
-// Kırmızı yalnızca KRİTİK içindir; dekorasyon için kullanılmaz (alarm yorgunluğu olmasın).
-// Uyarı renkleri havacılıktaki kuralla aynı: uyarı kırmızı, ikaz amber (14 CFR 25.1322).
+// NASA-STD-3001 Cilt 2, Ek F (ekip ekranı standardı): renk süs için değil anlam içindir; uyarı kırmızı, dikkat sarı,
+// bilgi mavi. Kırmızı yalnızca KRİTİK içindir (alarm yorgunluğu olmasın). Yazı/zemin kontrastı en az 6:1.
 import type { Level } from '../types';
 
-// Tema: canlı okyanus mavisi. Zemin siyah değil koyu mavi; paneller bir ton açık; vurgu parlak gök mavisi.
-// Projeksiyonda soluk görünmesin diye zemin eskisinden belirgin şekilde açık (kontrast yine WCAG AA üstü).
+// Tema: NASA tarzı görev konsolu. Yan menü ve üst bant NASA amblem mavisi (#0B3D91), paneller koyu lacivert,
+// yazı beyaz. Mavi tonları NASA Horizon Design System'in "NASA Blue" ailesinden türetildi.
 export const COLORS = {
-  bg: '#0C2547', // koyu okyanus mavisi zemin
-  panel: '#14396B', // paneller: zeminden bir ton açık mavi
-  border: '#2C5A92',
-  text: '#F3F8FF',
-  textMuted: '#A8C2E6',
-  calm: '#4FC3FF', // parlak gök mavisi: ana vurgu, seçili öğe, bilgi
-  normal: '#3EE0A1', // yeşil: güvenli
-  caution: '#FFC53D', // amber: dikkat, izlenmeli
-  critical: '#FF6B6B', // kırmızı: acil, hemen eylem
-  ai: '#B9A2FF', // mor: ASTRA'nın (yapay zekâ) sesi; Katman 1 uyarılarından ayrılsın
+  bg: '#071B3F', // koyu lacivert zemin
+  panel: '#0C2858', // konsol panelleri
+  chrome: '#0B3D91', // NASA amblem mavisi: yan menü ve üst bant
+  select: '#1A5BC4', // seçili sekme / kişi dolgusu (beyaz yazıyla 6,3:1)
+  border: '#1E4C94',
+  text: '#FFFFFF',
+  textMuted: '#B9CBEA', // panel üstünde 8,8:1
+  calm: '#6FB3FF', // bilgi mavisi: vurgu, bağlantı, seçili öğe çizgisi (panel üstünde 6,5:1)
+  normal: '#4BDB8A', // yeşil: normal (HDS "Active Green")
+  caution: '#FFD23F', // sarı: dikkat
+  critical: '#FF8A80', // kırmızı yazı: kritik (panel üstünde 6:1)
+  alarm: '#C8281D', // kırmızı dolgu: kritik ters video (beyaz yazıyla 5,6:1)
+  ai: '#BBA6FF', // mor: ASTRA'nın (yapay zekâ) sesi; Katman 1 uyarılarından ayrılsın
   offline: '#9DB0CC', // gri-mavi: veri yok / bağlantı yok
 } as const;
 

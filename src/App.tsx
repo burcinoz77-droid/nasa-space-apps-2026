@@ -1,8 +1,7 @@
-// Uygulama iskeleti: yan menü + üst bar + olay bandı + sayfa (Sahibi: Parça 3).
-// Sayfa sahipleri: Kokpit/Mürettebat = Parça 3,
-// Raporlar = Parça 2, Ayarlar = Parça 1, Görevler ve ASTRA sohbet paneli = Parça 4.
-// Seçili astronot burada tutulur: Kokpit'ten bir kişiye tıklanınca Mürettebat sayfası o kişiyle açılır.
-// Sade gezinme: 5 sayfa, her birinin altında ne işe yaradığını söyleyen kısa bir satır.
+// Uygulama iskeleti (Sahibi: Parça 3): solda NASA mavisi dar menü, üstte ortak bilgi bandı, altında sayfa.
+// Sayfa sahipleri: Kokpit konsolu = Parça 3, Raporlar = Parça 2, Ayarlar = Parça 1, Görevler ve ASTRA sohbet = Parça 4.
+// Üst bant NASA-STD-3001'in "ortak alan" kuralına göre her sayfada aynı yerde: sayfa adı, saat, konum, Dünya bağlantısı,
+// gecikme, açık olaylar. Seçili astronot burada tutulur: konsolda, Raporlar'da ve olay bandında aynı kişi seçilidir.
 import { type ReactNode, useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { CREW, CREW_BY_ID } from './crew';
@@ -10,42 +9,32 @@ import { controls, SCENARIO_NAMES } from './loop';
 import { SIM } from './sim/parameters';
 import { useAstra } from './store';
 import type { CrewId, ScenarioId, Telemetry } from './types';
-import { AstraChatPanel } from './ui/components/AstraChatPanel';
 import { ScenarioCinematics } from './ui/cinematic';
 import { DemoTour } from './ui/cinematic/DemoTour';
 import { NAVIGATE_EVENT } from './ui/cinematic/phases';
-import { IconBell, IconCockpit, IconCrew, IconReports, IconReset, IconSettings, IconSignal, IconTasks, OrbitalisMark } from './ui/components/Icons';
+import { AstraChatPanel } from './ui/components/AstraChatPanel';
+import { IconBell, IconCockpit, IconReports, IconReset, IconSettings, IconTasks, OrbitalisMark } from './ui/components/Icons';
 import { IncidentBanner } from './ui/components/IncidentBanner';
 import { SourceBadge } from './ui/components/SourceBadge';
 import { fmtDelay, initials } from './ui/format';
-import { AstronotEkrani } from './ui/pages/AstronotEkrani';
 import { Ayarlar } from './ui/pages/Ayarlar';
 import { Gorevler } from './ui/pages/Gorevler';
 import { Kokpit } from './ui/pages/Kokpit';
 import { Raporlar } from './ui/pages/Raporlar';
-import { alpha, COLORS, fmt } from './ui/theme';
+import { COLORS, fmt } from './ui/theme';
 
-type PageId = 'kokpit' | 'murettebat' | 'gorevler' | 'raporlar' | 'ayarlar';
+type PageId = 'kokpit' | 'gorevler' | 'raporlar' | 'ayarlar';
 
-const PAGES: { id: PageId; label: string; hint: string; icon: () => ReactNode; subtitle: string }[] = [
-  { id: 'kokpit', label: 'Kokpit', hint: 'Genel durum', icon: IconCockpit, subtitle: 'Görevin tek bakışta özeti' },
-  { id: 'murettebat', label: 'Mürettebat', hint: 'Kişi kişi sağlık', icon: IconCrew, subtitle: 'Bir astronot seçin: vücut haritası ve tüm ölçümler' },
-  { id: 'gorevler', label: 'Görevler', hint: 'EVA ve ekipman', icon: IconTasks, subtitle: 'Günün EVA görevi ve ekipman kontrolü' },
-  { id: 'raporlar', label: 'Raporlar', hint: 'Olay kaydı', icon: IconReports, subtitle: 'Olaylar, otonom adımlar, onaylar' },
-  { id: 'ayarlar', label: 'Ayarlar', hint: 'Senaryo, kaynaklar', icon: IconSettings, subtitle: 'Senaryolar, örnekleme hızı, veri kaynakları' },
+const PAGES: { id: PageId; label: string; title: string; icon: () => ReactNode }[] = [
+  { id: 'kokpit', label: 'Konsol', title: 'Sağlık konsolu', icon: IconCockpit },
+  { id: 'gorevler', label: 'Görevler', title: 'Görevler · EVA ve ekipman', icon: IconTasks },
+  { id: 'raporlar', label: 'Raporlar', title: 'Raporlar · olay kaydı', icon: IconReports },
+  { id: 'ayarlar', label: 'Ayarlar', title: 'Ayarlar · senaryo ve kaynaklar', icon: IconSettings },
 ];
 
-// Üst bardaki senaryo hapları (kısa adlar); tam adlar loop.ts → SCENARIO_NAMES
-// (dar ekranda, 1024 px tablet, kısa ad gösterilir)
-const SCENARIO_PILLS: { id: ScenarioId; label: string; short?: string }[] = [
-  { id: 'NORMAL', label: 'Normal gün', short: 'Normal' },
-  { id: 'SOLAR_STORM', label: 'Güneş fırtınası' },
-  { id: 'MARS_DAY_180', label: 'Mars 180. gün' },
-  { id: 'CO2_SCRUBBER_FAIL', label: 'CO₂ arızası' },
-  { id: 'EVA_OVEREXERTION', label: 'EVA aşırı efor', short: 'EVA efor' },
-];
+const SCENARIOS: ScenarioId[] = ['NORMAL', 'SOLAR_STORM', 'MARS_DAY_180', 'CO2_SCRUBBER_FAIL', 'EVA_OVEREXERTION'];
 
-// Konsolu kullanan kişi (profil kartı). Mürettebattan biri; gerçek bir kişi değildir.
+// Konsolu kullanan kişi: ekibin sağlık sorumlusu. Mürettebattan biri; gerçek bir kişi değildir.
 const CONSOLE_USER: CrewId = 'elif';
 const EMPTY: Telemetry[] = [];
 
@@ -66,29 +55,28 @@ export default function App() {
 
   const openCrew = (id: CrewId) => {
     setCrew(id);
-    setPage('murettebat');
+    setPage('kokpit');
   };
   const current = PAGES.find((p) => p.id === page)!;
+  const isConsole = page === 'kokpit';
 
   return (
     <div className="flex h-full">
-      <Sidebar page={page} onPage={setPage} />
+      <Rail page={page} onPage={setPage} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar onBell={() => setPage('raporlar')} />
-        <main className={`relative min-h-0 flex-1 overflow-auto px-5 pt-3 pb-24 ${hasCritical ? 'astra-critical-edge' : ''}`}>
-          <IncidentBanner onOpenCrew={openCrew} />
-          <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h1 className="text-2xl font-bold">{current.label}</h1>
-            <span className="text-sm text-slate-400">{current.subtitle}</span>
-          </div>
-          {page === 'kokpit' && <Kokpit onOpenCrew={openCrew} onOpenReports={() => setPage('raporlar')} />}
-          {page === 'murettebat' && <AstronotEkrani crewId={crew} onSelect={setCrew} />}
+        <TopBar title={current.title} onBell={() => setPage('raporlar')} />
+        <main
+          className={`relative flex min-h-0 flex-1 flex-col overflow-auto px-4 pt-3 ${isConsole ? 'pb-4' : 'pb-24'} ${hasCritical ? 'astra-critical-edge' : ''}`}
+        >
+          <IncidentBanner onOpenCrew={openCrew} dense={isConsole} />
+          {page === 'kokpit' && <Kokpit crewId={crew} onSelect={setCrew} />}
           {page === 'gorevler' && <Gorevler />}
           {page === 'raporlar' && <Raporlar crewId={crew} />}
           {page === 'ayarlar' && <Ayarlar />}
         </main>
       </div>
-      <AstraChatPanel />
+      {/* Konsolda ASTRA sohbeti "Ana istasyon" panelinin içinde; diğer sayfalarda Parça 4'ün yüzen paneli */}
+      {!isConsole && <AstraChatPanel />}
       {/* Parça 1: senaryo değişince o senaryonun tam ekran sinematiği (Atla ile kapanır) */}
       <ScenarioCinematics />
       <DemoTour />
@@ -96,78 +84,72 @@ export default function App() {
   );
 }
 
-// ---------- Yan menü ----------
-function Sidebar({ page, onPage }: { page: PageId; onPage: (p: PageId) => void }) {
-  const delay = useAstra((s) => s.ship?.commDelayOneWay_s);
+// ---------- Sol menü (NASA amblem mavisi) ----------
+function Rail({ page, onPage }: { page: PageId; onPage: (p: PageId) => void }) {
   const openCount = useAstra((s) => s.incidents.filter((i) => i.status !== 'resolved').length);
+  const item = (p: (typeof PAGES)[number]) => {
+    const on = p.id === page;
+    return (
+      <button
+        key={p.id}
+        onClick={() => onPage(p.id)}
+        aria-current={on ? 'page' : undefined}
+        className={`relative flex w-full flex-col items-center gap-1 rounded-md px-1 py-2.5 text-sm transition-colors ${
+          on ? 'bg-space-bg font-semibold text-white' : 'text-slate-200 hover:bg-white/10'
+        }`}
+      >
+        {on && <span className="absolute top-2 bottom-2 left-0 w-[3px] rounded-r bg-white" aria-hidden />}
+        {p.icon()}
+        <span className="leading-none">{p.label}</span>
+        {p.id === 'raporlar' && openCount > 0 && (
+          <span className="absolute top-1 right-2 min-w-5 rounded-full bg-white px-1 text-center font-mono text-sm leading-5 font-medium text-chrome">
+            {openCount}
+          </span>
+        )}
+      </button>
+    );
+  };
   return (
-    <aside className="flex w-[200px] shrink-0 flex-col border-r border-space-border bg-space-panel px-3 py-4 min-[1180px]:w-[232px]">
-      <div className="mb-6 flex items-center gap-2.5 px-2">
-        <span style={{ color: COLORS.calm }}>
-          <OrbitalisMark />
-        </span>
-        <div className="min-w-0">
-          <div className="text-xl leading-tight font-bold tracking-tight">Orbitalis</div>
-          <div className="font-mono text-sm tracking-wider whitespace-nowrap min-[1180px]:tracking-widest" style={{ color: COLORS.calm }}>
-            ASTRA-MED OS
-          </div>
-        </div>
+    <aside className="flex w-[88px] shrink-0 flex-col items-center gap-1 bg-chrome px-2 py-3" aria-label="Sayfalar">
+      <div className="mb-3 flex flex-col items-center gap-1 text-white" title="Orbitalis · ASTRA-MED OS">
+        <OrbitalisMark size={34} />
+        <span className="font-display text-sm leading-none font-bold">Orbitalis</span>
       </div>
-
-      <nav className="flex flex-col gap-1" aria-label="Sayfalar">
-        {PAGES.map((p) => {
-          const on = p.id === page;
-          return (
-            <button
-              key={p.id}
-              onClick={() => onPage(p.id)}
-              aria-current={on ? 'page' : undefined}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors ${on ? 'bg-calm text-space-bg shadow-lg shadow-calm/20' : 'text-slate-200 hover:bg-white/8'}`}
-            >
-              {p.icon()}
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-base leading-tight font-semibold">{p.label}</span>
-                <span className={`block truncate text-sm leading-tight ${on ? 'text-space-bg/80' : 'text-slate-400'}`}>{p.hint}</span>
-              </span>
-              {p.id === 'raporlar' && openCount > 0 && (
-                <span className={`rounded-full px-2 font-mono text-sm ${on ? 'bg-space-bg/20 text-space-bg' : 'bg-white/10 text-slate-100'}`}>{openCount}</span>
-              )}
-            </button>
-          );
-        })}
-      </nav>
-
-      <div className="mt-auto space-y-3">
-        <div className="rounded-xl border border-space-border bg-space-bg/60 p-3">
-          <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: COLORS.calm }}>
-            <IconSignal /> Dünya bağlantısı
-          </div>
-          <div className="mt-1 text-sm text-slate-400">gecikme · tek yön</div>
-          <div className="font-mono text-lg font-semibold whitespace-nowrap text-white">{fmtDelay(delay)}</div>
-          <div className="text-sm text-slate-400">gidiş-dönüş {delay ? fmtDelay(delay * 2) : '—'}</div>
-          <div className="mt-1.5">
-            <SourceBadge param="commDelayDemo" />
-          </div>
-        </div>
+      <nav className="flex w-full flex-col gap-1">{PAGES.filter((p) => p.id !== 'ayarlar').map(item)}</nav>
+      <div className="mt-auto flex w-full flex-col gap-1">
+        {item(PAGES.find((p) => p.id === 'ayarlar')!)}
         <button
           onClick={() => controls.reset()}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-space-border px-2 py-2 text-sm whitespace-nowrap text-slate-300 hover:bg-white/5"
+          className="flex w-full flex-col items-center gap-1 rounded-md px-1 py-2 text-sm text-slate-200 hover:bg-white/10"
+          title="Simülasyonu sıfırla"
         >
-          <IconReset /> Simülasyonu sıfırla
+          <IconReset />
+          <span className="leading-none">Sıfırla</span>
         </button>
       </div>
     </aside>
   );
 }
 
-// ---------- Üst bar ----------
-function TopBar({ onBell }: { onBell: () => void }) {
-  const { scenario, day, open, critical } = useAstra(
+// ---------- Üst bant: ortak alan ----------
+function Field({ label, children, mono = false, className = '' }: { label: string; children: ReactNode; mono?: boolean; className?: string }) {
+  return (
+    <div className={`min-w-0 leading-tight ${className}`}>
+      <div className="text-sm whitespace-nowrap text-slate-300">{label}</div>
+      <div className={`text-base whitespace-nowrap text-white ${mono ? 'font-mono' : 'font-medium'}`}>{children}</div>
+    </div>
+  );
+}
+
+function TopBar({ title, onBell }: { title: string; onBell: () => void }) {
+  const { scenario, day, delay, linked, open, critical } = useAstra(
     useShallow((s) => {
       const active = s.incidents.filter((i) => i.status !== 'resolved');
       return {
         scenario: s.ship?.scenario,
         day: s.ship?.missionDay,
+        delay: s.ship?.commDelayOneWay_s,
+        linked: !!s.ship,
         open: active.length,
         critical: active.some((i) => i.level === 'critical'),
       };
@@ -175,67 +157,73 @@ function TopBar({ onBell }: { onBell: () => void }) {
   );
   const samples = useAstra((s) => (s.history[CREW[0].id] ?? EMPTY).length);
   const calibrating = samples < SIM.baselineWindow;
-  const bellColor = critical ? COLORS.critical : open ? COLORS.caution : COLORS.textMuted;
   const me = CREW_BY_ID[CONSOLE_USER];
 
   return (
-    <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-space-border bg-space-panel/70 px-5 py-2.5">
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1" role="group" aria-label="Senaryo">
-        {SCENARIO_PILLS.map((p) => {
-          const on = scenario === p.id;
-          return (
-            <button
-              key={p.id}
-              onClick={() => controls.setScenario(p.id)}
-              aria-pressed={on}
-              aria-label={p.label}
-              title={SCENARIO_NAMES[p.id]}
-              className={`rounded-full px-2.5 py-1 text-sm whitespace-nowrap min-[1180px]:px-3 ${on ? 'bg-calm font-semibold text-space-bg shadow-md shadow-calm/25' : 'bg-white/8 text-slate-200 hover:bg-white/15'}`}
-            >
-              {p.short ? (
-                <>
-                  <span className="min-[1180px]:hidden">{p.short}</span>
-                  <span className="hidden min-[1180px]:inline">{p.label}</span>
-                </>
-              ) : (
-                p.label
-              )}
-            </button>
-          );
-        })}
+    <header className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-white/15 bg-chrome px-5 py-2">
+      <div className="min-w-0 leading-tight">
+        <h1 className="truncate text-lg font-bold text-white">{title}</h1>
+        <div className="text-sm whitespace-nowrap text-slate-300">ARES-1 · ASTRA-MED OS</div>
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-1">
+        <Clock day={day} calibration={calibrating ? `${samples}/${SIM.baselineWindow}` : undefined} />
+        <Field label="Konum" className="hidden min-[1180px]:block">
+          Mars yörüngesi
+        </Field>
+        <Field label="Dünya bağlantısı">
+          <span style={{ color: linked ? COLORS.normal : COLORS.offline }}>{linked ? '● Aktif' : '○ Yok'}</span>
+        </Field>
+        <Field label="Gecikme · tek yön" mono>
+          <span className="flex items-center gap-2">
+            {fmtDelay(delay)}
+            <span className="hidden font-sans min-[1380px]:inline">
+              <SourceBadge param="commDelayDemo" />
+            </span>
+          </span>
+        </Field>
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
-        <Clock day={day} calibration={calibrating ? `${samples}/${SIM.baselineWindow}` : undefined} />
+        <label className="flex items-center gap-2 text-sm text-slate-300">
+          <span className="hidden min-[1600px]:inline">Senaryo</span>
+          <select
+            value={scenario ?? 'NORMAL'}
+            onChange={(e) => controls.setScenario(e.target.value as ScenarioId)}
+            className="rounded-md border border-white/25 bg-space-bg/40 px-2 py-1.5 text-sm text-white"
+            aria-label="Senaryo"
+          >
+            {SCENARIOS.map((id) => (
+              <option key={id} value={id} className="bg-space-bg">
+                {SCENARIO_NAMES[id]}
+              </option>
+            ))}
+          </select>
+        </label>
         <button
           onClick={onBell}
-          className="relative rounded-xl p-2 hover:bg-white/5"
-          style={{ color: bellColor }}
+          className="relative rounded-md p-2 hover:bg-white/10"
+          style={{ color: critical ? COLORS.critical : open ? COLORS.caution : COLORS.text }}
           aria-label={`${open} açık olay${critical ? ', kritik var' : ''}. Raporlar'ı aç`}
           title="Açık olaylar"
         >
           <IconBell />
           {open > 0 && (
             <span
-              className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 font-mono text-sm leading-none font-bold text-space-bg"
-              style={{ backgroundColor: bellColor }}
+              className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 font-mono text-sm leading-none font-medium"
+              style={critical ? { backgroundColor: COLORS.alarm, color: COLORS.text } : { backgroundColor: COLORS.caution, color: COLORS.bg }}
             >
               {open}
             </span>
           )}
         </button>
-        <div className="flex items-center gap-2 rounded-xl border border-space-border bg-space-bg/60 py-1 pr-1 pl-1 min-[1180px]:pr-3">
-          <span
-            className="flex h-8 w-8 items-center justify-center rounded-full font-mono text-sm font-bold"
-            style={{ color: COLORS.calm, backgroundColor: alpha(COLORS.calm, 0.15) }}
-          >
+        <div className="flex items-center gap-2" title={`${me.name} · ${me.role}`}>
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white font-mono text-sm font-medium text-chrome">
             {initials(CONSOLE_USER)}
           </span>
-          <div className="hidden leading-tight min-[1180px]:block">
-            <div className="text-sm font-semibold">{me.name}</div>
-            <div className="text-sm text-slate-400">
-              {me.role} · {me.unit}
-            </div>
+          <div className="hidden leading-tight min-[1600px]:block">
+            <div className="text-sm font-semibold text-white">{me.name}</div>
+            <div className="text-sm text-slate-300">Sağlık sorumlusu</div>
           </div>
         </div>
       </div>
@@ -251,21 +239,15 @@ function Clock({ day, calibration }: { day: number | undefined; calibration?: st
     return () => clearInterval(id);
   }, []);
   return (
-    <div className="text-right leading-tight">
-      <div className="font-mono text-base font-semibold tabular-nums">{now.toLocaleTimeString('tr-TR')}</div>
-      {calibration ? (
-        <div
-          className="text-sm whitespace-nowrap"
-          style={{ color: COLORS.calm }}
-          title="Katman 1 kişisel baseline'ı ilk 30 ölçümde kurar; senaryoyu bundan sonra başlatın."
-        >
-          ◌ Baseline {calibration}
-        </div>
-      ) : (
-        <div className="text-sm whitespace-nowrap" style={{ color: COLORS.normal }}>
-          ● Canlı · Gün {fmt(day)}
-        </div>
-      )}
+    <div className="min-w-0 leading-tight">
+      <div className="text-sm whitespace-nowrap text-slate-300">
+        {calibration ? (
+          <span title="Katman 1 kişisel baseline'ı ilk 30 ölçümde kurar; senaryoyu bundan sonra başlatın.">Saat · baseline {calibration}</span>
+        ) : (
+          <>Saat · görev günü {fmt(day)}</>
+        )}
+      </div>
+      <div className="font-mono text-base text-white tabular-nums">{now.toLocaleTimeString('tr-TR')}</div>
     </div>
   );
 }

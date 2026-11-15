@@ -1,7 +1,7 @@
-// Parça 3 · Astronot Ekranı'nın vücut paneli: 3B astronot (yoksa 2B yedek çizim), bölge seçici ve seçili bölgenin
-// ayrıntısı. İmleç bir bölgenin üstüne gelince risk kutusu çıkar (seviye, skor, bölgedeki en çok sapan ölçüm);
-// tıklayınca aşağıda o bölgenin bütün ölçümleri açılır.
-import { lazy, Suspense, useMemo, useState } from 'react';
+// Parça 3 · Konsolun seçili astronot sütunu: 3B astronot (yoksa 2B yedek çizim), bölge seçici ve seçili bölgenin
+// sağlık verileri. İmleç bir bölgenin üstüne gelince risk kutusu çıkar (seviye, skor, bölgedeki en çok sapan ölçüm);
+// tıklayınca aşağıda o bölgenin bütün ölçümleri açılır. slot: bölge seçiciyle ölçümler arasına (örn. "Önemli durum").
+import { lazy, type ReactNode, Suspense, useMemo, useState } from 'react';
 import { METRIC_BY_KEY, readMetric } from '../../metrics';
 import { useAstra } from '../../store';
 import type { CrewId, CrewStatus, Level, MetricScore, Telemetry } from '../../types';
@@ -33,7 +33,19 @@ function topSignalIn(status: CrewStatus | undefined, region: RegionId): MetricSc
   return status?.topSignals.find((s) => keys.includes(s.key));
 }
 
-export function BodyPanel({ crewId, status, t }: { crewId: CrewId; status: CrewStatus | undefined; t: Telemetry | undefined }) {
+export function BodyPanel({
+  crewId,
+  status,
+  t,
+  slot,
+  height = 340,
+}: {
+  crewId: CrewId;
+  status: CrewStatus | undefined;
+  t: Telemetry | undefined;
+  slot?: ReactNode;
+  height?: number;
+}) {
   const [webgl] = useState(hasWebGL);
   const [failed, setFailed] = useState(false);
   const [hover, setHover] = useState<HoverInfo | null>(null);
@@ -47,7 +59,7 @@ export function BodyPanel({ crewId, status, t }: { crewId: CrewId; status: CrewS
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="astra-scope relative h-[340px] overflow-hidden rounded-lg border border-space-border" onMouseLeave={() => setHover(null)}>
+      <div className="astra-scope relative overflow-hidden rounded-md border border-space-border" style={{ height }} onMouseLeave={() => setHover(null)}>
         {use3D ? (
           <Suspense fallback={<BodyMap status={status} selected={selected} onSelect={setPicked} />}>
             <Astronaut3D levels={levels} selected={selected} onHover={setHover} onSelect={setPicked} onError={() => setFailed(true)} />
@@ -76,7 +88,7 @@ export function BodyPanel({ crewId, status, t }: { crewId: CrewId; status: CrewS
               role="tab"
               aria-selected={on}
               onClick={() => setPicked(r.id)}
-              className="min-w-0 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/5"
+              className="min-w-0 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-white/5"
               style={{ boxShadow: `inset 0 0 0 1px ${on ? c : alpha(COLORS.text, 0.08)}`, backgroundColor: on ? alpha(c, 0.1) : undefined }}
             >
               <span className="block truncate text-sm font-semibold text-slate-100">{r.name}</span>
@@ -87,6 +99,8 @@ export function BodyPanel({ crewId, status, t }: { crewId: CrewId; status: CrewS
           );
         })}
       </div>
+
+      {slot}
 
       <RegionDetail crewId={crewId} region={selected} status={status} t={t} />
     </div>
@@ -105,7 +119,7 @@ function RiskTip({ hover, status, t }: { hover: HoverInfo; status: CrewStatus | 
   const top = Math.max(8, Math.min(hover.y - 24, hover.h - 150));
   return (
     <div
-      className="pointer-events-none absolute z-10 rounded-lg border px-3 py-2 shadow-xl"
+      className="pointer-events-none absolute z-10 rounded-md border px-3 py-2 shadow-xl"
       style={{
         left,
         top,
@@ -145,12 +159,12 @@ function RegionDetail({ crewId, region, status, t }: { crewId: CrewId; region: R
   const s = regionState(status, region);
   const hist = useAstra((st) => st.history[crewId] ?? EMPTY);
   return (
-    <div className="@container rounded-lg border border-space-border bg-white/[0.03]">
+    <div className="@container rounded-md border border-space-border bg-white/[0.03]">
       <div className="flex items-center justify-between gap-2 border-b border-space-border px-3 py-2">
         <div className="min-w-0">
-          <div className="font-semibold text-slate-100">
-            {r.name} <span className="font-normal text-slate-400">· {r.detail}</span>
-          </div>
+          <h3 className="font-semibold text-slate-100">
+            Sağlık verileri · {r.name} <span className="font-sans font-normal text-slate-400">· {r.detail}</span>
+          </h3>
           <div className="text-sm text-slate-400">
             {r.metrics.length} ölçüm, veri {r.groups}
           </div>

@@ -1,6 +1,6 @@
 // Resmi normal aralık göstergesi (Azra, PR #18): ölçüm resmi kaynağın aralığındaysa ✓ (uyarı verilmez),
 // dışındaysa ! (kişisel normalden sapma değerlendirilir). Parça 3 sadeleştirmesinde ortak bileşene taşındı;
-// Mürettebat sayfasında hem sağlık kartında hem bölge ayrıntısındaki her satırda kullanılır.
+// Konsolun seçili astronot sütununda hem temel değerlerde hem bölge ayrıntısındaki her satırda kullanılır.
 import { CREW_BY_ID } from '../../crew';
 import type { MetricKey } from '../../metrics';
 import { normalRangeFor } from '../../sim/parameters';
