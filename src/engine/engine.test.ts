@@ -33,6 +33,9 @@ function normalTelemetry(id: CrewId, eva: boolean, t: number, rand: () => number
       remPct: 22,
       swsPct: 18,
       circadianShift_h: 0.5,
+      ambientTemp_C: 22.5,
+      humidity_pct: 45,
+      noise_dBA: 55,
     },
   };
 }

@@ -29,7 +29,7 @@ Soru / yeni olay
 
 **Veri özeti** (`context.ts`): durumu normal olan kişi için 8 ana ölçüm (nabız, SpO₂, solunum,
 çekirdek sıcaklık, doz hızı, toplam doz, CO₂, uyku); durumu normal olmayan, soruda adı geçen ya da
-olayda etkilenen kişi için 33 ölçümün tamamı ve en çok sapan 3 sinyal. Ayrıca cevapta geçebilecek
+olayda etkilenen kişi için 36 ölçümün tamamı ve en çok sapan 3 sinyal. Ayrıca cevapta geçebilecek
 sabitler: kariyer doz limiti 600 mSv (NASA-STD-3001), CO₂ dikkat/kritik sınırı 2,3 / 3,0 mmHg
 (OCHMO-TB-004), Dünya gecikmesi. Herkes kritik olsa bile 3.000 token altında kalır (testli).
 
@@ -43,7 +43,7 @@ Mentor önerisiyle ASTRA üç yetenekle çalışır:
 
 | Yetenek | Ne yapar | Nerede |
 | --- | --- | --- |
-| **Araç kullanımı (tool calling)** | Model, cevap için gereken ayrıntıyı 6 salt-okur araçla kendisi çeker: `get_crew_member` (bir astronotun 33 ölçümü kişisel normalleriyle, skorları, açık olayları), `get_metric_trend` (yakın ve uzun dönem gidiş: artıyor / azalıyor / sabit), `assess_possible_conditions` (veriye dayalı olası durumlar), `list_incidents`, `get_event_log`, `lookup_reference` (eşik, limit ve bilimsel kaynak). Gemini'de `functionCall`, Claude'da `tool_use` ile; en fazla 3 tur. Kullanılan araçlar cevabın altında "⚙ Kullanılan araçlar" satırında görünür. | `api/astra.ts` (`TOOLS`, `runTool`) |
+| **Araç kullanımı (tool calling)** | Model, cevap için gereken ayrıntıyı 6 salt-okur araçla kendisi çeker: `get_crew_member` (bir astronotun 36 ölçümü kişisel normalleriyle, skorları, açık olayları), `get_metric_trend` (yakın ve uzun dönem gidiş: artıyor / azalıyor / sabit), `assess_possible_conditions` (veriye dayalı olası durumlar), `list_incidents`, `get_event_log`, `lookup_reference` (eşik, limit ve bilimsel kaynak). Gemini'de `functionCall`, Claude'da `tool_use` ile; en fazla 3 tur. Kullanılan araçlar cevabın altında "⚙ Kullanılan araçlar" satırında görünür. | `api/astra.ts` (`TOOLS`, `runTool`) |
 | **Bağlam (context)** | Her soruda kısa bir canlı veri özeti (herkes için 8 ana ölçüm, sorunlu kişilerin en çok sapan sinyalleri, açık olaylar, sabitler) + araçların okuduğu anlık veri kopyası + NASA ve hakemli kaynaklı bilgi tabanı. | `src/ai/context.ts`, `src/ai/tooldata.ts`, `src/ai/knowledge.ts` |
 | **Çok turlu sohbet (multi-turn)** | Son 10 mesaj modele gider; "Peki Kerem?" gibi devam soruları anlaşılır. Sohbet sayfa yenilense de devam eder. | `src/ai/client.ts`, `api/astra.ts` (`cleanHistory`) |
 
@@ -61,9 +61,27 @@ artış. Her sonuçta dayanak sinyaller (güncel değer + kişisel normal), olas
 anlatır: hangi değerler nasıl değişti → "... ile uyumlu olabilir" → kesin olmadığı ve medikal kontrol.
 Normal günde 200 ölçüm boyunca yanlış tahmin çıkmadığı testlidir.
 
+## Ortam ölçümleri ve sistemde ölçülmeyen konular
+
+NASA HRP'nin "kapalı ortam" tehlikesini karşılamak için çevre grubuna üç canlı ölçüm eklendi (toplam 36 ölçüm):
+
+| Ölçüm | Normal değer | Dayanak |
+|---|---|---|
+| Ortam sıcaklığı (`env.ambientTemp_C`) | 22,5 °C | NASA-STD-3001 performans bölgesi 20–25 °C, sağlık sınırı 18–27 °C (OCHMO-TB-002) |
+| Ortam nemi (`env.humidity_pct`) | %45 | Performans bölgesi %30–60, sağlık sınırı %25–75 (OCHMO-TB-002) |
+| Ortam gürültüsü (`env.noise_dBA`) | 55 dBA (varsayım) | Sürekli gürültü sınırı NC-50, yaklaşık 58 dBA (OCHMO-TB-035); ISS sınırı 16 sa çalışmada 72 dBA, 8 sa uykuda 62 dBA |
+
+Senaryolar bu üç ölçümü değiştirmez; normal değerlerinde kalırlar.
+
+Kemik, bağışıklık, denge, ekip uyumu, kabin mikropları ve göz yapısı (SANS) sistemde ölçülmez. ASTRA bunlar
+sorulunca önce ölçülmediğini söyler, sonra `lookup_reference` (`kemik`, `goz`, `olculmeyenler`, `yercekimi`, `ortam`)
+ya da bağlamdaki `sabitler` alanından NASA'nın genel bilgisini kaynağıyla ve "kişisel ölçüm değil, tahmin" diyerek verir.
+Örnek: kemik yoğunluğu kaybı NASA'ya göre ayda %1–1,5; 180. gün için kabaca %6–9 (`boneLossEstimate`).
+Yedek mod da aynı cevapları kurallı olarak verir.
+
 ## Hafıza
 
-- **Veri hafızası** (`src/ai/memory.ts`): 33 ölçümün kişisel normali (ilk 30 ölçüm) ve her 5 ölçümde bir
+- **Veri hafızası** (`src/ai/memory.ts`): 36 ölçümün kişisel normali (ilk 30 ölçüm) ve her 5 ölçümde bir
   kayıtla en fazla 72 kayıtlık uzun geçmiş (yaklaşık 60 saat görev süresi). `get_metric_trend` yakın ve uzun
   dönem gidişi birlikte verir. "Simülasyonu sıfırla" ile sıfırlanır.
 - **Sohbet hafızası**: son 10 mesaj modele gider. Sohbet tarayıcıda saklanır (`src/ai/chatStore.ts`); panel
