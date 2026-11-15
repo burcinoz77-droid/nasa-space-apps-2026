@@ -142,4 +142,4 @@ incident is shown in two places, the model is asked **once**; the result is stor
 
 - `npm run test`: safety filter, number verification, data summary size, offline answers to the 10 test questions,
   incident templates, client (mocked fetch) and the server function. Uses no quota.
-- Live model test: `docs/test-sorulari.md`.
+- Live model test: `docs/test-questions.md`.

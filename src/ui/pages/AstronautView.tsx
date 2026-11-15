@@ -31,7 +31,7 @@ const TABS: { id: TabId; label: string; groups: MetricInfo['group'][] }[] = [
 
 const levelColor = (l: Level | undefined) => (l ? LEVEL_COLOR[l] : COLORS.text);
 
-export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect: (id: CrewId) => void }) {
+export function AstronautViewPage({ crewId, onSelect }: { crewId: CrewId; onSelect: (id: CrewId) => void }) {
   const t = useAstra((s) => s.telemetry[crewId]);
   const st = useAstra((s) => s.statuses[crewId]);
   const statuses = useAstra((s) => s.statuses);

@@ -14,7 +14,7 @@ As planned, the code is not in this folder but inside the shared app. Part 4's f
 | `src/ai/fallback.ts` | Offline mode: English templates filled with current values |
 | `src/ai/explain.ts`, `src/ui/components/AstraExplanation.tsx` | The purple "ASTRA explanation" on the incident card |
 | `src/ui/components/AstraChatPanel.tsx` | Chat panel |
-| `src/ui/pages/Gorevler.tsx` | Tasks page |
+| `src/ui/pages/Tasks.tsx` | Tasks page |
 | `src/psych/` | Psychological tests: NASA-TLX, Samn-Perelli, PVT-B (official items, scoring, test schedule, psychological state) |
 | `src/ai/testdata.ts`, `src/ui/components/PsychTests.tsx` | Copy of the test results sent to ASTRA; the "Tests" tab on the Astronaut View |
 | `src/ai/*.test.ts`, `src/psych/psych.test.ts` | Tests (`npm run test`) and the live model test |
@@ -24,7 +24,7 @@ As planned, the code is not in this folder but inside the shared app. Part 4's f
 
 - ASTRA runs with Gemini in production (Vercel and Cloudflare); the option to switch to Claude is in the code but was not used.
 - To try it locally: put `GEMINI_API_KEY` in `.env`, run `npm run dev` and press one of the ready-made questions in the chat.
-- Live model test (10 questions): `docs/test-sorulari.md`.
+- Live model test (10 questions): `docs/test-questions.md`.
 
 ## Remaining work
 

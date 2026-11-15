@@ -3,7 +3,7 @@
 // A normal "npm run test" SKIPS this file; it uses no quota. To run it, the key must be in .env:
 //   Git Bash / macOS / Linux:  ASTRA_LIVE=1 npx vitest run src/ai/astra.live.test.ts
 //   Windows PowerShell:        $env:ASTRA_LIVE=1; npx vitest run src/ai/astra.live.test.ts
-// The result is written to docs/test-sonuclari-<provider>.md and copied from there into the plan's table.
+// The result is written to docs/test-results-<provider>.md and copied from there into the plan's table.
 // If even one result is "FAIL", fix SYSTEM_PROMPT in api/astra.ts and run the test again.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { loadEnv } from 'vite';
@@ -113,7 +113,7 @@ describe.skipIf(!LIVE)('ASTRA live model test', () => {
       '',
     ].join('\n');
     mkdirSync('docs', { recursive: true });
-    writeFileSync(`docs/test-sonuclari-${provider}.md`, md);
+    writeFileSync(`docs/test-results-${provider}.md`, md);
     console.log(md);
 
     expect(rows.filter((x) => x.problems.length).map((x) => `${x.n}: ${x.problems.join('; ')}`)).toEqual([]);

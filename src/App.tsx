@@ -29,12 +29,12 @@ import {
 import { IncidentBanner } from './ui/components/IncidentBanner';
 import { SourceBadge } from './ui/components/SourceBadge';
 import { fmtDelay, initials } from './ui/format';
-import { AstronotEkrani } from './ui/pages/AstronotEkrani';
-import { Astronotlar } from './ui/pages/Astronotlar';
-import { Ayarlar } from './ui/pages/Ayarlar';
-import { Gorevler } from './ui/pages/Gorevler';
-import { Kokpit } from './ui/pages/Kokpit';
-import { Raporlar } from './ui/pages/Raporlar';
+import { AstronautViewPage } from './ui/pages/AstronautView';
+import { CrewPage } from './ui/pages/Crew';
+import { SettingsPage } from './ui/pages/Settings';
+import { TasksPage } from './ui/pages/Tasks';
+import { MissionStatusPage } from './ui/pages/MissionStatus';
+import { ReportsPage } from './ui/pages/Reports';
 import { alpha, COLORS, fmt } from './ui/theme';
 
 type PageId = 'kokpit' | 'astronot' | 'astronotlar' | 'gorevler' | 'raporlar' | 'ayarlar';
@@ -94,12 +94,12 @@ export default function App() {
             <h1 className="text-2xl font-bold">{current.label}</h1>
             <span className="text-sm text-slate-400">{current.subtitle}</span>
           </div>
-          {page === 'kokpit' && <Kokpit onOpenCrew={openCrew} onOpenReports={() => setPage('raporlar')} />}
-          {page === 'astronot' && <AstronotEkrani crewId={crew} onSelect={setCrew} />}
-          {page === 'astronotlar' && <Astronotlar onOpenCrew={openCrew} />}
-          {page === 'gorevler' && <Gorevler />}
-          {page === 'raporlar' && <Raporlar crewId={crew} />}
-          {page === 'ayarlar' && <Ayarlar />}
+          {page === 'kokpit' && <MissionStatusPage onOpenCrew={openCrew} onOpenReports={() => setPage('raporlar')} />}
+          {page === 'astronot' && <AstronautViewPage crewId={crew} onSelect={setCrew} />}
+          {page === 'astronotlar' && <CrewPage onOpenCrew={openCrew} />}
+          {page === 'gorevler' && <TasksPage />}
+          {page === 'raporlar' && <ReportsPage crewId={crew} />}
+          {page === 'ayarlar' && <SettingsPage />}
         </main>
       </div>
       <AstraChatPanel />

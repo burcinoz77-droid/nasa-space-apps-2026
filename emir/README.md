@@ -12,7 +12,7 @@ The code is not in this folder; it lives in the shared structure:
 | `src/engine/index.ts` | `createDetector()`: health score, raise/escalate/resolve incidents, autonomous actions, incident log |
 | `src/engine/labels.ts` | Incident and autonomous action names (`INCIDENT_LABELS`, `ACTION_LABELS`) |
 | `src/engine/*.test.ts` | Unit tests + end-to-end tests (`npm run test`) |
-| `src/ui/pages/Raporlar.tsx` | Reports page: incident log, filter, telemetry snapshot report, acknowledgement |
+| `src/ui/pages/Reports.tsx` | Reports page: incident log, filter, telemetry snapshot report, acknowledgement |
 
 ## How it works (for the jury, in 30 seconds)
 

@@ -35,7 +35,7 @@ function avgMetric(telemetry: ReturnType<typeof useAstra.getState>['telemetry'],
   return values.length ? values.reduce((a, b) => a + b, 0) / values.length : undefined;
 }
 
-export function Gorevler() {
+export function TasksPage() {
   const ship = useAstra((s) => s.ship);
   const statuses = useAstra((s) => s.statuses);
   const telemetry = useAstra((s) => s.telemetry);
