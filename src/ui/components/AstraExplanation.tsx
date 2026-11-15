@@ -56,7 +56,7 @@ export function AstraMeta({ answer }: { answer: AstraAnswer }) {
       <span style={{ color: offline ? COLORS.offline : COLORS.ai }} title={hint}>
         {offline ? '◌' : '✦'} {label}
       </span>
-      {!offline && <span style={{ color: COLORS.textMuted }}>{fmt(answer.latencyMs / 1000, 1)} sn</span>}
+      {!offline && <span style={{ color: COLORS.textMuted }}>{fmt(answer.latencyMs / 1000, 1)} s</span>}
       {!offline && <VerifiedBadge ok={answer.verified} />}
       {!!answer.tools?.length && (
         <span className="basis-full" style={{ color: COLORS.textMuted }} title="ASTRA read the data for this answer with these tools (read-only).">
