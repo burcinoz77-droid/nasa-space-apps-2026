@@ -112,7 +112,7 @@ export function StormShow({ onClose }: { onClose: () => void }) {
         <div className="font-mono text-xs tracking-[0.3em]" style={{ color: COLORS.caution }}>
           PARTICLE CLOUD INBOUND · GOES &gt;10 MeV
         </div>
-        <div className="mt-2 text-2xl font-bold md:text-3xl">ARES-1, Mars orbit · mission day 180</div>
+        <div className="mt-2 text-2xl font-bold md:text-3xl">ARES-1, Mars orbit · Mission Day 180</div>
         <div className="mt-2 text-base" style={{ color: COLORS.textMuted }}>
           One-way light time to Earth <b style={{ color: COLORS.text }}>{fmtMinSec(delay)}</b>: by the time Mission Control's warning arrives, it is too late.
         </div>
