@@ -59,6 +59,8 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
     return domainLevel(st, 'env');
   };
 
+  const eva = member.location === 'GEZEGEN'; // uzay yürüyüşünde, kask giyiyor
+
   return (
     <div className="space-y-4">
       {/* Astronot hap düğmeleri */}
@@ -72,12 +74,19 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
               role="tab"
               aria-selected={on}
               onClick={() => onSelect(m.id)}
-              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm ${on ? 'bg-calm/20 font-semibold text-calm ring-1 ring-calm' : 'bg-white/5 text-slate-200 hover:bg-white/10'}`}
+              className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm ${on ? 'bg-calm/20 font-semibold text-calm ring-1 ring-calm' : 'bg-white/5 text-slate-200 hover:bg-white/10'}`}
             >
               <span style={{ color: l ? LEVEL_COLOR[l] : COLORS.offline }} aria-label={l ? LEVEL_LABEL[l] : 'veri yok'}>
                 {l ? LEVEL_ICON[l] : '●'}
               </span>
-              {m.name.replace(/^Dr\.\s*/, '')}
+              <span className="flex flex-col items-start leading-tight">
+                {m.name.replace(/^Dr\.\s*/, '')}
+                {m.location === 'GEZEGEN' && (
+                  <span className="text-[11px] font-semibold" style={{ color: COLORS.critical }}>
+                    Uzay yürüyüşünde
+                  </span>
+                )}
+              </span>
             </button>
           );
         })}
@@ -98,10 +107,30 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-xl font-bold">{member.name}</div>
+          {eva && (
+            <div className="text-sm font-semibold" style={{ color: COLORS.critical }}>
+              ● Uzay yürüyüşünde
+            </div>
+          )}
           <div className="text-sm text-slate-400">
             {member.role} · {member.unit} · {LOCATION_LONG[member.location]} · {member.sensitivity}
           </div>
         </div>
+        {/* Kask vizörü: sadece uzay yürüyüşündeki (kask giyen) astronotlarda */}
+        {eva && (
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent(VISOR_EVENT, { detail: crewId }))}
+            className="flex items-center gap-2 rounded-xl px-4 py-2 text-base font-semibold hover:brightness-125"
+            style={{ color: COLORS.calm, backgroundColor: alpha(COLORS.calm, 0.14), boxShadow: `inset 0 0 0 1.5px ${alpha(COLORS.calm, 0.6)}` }}
+            title="Bu astronotun kask vizöründe (HUD) ne gördüğünü aç"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <path d="M4 13a8 8 0 0 1 16 0v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+              <path d="M7 12.5a5 5 0 0 1 10 0v1.5H7z" fill="currentColor" fillOpacity="0.25" />
+            </svg>
+            Vizör görünümü
+          </button>
+        )}
         {st?.restRequired && (
           <span className="rounded-full px-3 py-1 text-sm font-semibold" style={{ color: COLORS.calm, backgroundColor: alpha(COLORS.calm, 0.12) }}>
             ✓ Zorunlu dinlenme · otomatik
@@ -121,14 +150,6 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
             {urgentTests ? `▲ ${urgentTests} öncelikli test` : `${due.length} test önerisi`}
           </button>
         )}
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent(VISOR_EVENT, { detail: crewId }))}
-          className="rounded-full px-3 py-1 text-sm font-semibold hover:brightness-125"
-          style={{ color: COLORS.calm, backgroundColor: alpha(COLORS.calm, 0.12) }}
-          title="Bu astronotun kask vizöründe (HUD) ne gördüğünü aç"
-        >
-          ◉ Vizör görünümü
-        </button>
         <LevelBadge level={st?.level} pill />
       </div>
 

@@ -26,7 +26,10 @@ const LEVEL_RANK: Record<Level, number> = { normal: 0, caution: 1, critical: 2 }
 export function VisorHud() {
   const [crewId, setCrewId] = useState<CrewId | null>(null);
   useEffect(() => {
-    const open = (e: Event) => setCrewId((e as CustomEvent<CrewId>).detail);
+    const open = (e: Event) => {
+      const id = (e as CustomEvent<CrewId>).detail;
+      if (CREW_BY_ID[id]?.location === 'GEZEGEN') setCrewId(id); // kask yalnız uzay yürüyüşünde
+    };
     window.addEventListener(VISOR_EVENT, open);
     return () => window.removeEventListener(VISOR_EVENT, open);
   }, []);
