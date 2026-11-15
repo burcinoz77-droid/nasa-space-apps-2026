@@ -22,7 +22,7 @@ $env:ASTRA_LIVE=1; npx vitest run src/ai/astra.live.test.ts
 
 The test asks each question to the real model and checks: at most 4 sentences, passes the safety filter, every
 number in the answer is in the data, and the expected behavior from the plan is visible. The result table is written
-to `docs/test-sonuclari-gemini.md` (or `-claude.md`). For the free Gemini quota it waits 4.5 s between questions
+to `docs/test-results-gemini.md` (or `-claude.md`). For the free Gemini quota it waits 4.5 s between questions
 (the test takes about 1 minute).
 
 ## Results

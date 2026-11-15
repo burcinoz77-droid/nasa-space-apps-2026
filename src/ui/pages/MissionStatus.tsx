@@ -47,7 +47,7 @@ function useAverageTrend(avg: number | undefined, t: number | undefined) {
 const teamLevel = (statuses: Partial<Record<CrewId, CrewStatus>>, ids: CrewId[]): Level | undefined =>
   ids.some((id) => statuses[id]) ? worstLevel(...ids.map((id) => statuses[id]?.level)) : undefined;
 
-export function Kokpit({ onOpenCrew, onOpenReports }: { onOpenCrew: (id: CrewId) => void; onOpenReports?: () => void }) {
+export function MissionStatusPage({ onOpenCrew, onOpenReports }: { onOpenCrew: (id: CrewId) => void; onOpenReports?: () => void }) {
   const { ship, statuses } = useAstra(useShallow((s) => ({ ship: s.ship, statuses: s.statuses })));
   const shipLevel = teamLevel(statuses, idsOf('KOKPIT'));
   const surfaceLevel = teamLevel(statuses, idsOf('GEZEGEN'));

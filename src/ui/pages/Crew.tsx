@@ -17,7 +17,7 @@ const TEAMS: { loc: CrewLocation; title: string }[] = [
   { loc: 'GEZEGEN', title: 'Surface crew' },
 ];
 
-export function Astronotlar({ onOpenCrew }: { onOpenCrew: (id: CrewId) => void }) {
+export function CrewPage({ onOpenCrew }: { onOpenCrew: (id: CrewId) => void }) {
   const statuses = useAstra((s) => s.statuses);
   return (
     <div className="space-y-6">

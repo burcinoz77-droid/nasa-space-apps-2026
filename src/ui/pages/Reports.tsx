@@ -46,7 +46,7 @@ function rowColor(e: LedgerEntry, inc: Incident | undefined): string {
   return COLORS.offline;
 }
 
-export function Raporlar({ crewId }: { crewId?: CrewId } = {}) {
+export function ReportsPage({ crewId }: { crewId?: CrewId } = {}) {
   const ledger = useAstra((s) => s.ledger);
   const incidents = useAstra((s) => s.incidents);
   const explanations = useAstra((s) => s.explanations);

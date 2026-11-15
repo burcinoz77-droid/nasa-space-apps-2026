@@ -43,7 +43,7 @@ function SourceCell({ p }: { p: Param }) {
   );
 }
 
-export function Ayarlar() {
+export function SettingsPage() {
   const tickMs = useAstra((s) => s.tickMs);
   const ship = useAstra((s) => s.ship);
   const samples = useAstra((s) => s.history.elif ?? EMPTY).length;

@@ -67,7 +67,7 @@ It also runs without a key: the ASTRA chat switches to offline mode.
 | `npm run typecheck` | Type check |
 | `npm run lint` | Lint (oxlint) |
 | `npm run test` | Vitest tests |
-| `ASTRA_LIVE=1 npx vitest run src/ai/astra.live.test.ts` | Asks the 10 test questions to the real model (see `docs/test-sorulari.md`) |
+| `ASTRA_LIVE=1 npx vitest run src/ai/astra.live.test.ts` | Asks the 10 test questions to the real model (see `docs/test-questions.md`) |
 
 ## Folders and owners
 
@@ -142,7 +142,7 @@ Astronaut View → **Tests** tab. Items are taken verbatim from the official sca
 
 All astronaut data is synthetic (simulation). Parameters come from NASA and peer-reviewed sources;
 the source of every constant is written in `src/sim/parameters.ts`, and the link check is in
-`data/KAYNAK_KONTROLU.md`. Values without a source are marked "assumption" in the interface.
+`data/SOURCE_CHECK.md`. Values without a source are marked "assumption" in the interface.
 
 | NASA data and standards used | Where |
 | --- | --- |
