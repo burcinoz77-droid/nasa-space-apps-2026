@@ -61,6 +61,9 @@ export const METRICS: MetricInfo[] = [
   { key: 'env.remPct', label: 'REM uykusu', unit: '%', group: 5, badWhen: 'low', cadence: 'daily', decimals: 0 },
   { key: 'env.swsPct', label: 'Derin uyku', unit: '%', group: 5, badWhen: 'low', cadence: 'daily', decimals: 0 },
   { key: 'env.circadianShift_h', label: 'Sirkadiyen kayma', unit: 'sa', group: 5, badWhen: 'high', cadence: 'daily', decimals: 1 },
+  { key: 'env.ambientTemp_C', label: 'Ortam sıcaklığı', unit: '°C', group: 5, badWhen: 'both', cadence: 'live', decimals: 1 },
+  { key: 'env.humidity_pct', label: 'Ortam nemi', unit: '%', group: 5, badWhen: 'both', cadence: 'live', decimals: 0 },
+  { key: 'env.noise_dBA', label: 'Ortam gürültüsü', unit: 'dBA', group: 5, badWhen: 'high', cadence: 'live', decimals: 0 },
 ];
 
 export const GROUP_NAMES: Record<MetricInfo['group'], string> = {

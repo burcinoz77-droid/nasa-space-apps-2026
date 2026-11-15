@@ -9,6 +9,7 @@ import { useAstra, type AstraState } from '../store';
 import type { AstraAnswer, AstraRequest, CrewId, CrewLocation, Incident, IncidentType, MetricScore } from '../types';
 import { fmt } from '../ui/theme';
 import { possibleConditions } from './conditions';
+import { boneLossEstimate } from './knowledge';
 import { ACTION_DONE_TR, crewInText, delayText, LEVEL_TR, shortName, valueText } from './labels';
 import { baselineReady } from './memory';
 
@@ -195,16 +196,45 @@ const METRIC_WORDS: [RegExp, MetricKey[]][] = [
   [/ekg|ritim|ritm|düzensiz atım/, ['cardio.ecg_ectopic_per_min']],
   [/etco|soluk sonu/, ['resp.etco2_mmHg']],
   [/solunum|nefes/, ['resp.rr_bpm']],
+  [/kabin sıcaklı|ortam sıcaklı|oda sıcaklı|hava sıcaklı/, ['env.ambientTemp_C']],
+  [/bağıl nem|nem oran|rutubet|ortam nem|kabin nem/, ['env.humidity_pct']],
+  [/gürültü|ses düzey|ses seviye|desibel|dba/, ['env.noise_dBA']],
   [/sıcaklı|ateş/, ['resp.coreTemp_C']],
   [/kortizol|stres|gsr/, ['biochem.sweatCortisol_ng_mL', 'resp.gsr_uS']],
   [/laktat/, ['biochem.sweatLactate_mM']],
   [/sodyum|elektrolit/, ['biochem.sweatSodium_mM']],
-  [/uyku|uyu/, ['env.sleepLastNight_h', 'env.remPct', 'env.swsPct']],
+  [/uyku|uyu(?!m)/, ['env.sleepLastNight_h', 'env.remPct', 'env.swsPct']],
   [/pvt|tepki|reaksiyon/, ['cog.pvtMeanRt_ms', 'cog.pvtLapses']],
   [/ruh hal|ruh hâl|duygu|panas|moral/, ['cog.panasPositive', 'cog.panasNegative']],
   [/göz bebe|pupil/, ['cog.pupilDiameter_mm', 'cog.pupilLatency_ms']],
   [/kabin basın|giysi basın/, ['env.pressure_kPa']],
 ];
+
+/** Sistemde ölçülmeyen konular için kaynaklı, kesin olmayan cevap. */
+function unmeasuredText(s: AstraState, has: (re: RegExp) => boolean): string | undefined {
+  if (has(/kemik|osteopor/)) {
+    const day = s.ship?.missionDay ?? 180;
+    return sentences(
+      'Kemik yoğunluğu bu sistemde ölçülmüyor; NASA bunu uçuş öncesi ve sonrası kemik taramalarıyla izliyor.',
+      `NASA'ya göre 4–6 aylık görevlerde ağırlık taşıyan kemikler ayda ortalama %1–1,5 yoğunluk kaybeder; ${day} günlük görev süresi için bu kabaca ${boneLossEstimate(day)} eder ve kişisel bir ölçüm değil, genel bir tahmindir.`,
+      DOCTOR,
+    );
+  }
+  if (has(/bağışıklı|bagisikli|immün/)) return sentences('Bağışıklık sistemi bu sistemde ölçülmüyor; değerlendirilmesi için kan ya da tükürük tahlili gerekir.', DOCTOR);
+  if (has(/denge|vestibül/)) return sentences('Denge (vestibüler sistem) bu sistemde ölçülmüyor; NASA bunu dönüş sonrası denge testleriyle izliyor.', DOCTOR);
+  if (has(/ekip uyum|takım uyum|ekip içi|takım çalışma/)) {
+    return sentences('Ekip uyumu bu sistemde doğrudan ölçülmüyor; stres ve ruh hali ölçümleri (BSI-18, PANAS) dolaylı bilgi veriyor.');
+  }
+  if (has(/mikrop|bakteri|mantar/)) return sentences('Kabin mikropları bu sistemde ölçülmüyor; bunun için yüzeylerden örnek alınıp laboratuvarda incelenmesi gerekir.');
+  if (has(/optik disk|göz yapı|göz değişim|sans(?![a-zçğıöşü])/)) {
+    return sentences(
+      'Göz yapısındaki değişimler (SANS) bu sistemde doğrudan ölçülmüyor; göz bebeği ölçümleri yalnızca dolaylı bir göstergedir.',
+      'Kesin değerlendirme göz taramasıyla (OCT) yapılır.',
+      DOCTOR,
+    );
+  }
+  return undefined;
+}
 
 function statusSentence(s: AstraState, id: CrewId, withName = true): string {
   const st = s.statuses[id];
@@ -427,6 +457,9 @@ function chatText(question: string, s: AstraState): string {
   // 8) Belirli bir ölçüm
   const match = METRIC_WORDS.find(([re]) => re.test(q));
   if (match) return metricText(s, crew, match[1]);
+  // 8b) Sistemde ölçülmeyen konular: uydurmadan söyle, varsa NASA'nın genel bilgisini ver
+  const unmeasured = unmeasuredText(s, has);
+  if (unmeasured) return unmeasured;
   // 9) Bir kişinin durumu
   if (crew.length && has(/nasıl|durum|iyi mi|ne durumda|kritik|dikkat|skor/)) return whyText(s, crew[0], false);
   // 10) Sadece bir ad ("Peki Kerem?"): o kişinin durumu

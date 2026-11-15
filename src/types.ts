@@ -71,6 +71,9 @@ export interface Environment {
   remPct: number; // REM uykusu oranı
   swsPct: number; // derin (yavaş dalga) uyku oranı
   circadianShift_h: number; // sirkadiyen ritim kayması (saat)
+  ambientTemp_C: number; // kabin ya da giysi içi ortam sıcaklığı
+  humidity_pct: number; // kabin ya da giysi içi bağıl nem
+  noise_dBA: number; // astronotun maruz kaldığı gürültü (kişisel gürültü dozimetresi)
 }
 
 // Bir astronotun bir andaki tüm ölçümleri (Parça 1 üretir, herkes okur)

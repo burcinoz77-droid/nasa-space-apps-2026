@@ -9,6 +9,7 @@ import { PARAMS } from '../sim/parameters';
 import type { AstraState } from '../store';
 import type { CrewId, Incident, MetricScore } from '../types';
 import { possibleConditions } from './conditions';
+import { boneLossEstimate } from './knowledge';
 import { ACTION_TR, crewInText, delayText, INCIDENT_TR, LEVEL_TR, SCENARIO_TR, shortName } from './labels';
 
 /** Normal durumdaki kişi için gönderilen 8 ana ölçüm. */
@@ -132,6 +133,10 @@ export function buildContext(s: AstraState, opts: ContextOptions = {}): Record<s
       co2DikkatSiniri_mmHg: param('co2CautionLimit', 2.3), // OCHMO-TB-004
       co2KritikSiniri_mmHg: param('co2CriticalLimit', 3.0), // OCHMO-TB-004
       issCo2Medyani_mmHg: param('cabinCO2Median', 1.9), // OSDR EDA
+      ortamPerformansAraligi: '20–25 °C, nem %30–60', // OCHMO-TB-002
+      gurultuSiniri_dBA: { calisma16sa: param('noiseWorkLimit', 72), uyku8sa: param('noiseSleepLimit', 62) }, // ISS
+      // Kemik sistemde ölçülmez; NASA HRP ortalamasından genel tahmin
+      tahminiKemikKaybi: `${boneLossEstimate(s.ship?.missionDay ?? 180)} (NASA: ayda %1–1,5; ölçüm değil, tahmin)`,
     },
     murettebat: CREW.map((m) => crewSummary(s, m.id, isDetailed(m.id), keysOnly)),
     acikOlaylar: openIncidents.map(incidentSummary),

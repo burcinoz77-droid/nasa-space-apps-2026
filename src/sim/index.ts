@@ -1,5 +1,5 @@
 // Parça 1 · Simülasyon motoru (dijital ikiz)
-// 6 astronot × 33 ölçüm, her tick'te bir. Gerçek sensör takıldığında değişen tek dosya budur.
+// 6 astronot × 36 ölçüm, her tick'te bir. Gerçek sensör takıldığında değişen tek dosya budur.
 //
 // Nasıl çalışır:
 //  1. Kişisel baseline: başlangıçta seed'li rastgeleyle her astronot için bir kez kurulur
@@ -234,6 +234,9 @@ function toTelemetry(crewId: CrewId, t: number, v: Values): Telemetry {
       remPct: v['env.remPct'],
       swsPct: v['env.swsPct'],
       circadianShift_h: v['env.circadianShift_h'],
+      ambientTemp_C: v['env.ambientTemp_C'],
+      humidity_pct: v['env.humidity_pct'],
+      noise_dBA: v['env.noise_dBA'],
     },
   };
 }

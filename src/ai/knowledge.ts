@@ -29,6 +29,18 @@ function val(key: string, fallback: number): string {
   return v.toLocaleString('tr-TR', { maximumFractionDigits: 2 });
 }
 
+/** NASA HRP: 4–6 aylık görevlerde ağırlık taşıyan kemikler ayda ortalama %1–1,5 yoğunluk kaybeder. */
+export const BONE_LOSS_PER_MONTH = { min: 1, max: 1.5 };
+const BONE_SRC = { kaynak: 'NASA HRP, kemik değişimi riski', url: 'https://www.nasa.gov/reference/risk-of-spaceflight-induced-bone-changes/' };
+
+/** Görev gününe göre kaba kemik yoğunluğu kaybı tahmini, örneğin 180. gün için "%6–9". Ölçüm değildir. */
+export function boneLossEstimate(missionDay: number): string {
+  const months = missionDay / 30.4;
+  const lo = Math.round(months * BONE_LOSS_PER_MONTH.min);
+  const hi = Math.round(months * BONE_LOSS_PER_MONTH.max);
+  return lo === hi ? `%${lo}` : `%${lo}–${hi}`;
+}
+
 const ASSUMPTION = { kaynak: 'Varsayım (ekip ayarı; NASA ya da hakemli kaynakta evrensel eşik yok)' };
 
 export const REFERENCES: ReferenceTopic[] = [
@@ -40,6 +52,8 @@ export const REFERENCES: ReferenceTopic[] = [
       { bilgi: `Mars yolculuğunda (Kokpit) doz hızı ${val('doseRateMarsTransit', 1.84)} mSv/gün, yaklaşık 76,7 µSv/sa.`, ...src('doseRateMarsTransit', 'Curiosity RAD, Zeitlin vd. 2013') },
       { bilgi: `Mars yüzeyinde doz hızı ${val('doseRateMarsSurface', 0.64)} mSv/gün, yaklaşık 26,7 µSv/sa; atmosfer kısmen kalkan olur.`, ...src('doseRateMarsSurface', 'Curiosity RAD, Hassler vd. 2013') },
       { bilgi: 'Katman 1, toplam doz 480 mSv (kariyer limitinin %80\'i) olunca dikkat, 600 mSv olunca kritik olay açar; doz hızı kişisel normalden z ≥ 3 sapınca radyasyon sığınağına geçişi başlatır.', kaynak: 'Katman 1 kuralı, NASA-STD-3001 limitine göre' },
+      { bilgi: "ISS'teki toplam radyasyonun yaklaşık %30'u nötrondur; bu oran ISS içindir, Mars için kullanılmamalıdır.", kaynak: 'Kanada Uzay Ajansı (CSA), 2026', url: 'https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp' },
+      { bilgi: "Mars yüzeyinde nötronlar toplam doz hızının yaklaşık %7'sini, biyolojik açıdan önemli doz eşdeğerinin yaklaşık %10'unu oluşturur. Uygulama nötron payını ayrıca göstermez.", kaynak: 'Köhler vd. 2014, Curiosity RAD Mars yüzeyi nötron ölçümü' },
       { bilgi: 'Güneş fırtınası senaryosundaki olay sırası Mayıs 2024 DONKI kayıtlarını izler; doz çarpanları varsayımdır (DONKI doz değeri vermez).', ...src('donkiSep', 'NASA DONKI, Mayıs 2024 SEP') },
     ],
   },
@@ -103,6 +117,50 @@ export const REFERENCES: ReferenceTopic[] = [
     anahtarKelimeler: ['gecikme', 'dünya', 'iletişim', 'mesaj', 'uçuş doktoru'],
     bilgiler: [
       { bilgi: 'Dünya ile Mars arasında tek yön gecikme 3–22,4 dakika, gidiş-dönüş 6–44 dakikadır.', ...src('commDelayMin', 'NASA Mars Relay Network') },
+    ],
+  },
+  {
+    konu: 'ortam',
+    anahtarKelimeler: ['ortam', 'kabin sıcaklığı', 'ortam sıcaklığı', 'nem', 'rutubet', 'gürültü', 'ses düzeyi', 'desibel', 'dba', 'konfor'],
+    bilgiler: [
+      { bilgi: 'NASA performans bölgesi: ortam sıcaklığı 20–25 °C ve bağıl nem %30–60. Sağlık sınırı 18 °C ve %75 nem ile 27 °C ve %25 nem arasıdır. Uygulamadaki normal değerler (22,5 °C, %45) bu aralığın ortasıdır.', ...src('ambientTempComfort', 'OCHMO-TB-002 ECLSS') },
+      { bilgi: 'Uzay aracı çalışma alanlarında sürekli gürültü sınırı NC-50 eğrisidir (yaklaşık 58 dBA). Uygulamadaki 55 dBA normal değeri bu sınırın altında seçilmiş bir varsayımdır.', ...src('noiseBaseline', 'OCHMO-TB-035 Akustik') },
+      { bilgi: "ISS'te astronotların gürültü maruziyeti için sınır 16 saatlik çalışma ortalamasında 72 dBA, 8 saatlik uykuda 62 dBA'dır. Uyku sırasında 50 dBA aşılırsa uçuş doktoru astronotu gürültüyü azaltma adımları konusunda bilgilendirir.", ...src('noiseWorkLimit', 'ISS gürültü sınırları') },
+      { bilgi: "ISS'te gürültü, astronotların taktığı kişisel gürültü dozimetreleriyle ölçülür.", kaynak: 'NASA NTRS, ISS akustik izleme', url: 'https://ntrs.nasa.gov/api/citations/20110013006/downloads/20110013006.pdf' },
+    ],
+  },
+  {
+    konu: 'kemik',
+    anahtarKelimeler: ['kemik', 'osteoporoz', 'kırık', 'kemik yoğunluğu', 'kas kaybı', 'kas'],
+    bilgiler: [
+      { bilgi: 'Kemik yoğunluğu bu sistemde ölçülmez; NASA bunu uçuş öncesi ve sonrası kemik taramalarıyla izler.', ...BONE_SRC },
+      { bilgi: `NASA'ya göre 4–6 aylık görevlerde ağırlık taşıyan kemikler ayda ortalama %1–1,5 yoğunluk kaybeder; 180. gün için bu kabaca ${boneLossEstimate(180)} eder. Bu kişisel bir ölçüm değil, genel bir tahmindir. Daha uzun görevlerde bu hızın sürüp sürmediği henüz bilinmiyor.`, ...BONE_SRC },
+    ],
+  },
+  {
+    konu: 'goz',
+    anahtarKelimeler: ['göz', 'goz', 'sans', 'görme', 'optik disk', 'ödem'],
+    bilgiler: [
+      { bilgi: "SANS (uzay uçuşuna bağlı nöro-oküler sendrom), NASA'nın şu anda uçuşla ilgili en önde gelen sağlık riski olarak gösterdiği durumdur.", kaynak: 'NASA HRP riskler', url: 'https://www.nasa.gov/hrp/risks/' },
+      { bilgi: "Uzun görevlerde belirgin optik disk ödemi astronotların yaklaşık %16–19'unda görülür; göz taramasıyla (OCT) bakıldığında bu oran yaklaşık %70'tir.", kaynak: 'JAMA Ophthalmology, NASA Bir Yıllık Görev vaka serisi', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC8085766' },
+      { bilgi: 'Uygulamadaki göz bebeği ölçümleri SANS için yalnızca dolaylı ve varsayıma dayalı bir göstergedir; kesin değerlendirme göz taramasıyla yapılır.', ...ASSUMPTION },
+    ],
+  },
+  {
+    konu: 'yercekimi',
+    anahtarKelimeler: ['yerçekimi', 'yercekimi', 'gravite', 'çekim', 'ağırlık'],
+    bilgiler: [
+      { bilgi: "Mars yüzeyinde ortalama yerçekimi 3,73 m/s², yani Dünya'nınkinin 0,38'idir. Simülasyon yerçekiminin vücuda etkisini modellemez.", kaynak: 'NASA Mars Fact Sheet', url: 'https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html' },
+    ],
+  },
+  {
+    konu: 'olculmeyenler',
+    anahtarKelimeler: ['bağışıklık', 'bagisiklik', 'immün', 'denge', 'vestibüler', 'ekip uyumu', 'takım', 'ekip', 'mikrop', 'bakteri', 'ölçülmeyen', 'kapsam'],
+    bilgiler: [
+      { bilgi: 'Bağışıklık sistemi bu sistemde ölçülmez; kan ya da tükürük tahlili gerekir. Inspiration4 görevinin kan verileri NASA OSDR arşivinde açıktır.', kaynak: 'NASA OSDR, Inspiration4', url: 'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11094041/' },
+      { bilgi: 'Denge (vestibüler sistem) bu sistemde ölçülmez. Uzun görevden dönen astronotlar ayakta dengeyi daha geç bulur ve denge testlerinde daha az doğru adım atar.', kaynak: 'Frontiers in Physiology 2025, NASA JSC', url: 'https://www.frontiersin.org/journals/physiology/articles/10.3389/fphys.2025.1677377/full' },
+      { bilgi: 'Ekip uyumu doğrudan ölçülmez; stres ve ruh hali ölçümleri (BSI-18, PANAS) dolaylı bilgi verir. NASA, uzay uçuşundaki ekip ölçümlerinin henüz yayımlanmadığını belirtir.', kaynak: 'NASA NTRS, ekip riski kanıt raporu', url: 'https://ntrs.nasa.gov/citations/20220007465' },
+      { bilgi: "Kabin mikropları bu sistemde ölçülmez. ISS yüzeylerinde en sık görülen mikroplar insan derisiyle ilişkili türlerdir.", kaynak: 'Microbial Tracking-2, Microbiome', url: 'https://www.osti.gov/biblio/1881622' },
     ],
   },
   {

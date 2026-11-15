@@ -17,6 +17,8 @@ import { baselineReady, longHistory, longHistorySpanHours, personalNormal } from
 import { toolLabel } from './labels';
 import { buildToolData } from './tooldata';
 import { verifyNumbers } from './verify';
+import { boneLossEstimate } from './knowledge';
+import { METRICS } from '../metrics';
 
 type Crew = { ad: string; olcumler: Record<string, unknown> };
 const crewOf = (ctx: Record<string, unknown>, ad: string) => (ctx.murettebat as Crew[]).find((c) => c.ad === ad)!;
@@ -35,6 +37,8 @@ describe('context.ts · veri özeti', () => {
     expect(json).toContain('"kariyerDozLimiti_mSv":600');
     expect(json).toContain('"co2KritikSiniri_mmHg":3');
     expect(json).toContain('12 dk 30 sn');
+    expect(json).toContain('"gurultuSiniri_dBA":{"calisma16sa":72,"uyku8sa":62}');
+    expect(json).toContain('%6–9 (NASA: ayda %1–1,5; ölçüm değil, tahmin)');
   });
 
   it(`herkes kritik olsa bile ${MAX_CONTEXT_TOKENS} token altında kalır`, () => {
@@ -326,7 +330,7 @@ describe('Araçlar (tool calling) · salt-okur araçlar', () => {
   it('get_crew_member: adı esnek tanır, tüm ölçümleri ve açık olayları verir', () => {
     const r = runTool('get_crew_member', { ad: "Kerem'in" }, data()) as { ad: string; olcumler: unknown[]; acikOlaylar: unknown[] };
     expect(r.ad).toBe('Kerem');
-    expect(r.olcumler.length).toBe(33);
+    expect(r.olcumler.length).toBe(METRICS.length);
     expect(r.acikOlaylar.length).toBe(1);
     expect(runTool('get_crew_member', { ad: 'Kenji' }, data())).toMatchObject({ hata: expect.stringMatching(/astronot yok/) });
   });
@@ -362,6 +366,52 @@ describe('Araçlar (tool calling) · salt-okur araçlar', () => {
     expect(ref.konu).toBe('co2');
     expect(ref.bilgiler.some((b) => /OCHMO/.test(b.kaynak))).toBe(true);
     expect((runTool('lookup_reference', { konu: 'radyasyon' }, d) as { bilgiler: { bilgi: string }[] }).bilgiler[0].bilgi).toMatch(/600 mSv/);
+  });
+});
+
+describe('Yeni ölçümler (ortam) ve sistemde ölçülmeyen konular', () => {
+  it('ortam sıcaklığı, nem ve gürültü her astronotun verisinde ve NASA aralığında', () => {
+    const s = runSimulation(40);
+    for (const t of Object.values(s.telemetry)) {
+      expect(t.env.ambientTemp_C).toBeGreaterThanOrEqual(20);
+      expect(t.env.ambientTemp_C).toBeLessThanOrEqual(25);
+      expect(t.env.humidity_pct).toBeGreaterThanOrEqual(30);
+      expect(t.env.humidity_pct).toBeLessThanOrEqual(60);
+      expect(t.env.noise_dBA).toBeLessThan(62);
+    }
+  });
+
+  it('araçlar Türkçe adla yeni ölçümleri bulur', () => {
+    runSimulation(40);
+    const td = JSON.parse(JSON.stringify(buildToolData(useAstra.getState())));
+    expect((runTool('get_metric_trend', { ad: 'Elif', olcum: 'gürültü' }, td) as { olcum: string }).olcum).toBe('Ortam gürültüsü');
+    expect((runTool('get_metric_trend', { ad: 'Elif', olcum: 'kabin sıcaklığı' }, td) as { olcum: string }).olcum).toBe('Ortam sıcaklığı');
+    expect((runTool('get_metric_trend', { ad: 'Elif', olcum: 'vücut ısısı' }, td) as { olcum: string }).olcum).toBe('Çekirdek sıcaklık');
+    expect((runTool('lookup_reference', { konu: 'kemik' }, td) as { konu: string }).konu).toBe('kemik');
+    expect((runTool('lookup_reference', { konu: 'gürültü' }, td) as { konu: string }).konu).toBe('ortam');
+    expect((runTool('lookup_reference', { konu: 'SANS' }, td) as { konu: string }).konu).toBe('goz');
+  });
+
+  it('kemik kaybı tahmini görev gününe göre hesaplanır', () => {
+    expect(boneLossEstimate(180)).toBe('%6–9');
+    expect(boneLossEstimate(30)).toBe('%1');
+  });
+
+  it('yedek mod: ölçülmeyen konularda uydurmaz, ölçülmediğini ve NASA bilgisini söyler', () => {
+    makeDemoState();
+    const ask = (q: string) => fallbackAnswer({ mode: 'chat', question: q, context: {} }).text;
+    const bone = ask("Kerem'in kemik kaybı ne durumda?");
+    expect(bone).toMatch(/ölçülmüyor/);
+    expect(bone).toContain('%1–1,5');
+    expect(bone).toContain('%6–9');
+    expect(ask('Bağışıklık sistemi nasıl?')).toMatch(/ölçülmüyor/);
+    expect(ask('Ekip uyumu nasıl?')).toMatch(/ölçülmüyor/);
+    expect(ask('SANS riski var mı?')).toMatch(/ölçülmüyor/);
+    expect(ask("Mert'in elektrolit dengesi nasıl?")).not.toMatch(/vestibüler/);
+    expect(ask('Kokpitte gürültü kaç?')).toMatch(/dBA/);
+    for (const q of ["Kerem'in kemik kaybı ne durumda?", 'SANS riski var mı?', 'Kokpitte gürültü kaç?']) {
+      expect(checkAnswer(ask(q))).toEqual({ safe: true });
+    }
   });
 });
 

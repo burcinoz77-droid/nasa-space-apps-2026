@@ -1,6 +1,6 @@
 // Parça 4 · ASTRA'nın veri hafızası. Ortak durumu (useAstra) SADECE okur, kendi içinde tutar:
 //  1) Kişisel normal: her astronot × her ölçüm için ilk 30 ölçümün ortalaması ve sapması (sonra donar).
-//     Katman 1 de aynı yöntemi kullanır; ASTRA kendi kopyasını tutar çünkü 33 ölçümün hepsine ihtiyaç duyar.
+//     Katman 1 de aynı yöntemi kullanır; ASTRA kendi kopyasını tutar çünkü 36 ölçümün hepsine ihtiyaç duyar.
 //  2) Uzun geçmiş: her 5 ölçümde bir kayıt, en fazla 72 kayıt (yaklaşık 60 saat görev süresi).
 // Ekranlardaki 120 ölçümlük kısa geçmişten (store.history) daha geriyi hatırlar.
 // "Simülasyonu sıfırla" ile ortak durum boşalınca hafıza da sıfırlanır.
