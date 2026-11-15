@@ -1,6 +1,7 @@
 // Ana döngü: Simülasyon (Parça 1) -> Katman 1 (Parça 2) -> ortak durum -> ekranlar.
 // Bu dosya parçaları birbirine bağlar; değiştirmeden önce ekibe haber verin.
 import { createDetector } from './engine';
+import { applyTestResults, useTests } from './psych/store';
 import { createSimulation } from './sim';
 import { useAstra } from './store';
 import type { ScenarioId } from './types';
@@ -19,6 +20,7 @@ let timer: ReturnType<typeof setInterval> | undefined;
 
 function step() {
   const { ship, telemetry } = sim.tick();
+  applyTestResults(telemetry); // Parça 4: astronotun yaptığı PVT-B sonucu simüle PVT değerinin yerine geçer
   const out = detector.process(ship, telemetry);
   for (const action of out.newActions) sim.onAutoAction(action); // güvenli adımın fiziksel etkisi
   useAstra.getState().applyTick(ship, telemetry, out);
@@ -54,6 +56,7 @@ export const controls = {
     sim.reset();
     detector.reset();
     useAstra.getState().clearAll();
+    useTests.getState().clear();
     log('Simülasyon sıfırlandı');
     controls.start();
   },
