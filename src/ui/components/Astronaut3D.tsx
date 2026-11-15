@@ -7,7 +7,8 @@
 //   · çevre (ayak altındaki zemin halkası)
 // Her bölge Katman 1 seviyesinin renginde boyanır, KRİTİK bölge nabız gibi parlar. İmleç bir bölgenin üstüne gelince
 // bölge vurgulanır ve onHover ile ekran koordinatı bildirilir (risk kutusunu üst bileşen çizer); tıklayınca onSelect.
-// Kamera modelin etrafında yavaşça döner; fareyle sürükleyerek döndürülebilir. prefers-reduced-motion'da dönmez.
+// Kamera modelin etrafında sürekli ve yavaşça döner (imleç üstündeyken yavaşlar); fareyle sürüklenebilir.
+// Windows'ta "Animasyon efektleri" kapalı olsa da döner; o ayar açıksa sadece KRİTİK yanıp sönmesi kapanır.
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -174,7 +175,7 @@ export default function Astronaut3D({ levels, selected, onHover, onSelect, onErr
     controls.dampingFactor = 0.08;
     controls.minPolarAngle = Math.PI * 0.32;
     controls.maxPolarAngle = Math.PI * 0.56;
-    controls.autoRotate = !still;
+    controls.autoRotate = true;
     controls.autoRotateSpeed = 1.6; // ~37 sn'de bir tur
     controls.update();
 
@@ -332,7 +333,7 @@ export default function Astronaut3D({ levels, selected, onHover, onSelect, onErr
       }
       shared.uHover.value = hovered && hovered !== 'env' ? ORDER.indexOf(hovered) : -1;
       shared.uSelected.value = sel && sel !== 'env' ? ORDER.indexOf(sel) : -1;
-      shared.uTime.value = still ? 0 : t;
+      shared.uTime.value = t;
       // Çevre halkası
       const envLevel = lv.env;
       const envC = levelColor(envLevel);
@@ -342,9 +343,10 @@ export default function Astronaut3D({ levels, selected, onHover, onSelect, onErr
       const pulse = envLevel === 'critical' && !still ? 0.5 + 0.5 * Math.sin(t * 5) : 0;
       envSoft.opacity = (envLevel && envLevel !== 'normal' ? 0.22 : 0.1) + (envOn ? 0.14 : 0) + pulse * 0.2;
       envMat.opacity = envOn ? 1 : 0.75;
-      if (!still) dashes.rotation.y = t * 0.15;
-      // Fare modelin üstündeyken dönüş durur, okumak kolay olsun
-      controls.autoRotate = !still && !hovered;
+      dashes.rotation.y = t * 0.15;
+      // Sürekli yavaş dönüş; imleç modelin üstündeyken yavaşlar, okuması kolay olsun
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = hovered ? 0.5 : 1.6;
       controls.update();
       renderer.render(scene, camera);
       raf = requestAnimationFrame(tick);
