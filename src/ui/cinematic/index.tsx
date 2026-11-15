@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAstra } from '../../store';
 import type { ScenarioId } from '../../types';
-import { CINEMATIC_EVENT } from './phases';
+import { CINEMATIC_END_EVENT, CINEMATIC_EVENT } from './phases';
 import { SHOWS } from './shows';
 
 export function ScenarioCinematics() {
@@ -28,5 +28,13 @@ export function ScenarioCinematics() {
 
   if (!playing) return null;
   const Show = SHOWS[playing.id]!;
-  return <Show key={playing.run} onClose={() => setPlaying(null)} />;
+  return (
+    <Show
+      key={playing.run}
+      onClose={() => {
+        setPlaying(null);
+        window.dispatchEvent(new Event(CINEMATIC_END_EVENT));
+      }}
+    />
+  );
 }

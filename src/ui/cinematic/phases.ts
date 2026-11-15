@@ -41,3 +41,10 @@ export function fmtMinSec(s: number): string {
   const r = Math.round(s % 60);
   return `${m} dk ${r} sn`;
 }
+
+/** Jüri demo turunu başlatır: window.dispatchEvent(new Event(DEMO_EVENT)) */
+export const DEMO_EVENT = 'astra:demo';
+/** Bir sinematik kapandığında yayınlanır (demo turu sıradakine geçmek için dinler). */
+export const CINEMATIC_END_EVENT = 'astra:cinematic-end';
+/** Sayfa değiştirme isteği: detail = sayfa id ('kokpit' gibi). App.tsx dinler. */
+export const NAVIGATE_EVENT = 'astra:navigate';

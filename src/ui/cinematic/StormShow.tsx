@@ -18,6 +18,7 @@ import { alpha, COLORS, fmt } from '../theme';
 import { Astronaut } from './Astronaut';
 import { fmtMinSec, usePhases } from './phases';
 import { Caption, Stage } from './shared';
+import { alarm, chime, useCue, whoosh } from './sound';
 
 const VIDEO_URL = `${import.meta.env.BASE_URL}media/sdo-x39-2024-05-10.mp4`;
 const BASE_DOSE = (PARAMS.doseRateMarsTransit.value * 1000) / 24; // 76,7 µSv/sa
@@ -42,6 +43,10 @@ export function StormShow({ onClose }: { onClose: () => void }) {
   const sheltered = Boolean(incident?.autoActions.includes('RADIATION_SHELTER'));
 
   const phase = usePhases(ORDER, LIMITS, (p) => (p === 'travel' ? dose > BASE_DOSE * 3 : p === 'impact' ? Boolean(incident) : true), onClose);
+
+  useCue(phase === 'travel', whoosh);
+  useCue(Boolean(incident), alarm);
+  useCue(phase === 'response' && sheltered, chime);
 
   const small = phase !== 'flare'; // Güneş köşeye küçülür
   const hot = phase === 'impact' || (phase === 'response' && !sheltered);

@@ -2,6 +2,7 @@
 import type { ComponentType } from 'react';
 import type { ScenarioId } from '../../types';
 import { Co2Show } from './Co2Show';
+import { EvaShow } from './EvaShow';
 import { StormShow } from './StormShow';
 
 export { CINEMATIC_EVENT } from './phases';
@@ -9,4 +10,5 @@ export { CINEMATIC_EVENT } from './phases';
 export const SHOWS: Partial<Record<ScenarioId, ComponentType<{ onClose: () => void }>>> = {
   SOLAR_STORM: StormShow,
   CO2_SCRUBBER_FAIL: Co2Show,
+  EVA_OVEREXERTION: EvaShow,
 };
