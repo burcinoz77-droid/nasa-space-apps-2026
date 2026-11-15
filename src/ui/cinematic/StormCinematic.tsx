@@ -114,13 +114,13 @@ function Show({ onClose }: { onClose: () => void }) {
       <div
         className="absolute overflow-hidden"
         style={{
-          left: small ? '-9vh' : '50%',
-          top: small ? '50%' : '50%',
-          width: small ? '46vh' : '92vh',
-          height: small ? '46vh' : '92vh',
+          left: small ? '-9vh' : '66%', // ilk sahnede sağa yaslı: soldaki yazı NASA damgasını örtmesin
+          top: '50%',
+          width: small ? '46vh' : '84vh',
+          height: small ? '46vh' : '84vh',
           transform: 'translate(' + (small ? '0' : '-50%') + ', -50%)',
-          borderRadius: '50%',
-          boxShadow: `0 0 120px 30px ${alpha('#f59e0b', small ? 0.35 : 0.2)}`,
+          borderRadius: small ? '50%' : '2%', // ilk sahnede kare: NASA'nın tarih damgası görünsün
+          boxShadow: small ? `0 0 120px 30px ${alpha('#f59e0b', 0.35)}` : 'none',
           transition: 'all 1.6s cubic-bezier(.6,0,.2,1)',
         }}
       >
@@ -133,7 +133,7 @@ function Show({ onClose }: { onClose: () => void }) {
             playsInline
             onError={() => setVideoOk(false)}
             className="h-full w-full object-cover"
-            style={{ transform: 'scale(1.12)' }}
+            style={{ transform: small ? 'scale(1.12)' : 'none', transition: 'transform 1.6s cubic-bezier(.6,0,.2,1)' }}
           />
         ) : (
           <DrawnSun />
@@ -143,7 +143,7 @@ function Show({ onClose }: { onClose: () => void }) {
       {/* 1 · Patlama yazısı */}
       <Caption show={phase === 'flare'} pos="bottom-left">
         <div className="font-mono text-xs tracking-[0.3em]" style={{ color: COLORS.caution }}>
-          {videoOk ? 'GERÇEK GÖRÜNTÜ · NASA/SDO' : 'CANLANDIRMA · VERİ: NASA DONKI'}
+          {videoOk ? 'GERÇEK GÖRÜNTÜ · NASA/SDO · AIA 304 Å' : 'CANLANDIRMA · VERİ: NASA DONKI'}
         </div>
         <div className="mt-2 text-3xl font-bold md:text-4xl">X3.9 güneş patlaması</div>
         <div className="mt-1 text-lg" style={{ color: COLORS.text }}>
