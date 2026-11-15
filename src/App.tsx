@@ -12,6 +12,7 @@ import type { CrewId, ScenarioId, Telemetry } from './types';
 import { AstraChatPanel } from './ui/components/AstraChatPanel';
 import { ScenarioCinematics } from './ui/cinematic';
 import { DemoTour } from './ui/cinematic/DemoTour';
+import { VisorHud } from './ui/cinematic/VisorHud';
 import { NAVIGATE_EVENT } from './ui/cinematic/phases';
 import {
   IconAstronaut,
@@ -105,6 +106,7 @@ export default function App() {
       {/* Parça 1: senaryo değişince o senaryonun tam ekran sinematiği (Atla ile kapanır) */}
       <ScenarioCinematics />
       <DemoTour />
+      <VisorHud />
     </div>
   );
 }

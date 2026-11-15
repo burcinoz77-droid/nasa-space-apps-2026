@@ -48,3 +48,5 @@ export const DEMO_EVENT = 'astra:demo';
 export const CINEMATIC_END_EVENT = 'astra:cinematic-end';
 /** Sayfa değiştirme isteği: detail = sayfa id ('kokpit' gibi). App.tsx dinler. */
 export const NAVIGATE_EVENT = 'astra:navigate';
+/** Kask vizörünü açar: detail = astronot id. */
+export const VISOR_EVENT = 'astra:visor';
