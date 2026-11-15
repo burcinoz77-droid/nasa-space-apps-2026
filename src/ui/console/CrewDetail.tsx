@@ -48,7 +48,7 @@ export function CrewDetail({ crewId }: { crewId: CrewId }) {
                 <path d="M4 13a8 8 0 0 1 16 0v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
                 <path d="M7 12.5a5 5 0 0 1 10 0v1.5H7z" fill="currentColor" fillOpacity="0.25" />
               </svg>
-              Helmet HUD
+              HUD
             </button>
           )}
           <TestsButton crewId={crewId} onOpen={() => setTests(true)} />
