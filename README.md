@@ -10,6 +10,15 @@ ASTRA, ARES-1 Mars görevindeki 6 astronotun 5 veri grubundaki ölçümlerini ca
 onaylı güvenli adımlar. **Katman 2** bir dil modelidir: olayları Türkçe açıklar ve soruları
 sadece veriye dayanarak cevaplar. Karar her zaman mürettebatındır.
 
+## Ekip / Team
+
+| Üye | Parça | Ne yaptı | GitHub |
+| --- | --- | --- | --- |
+| Burçin Öz | Parça 1 · Simülasyon | Dijital ikiz, senaryolar, kaynaklı parametreler, NASA verileri, sinematikler, jüri demo turu, kask vizörü, Ayarlar, yayınlama | [burcinoz77-droid](https://github.com/burcinoz77-droid) |
+| Muhammet Emir Uzun | Parça 2 · Katman 1 | Kişisel baseline, anomali tespiti, olay kuralları, otonom adımlar, Raporlar (olay kaydı) | [emirruzunn](https://github.com/emirruzunn) |
+| Berat Yusuf Beyazıt | Parça 3 · Arayüz | Kokpit, Astronot Ekranı, Astronotlar, 3B astronot, olay bandı, renk ve erişilebilirlik | [beyazitberatyusuf-afk](https://github.com/beyazitberatyusuf-afk) |
+| Azra Çetin | Parça 4 · ASTRA | Yapay zekâ (Katman 2), psikolojik testler, Görevler, belgeler, sunum ve video | [azracetin335815-ux](https://github.com/azracetin335815-ux) |
+
 ## English summary (for judges)
 
 **Orbitalis** is a health-monitoring console for a 6-person crew on a Mars mission (ARES-1, day 180):
@@ -69,7 +78,9 @@ Anahtar yoksa da çalışır: ASTRA sohbeti yedek moda geçer.
 | --- | --- |
 | `npm run dev` | Uygulama + yerel `/api/astra` |
 | `npm run build` | Yayın paketi (`dist/`) |
+| `npm run preview` | Derlenmiş paketi yerelde açar |
 | `npm run typecheck` | Tip kontrolü |
+| `npm run lint` | Kod kontrolü (oxlint) |
 | `npm run test` | Vitest testleri |
 | `ASTRA_LIVE=1 npx vitest run src/ai/astra.live.test.ts` | 10 test sorusunu gerçek modele sorar (bkz. `docs/test-sorulari.md`) |
 
@@ -87,7 +98,18 @@ Anahtar yoksa da çalışır: ASTRA sohbeti yedek moda geçer.
 | `api/astra.ts`, `src/ai/` | Katman 2: ASTRA yapay zekâsı | Parça 4 |
 | `src/psych/` | Psikolojik testler: NASA-TLX, Samn-Perelli, PVT-B | Parça 4 |
 | `src/loop.ts`, `src/store.ts` | Parçaları bağlayan döngü ve ortak durum | Herkes (gruba yaz) |
+| `vercel.json`, `cloudflare/`, `wrangler.jsonc`, `.github/workflows/pages.yml` | Yayınlama: Vercel, Cloudflare yedeği, GitHub Pages | Parça 1 |
 | `docs/` | Sunum, kaynaklar, ASTRA belgeleri | Parça 4 |
+
+## Yayınlama
+
+| Nerede | Nasıl güncellenir |
+| --- | --- |
+| Vercel (ana yayın) | GitHub'daki `main` dalından yayınlanır. `api/astra.ts` sunucu fonksiyonu olarak çalışır (süre sınırı `vercel.json`'da 60 sn); anahtarlar Vercel ortam değişkenlerindedir, değiştirince **Redeploy** gerekir. |
+| Cloudflare Workers (yedek) | `npm run build` ve `npx wrangler deploy`. Sitenin ve ASTRA sunucusunun aynısı; anahtar Cloudflare'de "secret" olarak durur. Ayrıntı: `cloudflare/README.md`. |
+| GitHub Pages | `main`'e her birleştirmede GitHub Actions (`.github/workflows/pages.yml`) derleyip yayınlar. Sunucu olmadığı için ASTRA yedek modda çalışır. |
+
+Anahtarlar hiçbir zaman repoya ya da tarayıcıya gitmez: `.env` commit edilmez, değişken adlarında `VITE_` ön eki kullanılmaz.
 
 ## Uygulamada neler var
 
@@ -100,7 +122,9 @@ Anahtar yoksa da çalışır: ASTRA sohbeti yedek moda geçer.
 - **Astronot Ekranı:** 3B astronot (bölgeye göre renk), ölçüm grupları, resmi normal aralık göstergesi,
   yüzeydeki astronotlar için **kask vizörü** (HUD) ve **Testler** sekmesi.
 - **Kaynak gösterimi:** her sayının yanında küçük gri (i); üstüne gelince kaynak adı çıkar, tıklayınca kaynak açılır.
-  Kaynağı olmayan değerlerde gri "varsayım" yazar.
+  Kaynağı olmayan değerlerde gri "varsayım" yazar. Ayarlar'daki **Veri kaynakları** tablosu her değeri, normal aralığını ve kaynağını listeler.
+- **Sinematik sesleri:** kodla üretilen sesler (fırtına, alarm, kalp atışı); 🔊 düğmesiyle kapatılır.
+- **ASTRA sohbet paneli:** sağ alttaki "ASTRA'ya sor"; panel başlığından sürüklenip taşınabilir, hazır sorular içerir.
 
 ## ASTRA (Katman 2) kısaca
 
@@ -150,7 +174,7 @@ alınmıştır; her sabitin kaynağı `src/sim/parameters.ts` içinde yazılıd�
 NASA Space Apps kuralı gereği kullanılan veri, araç ve yapay zekâ burada belirtilir.
 
 **Uygulamanın içinde (ürünün parçası)**
-- Katman 2 (ASTRA): Google Gemini (`gemini-3.8-flash`, geliştirme) ve Anthropic Claude Haiku 5.5 (`claude-haiku-5-5`, demo). Sunucu fonksiyonundan REST ile çağrılır; anahtarlar yalnızca sunucuda durur.
+- Katman 2 (ASTRA): Google Gemini (`gemini-3.8-flash`; yoğunlukta `gemini-3.5-flash-lite` ve `gemini-3.7-flash` yedek modelleri). Geliştirmede ve demoda Gemini kullanıldı. Kod, isteğe bağlı olarak Anthropic Claude Haiku 5.5'e (`ASTRA_PROVIDER=claude`) geçebilir; bu seçenek yayında kullanılmadı. Sunucu fonksiyonundan REST ile çağrılır; anahtarlar yalnızca sunucuda durur.
 - Dil modeli yalnızca okur: olayları açıklar, soruları cevaplar ve veriye dayalı olası durumları ihtimal olarak belirtir. Uyarı açamaz, telemetriyi, olayları ya da otonom adımları değiştiremez. Kesin teşhis ve ilaç içeren cevaplar güvenlik süzgecinde durdurulur; cevaptaki sayılar veriyle karşılaştırılır.
 
 **Geliştirme sırasında**
