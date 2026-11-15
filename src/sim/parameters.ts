@@ -59,7 +59,8 @@ export const PARAMS = {
   bpSysRest: { label: 'Sistolik tansiyon', value: 112, unit: 'mmHg', ...SRC.norsk2015 },
   bpDiaRest: { label: 'Diyastolik tansiyon', value: 70, unit: 'mmHg', ...SRC.norsk2015 },
   bpDropInSpace: { label: 'Uzayda tansiyon düşüşü', value: 8, unit: 'mmHg (24 saatlik, sistolik)', ...SRC.norsk2015 },
-  spo2Normal: { label: 'Oksijen doygunluğu (SpO₂)', value: 98, unit: '% (aralık 96–99)', ...SRC.hrpHypoxia },
+  // NASA HRP hipoksi sayfası konuyu verir ama sayı vermez; 98 (96–99) değeri bu yüzden varsayım olarak işaretli.
+  spo2Normal: { label: 'Oksijen doygunluğu (SpO₂)', value: 98, unit: '% (aralık 96–99)', ...SRC.hrpHypoxia, assumption: true },
   // Veri grubu 2 · Solunum ve metabolik
   respRateRest: { label: 'Solunum sayısı, dinlenme', value: 14, unit: 'nefes/dk (12–20)', ...SRC.jems },
   respRateEva: { label: 'Solunum sayısı, EVA', value: 22, unit: 'nefes/dk (EVA 20–32)', ...SRC.jems },
