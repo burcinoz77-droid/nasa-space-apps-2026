@@ -18,6 +18,7 @@ import { toolLabel } from './labels';
 import { buildToolData } from './tooldata';
 import { verifyNumbers } from './verify';
 import { boneLossEstimate } from './knowledge';
+import { answerSources } from './sources';
 import { METRICS } from '../metrics';
 
 type Crew = { ad: string; olcumler: Record<string, unknown> };
@@ -265,6 +266,14 @@ describe('client.ts · askAstra', () => {
     const a = await askAstra({ mode: 'chat', question: 'Radyasyon limiti ne?', context: {} });
     expect(a.tools).toEqual(['Kaynak bilgisi · radyasyon']);
     expect(a.verified).toBe(true);
+    expect(a.sources?.[0]).toMatchObject({ ad: expect.stringMatching(/NASA-STD-3001/), url: expect.stringMatching(/^https:\/\//) });
+  });
+
+  it('yedek cevaplar da kaynak linkiyle gelir', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ağ yok')));
+    const a = await askAstra({ mode: 'chat', question: 'CO₂ güvenli mi?', context: {} });
+    expect(a.source).toBe('fallback');
+    expect(a.sources?.map((x) => x.ad)).toContain('OCHMO-TB-004 CO₂');
   });
 
   it('sohbet isteğiyle araç verisini de gönderir', async () => {
@@ -369,6 +378,20 @@ describe('Araçlar (tool calling) · salt-okur araçlar', () => {
   });
 });
 
+describe('Kaynak linkleri (sources.ts)', () => {
+  it('sorudaki konuya göre doğru kaynakları seçer, ilgisizleri eklemez', () => {
+    const noise = answerSources('Kabin gürültüsü normal mi?', 'Ortam gürültüsü: Elif 55 dBA. Tüm değerler resmi normal aralıkta (en fazla 72 dBA).');
+    expect(noise.map((x) => x.ad).join(' ')).toMatch(/Akustik/);
+    expect(noise.map((x) => x.ad).join(' ')).not.toMatch(/NIH|Pulse/);
+    expect(answerSources('Kemik kaybı ne durumda?', 'Kemik yoğunluğu ölçülmüyor. Bu konuda uçuş doktoruna danışmayı öneririm.').map((x) => x.ad)).toEqual([
+      'NASA HRP, kemik değişimi riski',
+    ]);
+    // "önemli" kelimesindeki "nem" ortam konusunu tetiklemez
+    expect(answerSources('Bu önemli mi?', 'Merhaba.')).toEqual([]);
+    for (const x of answerSources('Radyasyon durumu nasıl?', 'Kariyer limiti 600 mSv.')) expect(x.url).toMatch(/^https:\/\//);
+  });
+});
+
 describe('Yeni ölçümler (ortam) ve sistemde ölçülmeyen konular', () => {
   it('ortam sıcaklığı, nem ve gürültü her astronotun verisinde ve NASA aralığında', () => {
     const s = runSimulation(40);
@@ -409,6 +432,7 @@ describe('Yeni ölçümler (ortam) ve sistemde ölçülmeyen konular', () => {
     expect(ask('SANS riski var mı?')).toMatch(/ölçülmüyor/);
     expect(ask("Mert'in elektrolit dengesi nasıl?")).not.toMatch(/vestibüler/);
     expect(ask('Kokpitte gürültü kaç?')).toMatch(/dBA/);
+    expect(ask('Kabin gürültüsü normal mi?')).toMatch(/resmi normal aralıkta \(en fazla 72 dBA\)/);
     for (const q of ["Kerem'in kemik kaybı ne durumda?", 'SANS riski var mı?', 'Kokpitte gürültü kaç?']) {
       expect(checkAnswer(ask(q))).toEqual({ safe: true });
     }

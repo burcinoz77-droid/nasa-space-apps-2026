@@ -5,6 +5,7 @@ import { useAstra } from '../store';
 import type { AstraAnswer, AstraRequest } from '../types';
 import { fallbackAnswer } from './fallback';
 import { toolLabel } from './labels';
+import { answerSources } from './sources';
 import { checkAnswer } from './safety';
 import { buildToolData } from './tooldata';
 import { verifyNumbers } from './verify';
@@ -24,7 +25,13 @@ function recentHistory(question: string): { role: 'user' | 'astra'; text: string
   return previous.slice(-10).map((m) => ({ role: m.role, text: m.text.slice(0, 500) }));
 }
 
+/** ASTRA'ya sorar; cevabın altında gösterilecek kaynak linklerini de ekler. */
 export async function askAstra(req: AstraRequest): Promise<AstraAnswer> {
+  const answer = await askAstraInner(req);
+  return answer.sources ? answer : { ...answer, sources: answerSources(req.question, answer.text) };
+}
+
+async function askAstraInner(req: AstraRequest): Promise<AstraAnswer> {
   const started = performance.now();
   const elapsed = () => Math.round(performance.now() - started);
   const history = req.mode === 'chat' ? recentHistory(req.question) : [];
@@ -69,6 +76,12 @@ export async function askAstra(req: AstraRequest): Promise<AstraAnswer> {
       verified: verifyNumbers(text, req.context, `${req.question} ${data.toolOutput ?? ''}`),
       latencyMs: elapsed(),
       ...(data.tools?.length ? { tools: data.tools.map(toolLabel) } : {}),
+      // lookup_reference ile okunan konuların kaynakları önce gelir
+      sources: answerSources(
+        req.question,
+        text,
+        (data.tools ?? []).filter((t) => t.ad === 'lookup_reference').map((t) => String(t.girdi?.konu ?? '')),
+      ),
     };
     cache.set(key, { at: Date.now(), answer });
     return answer;

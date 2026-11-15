@@ -2,9 +2,9 @@
 // Sabit metin yerine güncel değerlerle doldurulan şablonlar kullanılır; böylece yedek cevap da
 // doğru sayılar içerir. Kurallar modelinkiyle aynı: en fazla 4 cümle, teşhis yok, ilaç yok,
 // uyarı açmak yok, veride olmayan sayı yok.
-import { CREW, CREW_IDS } from '../crew';
+import { CREW, CREW_BY_ID, CREW_IDS } from '../crew';
 import { GROUP_NAMES, METRIC_BY_KEY, readMetric, type MetricKey } from '../metrics';
-import { PARAMS } from '../sim/parameters';
+import { normalRangeFor, PARAMS } from '../sim/parameters';
 import { useAstra, type AstraState } from '../store';
 import type { AstraAnswer, AstraRequest, CrewId, CrewLocation, Incident, IncidentType, MetricScore } from '../types';
 import { fmt } from '../ui/theme';
@@ -384,11 +384,30 @@ function metricText(s: AstraState, crew: CrewId[], keys: MetricKey[]): string {
   if (crew.length) {
     const id = crew[0];
     const parts = keys.map((k) => `${label(k)} ${valueText(k, metricNow(s, id, k) ?? NaN)}`);
-    return sentences(`${shortName(id)} için ${list(parts)}.`, statusSentence(s, id, false));
+    return sentences(`${shortName(id)} için ${list(parts)}.`, rangeSentence(s, [id], keys[0]), statusSentence(s, id, false));
   }
   const key = keys[0];
-  const parts = CREW_IDS.filter((id) => s.telemetry[id]).map((id) => `${shortName(id)} ${valueText(key, metricNow(s, id, key) ?? NaN)}`);
-  return `${METRIC_BY_KEY[key].label}: ${list(parts)}.`;
+  const ids = CREW_IDS.filter((id) => s.telemetry[id]);
+  const parts = ids.map((id) => `${shortName(id)} ${valueText(key, metricNow(s, id, key) ?? NaN)}`);
+  return sentences(`${METRIC_BY_KEY[key].label}: ${list(parts)}.`, rangeSentence(s, ids, key));
+}
+
+/** Resmi normal aralığı olan ölçümde: herkes aralıktaysa bunu, değilse aralık dışındakileri söyler. */
+function rangeSentence(s: AstraState, ids: CrewId[], key: MetricKey): string | undefined {
+  const withRange = ids.filter((id) => normalRangeFor(key, CREW_BY_ID[id].location));
+  if (!withRange.length) return undefined;
+  const outside = withRange.filter((id) => {
+    const r = normalRangeFor(key, CREW_BY_ID[id].location)!;
+    const v = metricNow(s, id, key);
+    return v !== undefined && (v < r[0] || v > r[1]);
+  });
+  const r = normalRangeFor(key, CREW_BY_ID[withRange[0]].location)!;
+  const rangeText = r[0] === 0 ? `en fazla ${valueText(key, r[1])}` : `${fmt(r[0], Number.isInteger(r[0]) ? 0 : 1)}–${valueText(key, r[1])}`;
+  if (!outside.length) {
+    const who = withRange.length === 1 ? 'Değer' : 'Tüm değerler';
+    return `${who} resmi normal aralıkta (${rangeText}); bu aralıkta uyarı gerekmez.`;
+  }
+  return `${list(outside.map(shortName))} resmi normal aralığın (${rangeText}) dışında; kişisel normalden sapma izleniyor.`;
 }
 
 function summaryText(s: AstraState): string {

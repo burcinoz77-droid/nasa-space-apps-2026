@@ -11,7 +11,15 @@ import { buildContext } from '../../ai/context';
 import { useAstra } from '../../store';
 import { AstraMeta, Thinking } from './AstraExplanation';
 
-const PRESETS = ['Bugün kim dinlenmeli?', 'Kerem neden kritik?', 'Radyasyon durumu nasıl?', 'CO₂ güvenli mi?'];
+const PRESETS = [
+  'Bugün kim dinlenmeli?',
+  'Kerem neden kritik?',
+  "Mert'te ne olabilir?",
+  'Radyasyon durumu nasıl?',
+  'CO₂ güvenli mi?',
+  'Kabin gürültüsü normal mi?',
+  'Kemik kaybı ne durumda?',
+];
 
 // ---- Sürükleme: panelin sol üst köşesinin ekrandaki yeri (px). null = varsayılan sağ alt köşe.
 type Pos = { x: number; y: number };
