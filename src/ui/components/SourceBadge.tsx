@@ -52,12 +52,12 @@ export function SourceBadge({ metric, param, crewId }: { metric?: MetricKey; par
   const p = resolve(metric, param, crewId);
   if (!p) return null;
   const label = shortSource(p);
-  const color = p.assumption ? COLORS.offline : COLORS.calm;
   const title = p.assumption
     ? `Varsayım: NASA ya da hakemli bir kaynağı yok${p.url ? ` (bağlam: ${p.source})` : ''}. ${p.label}`
     : `Kaynak: ${p.source} — ${p.label}. Tıklayınca kaynak açılır.`;
-  const cls = 'inline-flex shrink-0 items-center rounded-md px-1.5 py-px font-sans text-sm leading-5 font-medium whitespace-nowrap';
-  const style = { color, backgroundColor: alpha(color, 0.1), boxShadow: `inset 0 0 0 1px ${alpha(color, 0.35)}` };
+  // Sade görünüm: kutu yok, küçük ve sönük yazı; üstüne gelince belirginleşir. Veri öne çıksın, kaynak dursun.
+  const cls = 'inline-flex shrink-0 items-center font-sans text-xs leading-5 whitespace-nowrap opacity-60 transition-opacity hover:opacity-100';
+  const style = { color: p.assumption ? COLORS.offline : alpha(COLORS.textMuted, 0.9) };
   if (!p.url)
     return (
       <span className={cls} style={style} title={title}>
@@ -65,7 +65,7 @@ export function SourceBadge({ metric, param, crewId }: { metric?: MetricKey; par
       </span>
     );
   return (
-    <a href={p.url} target="_blank" rel="noreferrer" className={`${cls} hover:brightness-125`} style={style} title={title} onClick={(e) => e.stopPropagation()}>
+    <a href={p.url} target="_blank" rel="noreferrer" className={`${cls} underline decoration-dotted underline-offset-2 hover:text-calm`} style={style} title={title} onClick={(e) => e.stopPropagation()}>
       {label}
     </a>
   );

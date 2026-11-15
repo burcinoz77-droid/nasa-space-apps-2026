@@ -2,7 +2,7 @@
 // Sayfa sahipleri: Kokpit/Astronot Ekranı/Astronotlar = Parça 3,
 // Raporlar = Parça 2, Ayarlar = Parça 1, Görevler ve ASTRA sohbet paneli = Parça 4.
 // Seçili astronot burada tutulur: Kokpit ve Astronotlar'dan tıklanınca Astronot Ekranı o kişiyle açılır.
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { CREW, CREW_BY_ID } from './crew';
 import { controls, SCENARIO_NAMES } from './loop';
@@ -169,6 +169,66 @@ function Sidebar({ page, onPage }: { page: PageId; onPage: (p: PageId) => void }
 }
 
 // ---------- Üst bar ----------
+/** Senaryo seçimi bir demo aracı: ekranın ortasında değil, küçük bir "Simülasyon" menüsünde. */
+function ScenarioMenu({ scenario }: { scenario?: ScenarioId }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    window.addEventListener('mousedown', close);
+    window.addEventListener('keydown', close);
+    return () => {
+      window.removeEventListener('mousedown', close);
+      window.removeEventListener('keydown', close);
+    };
+  }, [open]);
+  const active = SCENARIO_PILLS.find((p) => p.id === scenario);
+  const crisis = Boolean(scenario && scenario !== 'NORMAL');
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="flex items-center gap-2 rounded-lg border border-space-border px-3 py-1.5 text-sm hover:bg-white/5"
+      >
+        <span className="text-xs tracking-widest" style={{ color: COLORS.textMuted }}>
+          SİMÜLASYON
+        </span>
+        <span className="font-medium" style={{ color: crisis ? COLORS.caution : COLORS.text }}>
+          {active?.label ?? '—'}
+        </span>
+        <span style={{ color: COLORS.textMuted }}>▾</span>
+      </button>
+      {open && (
+        <div role="menu" className="absolute top-full left-0 z-50 mt-1 w-64 rounded-xl border border-space-border bg-space-panel p-1 shadow-2xl">
+          {SCENARIO_PILLS.map((p) => {
+            const on = scenario === p.id;
+            return (
+              <button
+                key={p.id}
+                role="menuitemradio"
+                aria-checked={on}
+                onClick={() => {
+                  controls.setScenario(p.id);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-white/10 ${on ? 'font-semibold text-calm' : 'text-slate-200'}`}
+              >
+                {SCENARIO_NAMES[p.id]}
+                {on && <span>✓</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TopBar({ onBell }: { onBell: () => void }) {
   const { scenario, day, open, critical } = useAstra(
     useShallow((s) => {
@@ -188,29 +248,8 @@ function TopBar({ onBell }: { onBell: () => void }) {
 
   return (
     <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-space-border bg-space-panel/70 px-5 py-2.5">
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1" role="group" aria-label="Senaryo">
-        {SCENARIO_PILLS.map((p) => {
-          const on = scenario === p.id;
-          return (
-            <button
-              key={p.id}
-              onClick={() => controls.setScenario(p.id)}
-              aria-pressed={on}
-              aria-label={p.label}
-              title={SCENARIO_NAMES[p.id]}
-              className={`rounded-full px-2.5 py-1 text-sm whitespace-nowrap min-[1180px]:px-3 ${on ? 'bg-calm/20 font-semibold text-calm ring-1 ring-calm' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}
-            >
-              {p.short ? (
-                <>
-                  <span className="min-[1180px]:hidden">{p.short}</span>
-                  <span className="hidden min-[1180px]:inline">{p.label}</span>
-                </>
-              ) : (
-                p.label
-              )}
-            </button>
-          );
-        })}
+      <div className="flex min-w-0 flex-1 items-center">
+        <ScenarioMenu scenario={scenario} />
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
