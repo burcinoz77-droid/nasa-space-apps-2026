@@ -12,6 +12,8 @@ import { useAstra } from './store';
 import type { CrewId, ScenarioId, Telemetry } from './types';
 import { AstraChatPanel } from './ui/components/AstraChatPanel';
 import { ScenarioCinematics } from './ui/cinematic';
+import { DemoTour } from './ui/cinematic/DemoTour';
+import { NAVIGATE_EVENT } from './ui/cinematic/phases';
 import { IconBell, IconCockpit, IconCrew, IconReports, IconReset, IconSettings, IconSignal, IconTasks, OrbitalisMark } from './ui/components/Icons';
 import { IncidentBanner } from './ui/components/IncidentBanner';
 import { SourceBadge } from './ui/components/SourceBadge';
@@ -52,6 +54,16 @@ export default function App() {
   const [crew, setCrew] = useState<CrewId>(CREW[0].id);
   const hasCritical = useAstra((s) => s.incidents.some((i) => i.level === 'critical' && i.status === 'open'));
 
+  // Parça 1: jüri demo turu sayfayı Kokpit'e alabilsin
+  useEffect(() => {
+    const go = (e: Event) => {
+      const id = (e as CustomEvent<string>).detail;
+      if (PAGES.some((p) => p.id === id)) setPage(id as PageId);
+    };
+    window.addEventListener(NAVIGATE_EVENT, go);
+    return () => window.removeEventListener(NAVIGATE_EVENT, go);
+  }, []);
+
   const openCrew = (id: CrewId) => {
     setCrew(id);
     setPage('murettebat');
@@ -79,6 +91,7 @@ export default function App() {
       <AstraChatPanel />
       {/* Parça 1: senaryo değişince o senaryonun tam ekran sinematiği (Atla ile kapanır) */}
       <ScenarioCinematics />
+      <DemoTour />
     </div>
   );
 }
