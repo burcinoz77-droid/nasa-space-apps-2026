@@ -114,8 +114,8 @@ function Visor({ crewId, onClose }: { crewId: CrewId; onClose: () => void }) {
       {/* Top: heading strip */}
       <div className="absolute flex flex-col items-center gap-1.5" style={{ left: '50%', top: '5vh', transform: 'translateX(-50%)', fontFamily: MONO, color: HUD, textShadow: GLOW }}>
         <div className="flex gap-8 text-sm opacity-85">
-          {['K', '30', '60', 'D', '120', '150', 'G'].map((d) => (
-            <span key={d} style={{ fontWeight: d === 'D' ? 700 : 400 }}>
+          {['N', '30', '60', 'E', '120', '150', 'S'].map((d) => (
+            <span key={d} style={{ fontWeight: d === 'E' ? 700 : 400 }}>
               {d}
             </span>
           ))}
@@ -142,7 +142,7 @@ function Visor({ crewId, onClose }: { crewId: CrewId; onClose: () => void }) {
           delay {Math.floor(delay / 60)} min {Math.round(delay % 60)} s
         </span>
         <span className="text-sm" style={{ color: '#C4B5FD', textShadow: GLOW }}>
-          ● ASTRA Katman 1 · gemide, aktif
+          ● ASTRA Layer 1 · onboard, active
         </span>
       </Corner>
 
