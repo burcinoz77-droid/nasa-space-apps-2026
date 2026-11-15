@@ -15,6 +15,7 @@ import { alpha, COLORS, fmt } from '../theme';
 import { Astronaut } from './Astronaut';
 import { usePhases } from './phases';
 import { Caption, Stage } from './shared';
+import { alarm, chime, useCue, useHeartbeat } from './sound';
 
 const ORDER = ['cabin', 'failure', 'body', 'response'] as const;
 type Phase = (typeof ORDER)[number];
@@ -51,6 +52,10 @@ export function Co2Show({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (phase === 'response') controls.setSpeed(VENT_TICK_MS);
   }, [phase]);
+
+  useCue(phase === 'failure', alarm);
+  useHeartbeat(phase === 'body' || phase === 'response', hr);
+  useCue(phase === 'response' && vented, chime);
 
   const fan: 'run' | 'stop' | 'boost' = phase === 'cabin' ? 'run' : phase === 'response' && vented ? 'boost' : 'stop';
   const level = ppco2 >= CRITICAL ? COLORS.critical : ppco2 >= CAUTION ? COLORS.caution : COLORS.normal;

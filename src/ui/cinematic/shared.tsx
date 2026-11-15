@@ -1,9 +1,11 @@
 // Parça 1 · Sinematiklerin ortak parçaları: çerçeve, yıldız alanı, alt yazı kutusu, sahne makinesi.
 import { type CSSProperties, type ReactNode, useEffect, useRef } from 'react';
 import { alpha, COLORS } from '../theme';
+import { setMuted, useMuted } from './sound';
 
 /** Tam ekran çerçeve: koyu arka plan, yıldızlar, Atla düğmesi, Esc, alt kaynak satırı, kapanışta solma. */
 export function Stage({ fading, onClose, credit, label, children }: { fading: boolean; onClose: () => void; credit: string; label: string; children: ReactNode }) {
+  const muted = useMuted();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
@@ -18,6 +20,14 @@ export function Stage({ fading, onClose, credit, label, children }: { fading: bo
     >
       <Stars />
       {children}
+      <button
+        onClick={() => setMuted(!muted)}
+        className="absolute top-4 right-28 z-20 rounded-full border px-3 py-1.5 text-sm backdrop-blur hover:bg-white/10"
+        style={{ borderColor: alpha(COLORS.text, 0.3), color: COLORS.text }}
+        aria-label={muted ? 'Sesi aç' : 'Sesi kapat'}
+      >
+        {muted ? '🔇' : '🔊'}
+      </button>
       <button
         onClick={onClose}
         className="absolute top-4 right-4 z-20 rounded-full border px-4 py-1.5 text-sm backdrop-blur hover:bg-white/10"

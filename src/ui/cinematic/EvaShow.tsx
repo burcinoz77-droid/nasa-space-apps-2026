@@ -13,6 +13,7 @@ import { alpha, COLORS, fmt } from '../theme';
 import { Astronaut } from './Astronaut';
 import { usePhases } from './phases';
 import { Caption, Stage } from './shared';
+import { alarm, chime, useCue, useHeartbeat } from './sound';
 
 const ORDER = ['work', 'heat', 'response'] as const;
 type Phase = (typeof ORDER)[number];
@@ -53,6 +54,10 @@ export function EvaShow({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     if (phase === 'response') controls.setSpeed(REST_TICK_MS);
   }, [phase]);
+
+  useHeartbeat(phase !== 'outro', hr);
+  useCue(peak !== null, alarm);
+  useCue(phase === 'response' && rested, chime);
 
   const level = temp >= CRITICAL ? COLORS.critical : temp >= CAUTION ? COLORS.caution : COLORS.normal;
   const walking = phase === 'response' && resting;
