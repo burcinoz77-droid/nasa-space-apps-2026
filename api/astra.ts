@@ -507,16 +507,16 @@ class RequestTimeoutError extends Error {}
 const RETRY_WITH_NEXT_MODEL = new Set([404, 429, 500, 503]);
 const TOOL_ERROR = /function|tool|declaration|schema/i;
 /** Araç turu sınırı: bu kadar turdan sonra model metinle cevap vermeye zorlanır. */
-const MAX_TOOL_ROUNDS = 3;
+const MAX_TOOL_ROUNDS = 2;
 /**
  * Tüm denemelerin toplam üst sınırı. Canlı sitede Gemini bir isteğe ~7 sn'de cevap veriyor; araç kullanan
- * sorular 2 istek sürer. İstemci 38 sn bekler. Vercel'de süre sınırı vercel.json'da 60 sn.
+ * sorular 2 istek sürer. İstemci 58 sn bekler. Vercel'de süre sınırı vercel.json'da 60 sn.
  */
-const TOTAL_TIMEOUT_MS = 35_000;
-/** Bir isteğin bekleme süresi (GEMINI_MODEL_TIMEOUT_MS ile değişir). Ölçülen ~6,7 sn'nin yaklaşık iki katı. */
-const DEFAULT_REQUEST_TIMEOUT_MS = 12_000;
+const TOTAL_TIMEOUT_MS = 55_000;
+/** Bir isteğin bekleme süresi (GEMINI_MODEL_TIMEOUT_MS ile değişir). 15 Kasım: canlıda basit bir soru bile ~11 sn sürdü; 12 sn sınırı araç kullanan sorularda yedek moda düşürüyordu. */
+const DEFAULT_REQUEST_TIMEOUT_MS = 24_000;
 /** Yedek modele geçmek için en az bu kadar süre kalmış olmalı; yoksa hemen yedek moda düşülür. */
-const MIN_TIME_FOR_NEXT_MODEL_MS = 8_000;
+const MIN_TIME_FOR_NEXT_MODEL_MS = 14_000;
 
 /** Tek bir HTTP isteği; kendi zaman aşımıyla. Yoğun model bazen hiç cevap vermez. */
 async function postJson(url: string, headers: Record<string, string>, body: unknown, signal: AbortSignal, timeoutMs: number): Promise<unknown> {
