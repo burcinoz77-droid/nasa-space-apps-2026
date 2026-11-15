@@ -2,7 +2,7 @@
 // Sayfa sahipleri: Kokpit/Astronot Ekranı/Astronotlar = Parça 3,
 // Raporlar = Parça 2, Ayarlar = Parça 1, Görevler ve ASTRA sohbet paneli = Parça 4.
 // Seçili astronot burada tutulur: Kokpit ve Astronotlar'dan tıklanınca Astronot Ekranı o kişiyle açılır.
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { CREW, CREW_BY_ID } from './crew';
 import { controls, SCENARIO_NAMES } from './loop';
@@ -188,32 +188,10 @@ function TopBar({ onBell }: { onBell: () => void }) {
 
   return (
     <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-space-border bg-space-panel/70 px-5 py-2.5">
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1" role="group" aria-label="Senaryo">
-        {SCENARIO_PILLS.map((p) => {
-          const on = scenario === p.id;
-          return (
-            <button
-              key={p.id}
-              onClick={() => controls.setScenario(p.id)}
-              aria-pressed={on}
-              aria-label={p.label}
-              title={SCENARIO_NAMES[p.id]}
-              className={`rounded-full px-2.5 py-1 text-sm whitespace-nowrap min-[1180px]:px-3 ${on ? 'bg-calm/20 font-semibold text-calm ring-1 ring-calm' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}
-            >
-              {p.short ? (
-                <>
-                  <span className="min-[1180px]:hidden">{p.short}</span>
-                  <span className="hidden min-[1180px]:inline">{p.label}</span>
-                </>
-              ) : (
-                p.label
-              )}
-            </button>
-          );
-        })}
-      </div>
+      <div className="min-w-0 flex-1" />
 
       <div className="flex shrink-0 items-center gap-3">
+        <ScenarioMenu scenario={scenario} />
         <Clock day={day} calibration={calibrating ? `${samples}/${SIM.baselineWindow}` : undefined} />
         <button
           onClick={onBell}
@@ -248,6 +226,69 @@ function TopBar({ onBell }: { onBell: () => void }) {
         </div>
       </div>
     </header>
+  );
+}
+
+/** Senaryo seçimi: gerçek görev konsolunda olmayacağı için küçük, sönük bir "Simülasyon ▾" menüsünde durur. */
+function ScenarioMenu({ scenario }: { scenario: ScenarioId | undefined }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', esc);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', esc);
+    };
+  }, [open]);
+  const current = SCENARIO_PILLS.find((p) => p.id === scenario);
+  const active = scenario && scenario !== 'NORMAL';
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title="Simülasyon senaryosu (demo)"
+        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm hover:bg-white/5"
+        style={{ color: active ? COLORS.caution : COLORS.textMuted }}
+      >
+        <span className="hidden min-[1180px]:inline">Simülasyon:</span>
+        <span className={active ? 'font-semibold' : ''}>{current?.short ?? current?.label ?? '—'}</span>
+        <span aria-hidden="true" className="text-xs">
+          ▾
+        </span>
+      </button>
+      {open && (
+        <div role="menu" className="absolute right-0 z-50 mt-1 w-64 rounded-xl border border-space-border bg-space-panel p-1 shadow-xl">
+          <div className="px-3 pt-2 pb-1 text-xs text-slate-500">Simülasyon senaryosu (demo)</div>
+          {SCENARIO_PILLS.map((p) => {
+            const on = scenario === p.id;
+            return (
+              <button
+                key={p.id}
+                role="menuitemradio"
+                aria-checked={on}
+                onClick={() => {
+                  controls.setScenario(p.id);
+                  setOpen(false);
+                }}
+                title={SCENARIO_NAMES[p.id]}
+                className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm ${on ? 'bg-calm/15 font-semibold text-calm' : 'text-slate-300 hover:bg-white/5'}`}
+              >
+                {p.label}
+                {on && <span aria-hidden="true">✓</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
