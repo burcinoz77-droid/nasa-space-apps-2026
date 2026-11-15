@@ -117,14 +117,17 @@ describe('Simülasyon', () => {
     expect(by(rested, 'mert').cardio.hr_bpm).toBeLessThan(by(before, 'mert').cardio.hr_bpm + 12);
   });
 
-  it('Normal\'e dönünce (stabilize et) değerler baseline\'a döner', () => {
+  it('Normal\'e dönünce (stabilize et) değerler baseline\'a döner, ama bir anda değil: toparlanma kademeli', () => {
     const sim = createSimulation();
-    const before = run(30, sim).telemetry;
+    const before = by(run(30, sim).telemetry, 'mert').resp.coreTemp_C;
     sim.setScenario('EVA_OVEREXERTION');
-    run(80, sim);
+    const peak = by(run(80, sim).telemetry, 'mert').resp.coreTemp_C;
     sim.setScenario('NORMAL');
-    const back = run(40, sim).telemetry;
-    expect(Math.abs(by(back, 'mert').resp.coreTemp_C - by(before, 'mert').resp.coreTemp_C)).toBeLessThan(0.4);
+    const soon = by(run(10, sim).telemetry, 'mert').resp.coreTemp_C;
+    const later = by(run(150, sim).telemetry, 'mert').resp.coreTemp_C;
+    expect(peak - before).toBeGreaterThan(0.8);
+    expect(soon - before).toBeGreaterThan((peak - before) * 0.5); // 10 ölçüm sonra iz hâlâ belirgin
+    expect(Math.abs(later - before)).toBeLessThan(0.4); // sonunda kişisel normaline döner
   });
 
   it('güneş fırtınasındaki her SEP olayı kayıtlı DONKI verisinde var', () => {
