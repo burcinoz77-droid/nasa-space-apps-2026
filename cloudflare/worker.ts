@@ -1,4 +1,4 @@
-// Cloudflare Workers entry: for networks that cannot reach vercel.app (some providers in Türkiye),
+// Cloudflare Workers entry: for networks that cannot reach vercel.app (some providers in Turkiye),
 // a copy of the site and the ASTRA server running at a single address.
 // - /api/astra → api/astra.ts (the same file as on Vercel, unchanged)
 // - everything else → the built site in dist/ (wrangler.jsonc "assets")

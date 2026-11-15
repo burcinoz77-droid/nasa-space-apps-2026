@@ -12,7 +12,7 @@ export type CrewLocation = 'KOKPIT' | 'GEZEGEN'; // KOKPIT = spacecraft in orbit
 
 export interface CrewMember {
   id: CrewId;
-  name: string; // "Dr. Elif Yılmaz"
+  name: string; // "Dr. Elif Yilmaz"
   role: string; // "Commander", "Flight Engineer", "Mission Specialist · Geologist"
   location: CrewLocation;
   unit: string; // "IVA-01" (inside the spacecraft) | "xEMU-01" (spacesuit)

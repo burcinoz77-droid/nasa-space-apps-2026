@@ -1,6 +1,6 @@
-# Cloudflare backup (for access from Türkiye)
+# Cloudflare backup (for access from Turkiye)
 
-Some internet providers in Türkiye reset connections to `*.vercel.app` addresses (`ERR_CONNECTION_RESET`).
+Some internet providers in Turkiye reset connections to `*.vercel.app` addresses (`ERR_CONNECTION_RESET`).
 This folder runs an **identical** copy of the site and the ASTRA server on Cloudflare Workers, at a single address.
 Gemini is live here too; that is the difference from the GitHub Pages backup.
 

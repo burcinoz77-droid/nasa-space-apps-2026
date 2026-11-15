@@ -128,12 +128,12 @@ function DueCard({ due, onStart, disabled }: { due: DueTest[]; onStart: (k: Test
                   <span
                     className="rounded-full px-2 py-0.5 text-xs"
                     style={
-                      d.oncelik === 'öncelikli'
+                      d.oncelik === 'priority'
                         ? { color: COLORS.caution, backgroundColor: alpha(COLORS.caution, 0.12) }
                         : { color: COLORS.textMuted, backgroundColor: 'rgba(255,255,255,0.05)' }
                     }
                   >
-                    {d.oncelik === 'öncelikli' ? 'priority' : 'routine'}
+                    {d.oncelik === 'priority' ? 'priority' : 'routine'}
                   </span>
                 </div>
                 <div className="mt-0.5 text-sm text-slate-400">

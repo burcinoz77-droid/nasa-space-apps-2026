@@ -70,7 +70,7 @@ export function toolLabel(tool: { ad: string; girdi?: Record<string, unknown> })
   return `${TOOL_TR[tool.ad] ?? tool.ad}${args.length ? ` · ${args.join(', ')}` : ''}`;
 }
 
-/** 'kerem' -> 'Kerem'. Crew members are addressed by first name (Emir Çelik -> Emir). */
+/** 'kerem' -> 'Kerem'. Crew members are addressed by first name (Emir Celik -> Emir). */
 export function shortName(id: CrewId): string {
   return id.charAt(0).toUpperCase() + id.slice(1);
 }

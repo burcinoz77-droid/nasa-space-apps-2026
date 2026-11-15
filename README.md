@@ -27,10 +27,10 @@ so the crew cannot wait for the flight surgeon. ASTRA monitors 36 metrics in 5 d
 
 | Member | Part | What they built | GitHub |
 | --- | --- | --- | --- |
-| Burçin Öz | Part 1 · Simulation | Digital twin, scenarios, sourced parameters, NASA data, cinematics, jury demo tour, helmet visor HUD, Settings, deployment | [burcinoz77-droid](https://github.com/burcinoz77-droid) |
+| Burcin Oz | Part 1 · Simulation | Digital twin, scenarios, sourced parameters, NASA data, cinematics, jury demo tour, helmet visor HUD, Settings, deployment | [burcinoz77-droid](https://github.com/burcinoz77-droid) |
 | Muhammet Emir Uzun | Part 2 · Layer 1 | Personal baseline, anomaly detection, incident rules, autonomous actions, Reports (incident log) | [emirruzunn](https://github.com/emirruzunn) |
-| Berat Yusuf Beyazıt | Part 3 · Interface | Mission Status, Astronaut View, Crew, 3D astronaut, incident banner, color and accessibility | [beyazitberatyusuf-afk](https://github.com/beyazitberatyusuf-afk) |
-| Azra Çetin | Part 4 · ASTRA | AI (Layer 2), psychological tests, Tasks, documentation, presentation and video | [azracetin335815-ux](https://github.com/azracetin335815-ux) |
+| Berat Yusuf Beyazit | Part 3 · Interface | Mission Status, Astronaut View, Crew, 3D astronaut, incident banner, color and accessibility | [beyazitberatyusuf-afk](https://github.com/beyazitberatyusuf-afk) |
+| Azra Cetin | Part 4 · ASTRA | AI (Layer 2), psychological tests, Tasks, documentation, presentation and video | [azracetin335815-ux](https://github.com/azracetin335815-ux) |
 
 ## Presentation, demo video and live links
 
@@ -42,7 +42,7 @@ so the crew cannot wait for the flight surgeon. ASTRA monitors 36 metrics in 5 d
 | Live app, backup (Cloudflare) | https://nasa-space-apps-2026.orbitalis-astra.workers.dev | ASTRA live (Gemini) |
 | GitHub Pages | https://burcinoz77-droid.github.io/nasa-space-apps-2026/ | No AI server: ASTRA in offline mode |
 
-Some networks in Türkiye block `.vercel.app` and `.workers.dev` addresses. If the app does not open,
+Some networks in Turkiye block `.vercel.app` and `.workers.dev` addresses. If the app does not open,
 use a phone hotspot or run it locally (`npm run dev`).
 
 **Try it in 2 minutes:** wait ~40 s until the clock shows "● Live" (personal baselines learned) →

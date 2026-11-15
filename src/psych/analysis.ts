@@ -24,7 +24,7 @@ export const TLX_CAUTION = 50;
 
 export interface DueTest {
   kind: TestKind;
-  oncelik: 'öncelikli' | 'rutin';
+  oncelik: 'priority' | 'routine';
   neden: string;
   kaynak?: TestSource;
 }
@@ -75,31 +75,31 @@ export function dueTests(crewId: CrewId, a: AstraState = useAstra.getState(), ts
     if (!recent && kind !== 'TLX' && shortSleep) {
       out.push({
         kind,
-        oncelik: 'öncelikli',
+        oncelik: 'priority',
         neden: `Slept ${fmt(sleep, 1)} h last night (under 6 h). In ISS data, short sleep was linked to slower reactions and more fatigue.`,
         kaynak: TEST_SOURCES.jones2022,
       });
       continue;
     }
     if (!recent && kind !== 'TLX' && cog) {
-      out.push({ kind, oncelik: 'öncelikli', neden: 'Layer 1 sees cognitive metrics deviating from personal baseline; an objective reaction test and a fatigue rating will clarify.' });
+      out.push({ kind, oncelik: 'priority', neden: 'Layer 1 sees cognitive metrics deviating from personal baseline; an objective reaction test and a fatigue rating will clarify.' });
       continue;
     }
     if (!recent && kind === 'TLX' && (onSurface || inIncident)) {
       out.push({
         kind,
-        oncelik: 'öncelikli',
+        oncelik: 'priority',
         neden: onSurface ? 'EVA work on the surface: to measure post-task workload (assumed rule).' : 'There is an open incident: to measure post-incident workload (assumed rule).',
       });
       continue;
     }
     if (last === undefined) {
-      out.push({ kind, oncelik: 'rutin', neden: 'Not taken yet: a first measurement is needed for personal comparison.' });
+      out.push({ kind, oncelik: 'routine', neden: 'Not taken yet: a first measurement is needed for personal comparison.' });
     } else if (since >= ROUTINE_TICKS) {
-      out.push({ kind, oncelik: 'rutin', neden: '4 mission days since the last test (on the ISS the Reaction Self Test was done every 4 days).', kaynak: TEST_SOURCES.jones2022 });
+      out.push({ kind, oncelik: 'routine', neden: '4 mission days since the last test (on the ISS the Reaction Self Test was done every 4 days).', kaynak: TEST_SOURCES.jones2022 });
     }
   }
-  return out.sort((x, y) => (x.oncelik === y.oncelik ? 0 : x.oncelik === 'öncelikli' ? -1 : 1));
+  return out.sort((x, y) => (x.oncelik === y.oncelik ? 0 : x.oncelik === 'priority' ? -1 : 1));
 }
 
 function spFactor(sp: SpResult | undefined, prev: SpResult | undefined, now: number): PsychFactor | undefined {
