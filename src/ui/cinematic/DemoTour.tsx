@@ -9,7 +9,7 @@ import { PARAMS, SIM } from '../../sim/parameters';
 import { useAstra } from '../../store';
 import type { ScenarioId } from '../../types';
 import { alpha, COLORS } from '../theme';
-import { CINEMATIC_END_EVENT, DEMO_EVENT, NAVIGATE_EVENT } from './phases';
+import { CINEMATIC_END_EVENT, DEMO_EVENT, NAVIGATE_EVENT, runtime } from './phases';
 import { Stars } from './shared';
 
 const TOUR: { id: ScenarioId; action: string }[] = [
@@ -58,6 +58,7 @@ export function DemoTour() {
 async function run(signal: AbortSignal, setStage: (s: Stage) => void) {
   const normalSpeed = useAstra.getState().tickMs;
   const nav = (page: string) => window.dispatchEvent(new CustomEvent(NAVIGATE_EVENT, { detail: page }));
+  runtime.tourActive = true;
   try {
     // Açılış: sıfırla, kişisel normalleri hızlı öğren
     setStage({ kind: 'intro' });
@@ -82,6 +83,7 @@ async function run(signal: AbortSignal, setStage: (s: Stage) => void) {
     setStage({ kind: 'outro' });
     await sleep(OUTRO_MS, signal);
   } finally {
+    runtime.tourActive = false;
     controls.setSpeed(normalSpeed);
   }
 }

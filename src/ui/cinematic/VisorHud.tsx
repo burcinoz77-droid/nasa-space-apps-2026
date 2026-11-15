@@ -4,7 +4,9 @@
 //   Olay     : o astronotu içeren Katman 1 olayı varsa kenarlar olay renginde parlar, ilgili değer büyür,
 //              ortada tek cümlelik uyarı + otomatik adım + sesli karar ("onayla" gerçekten olayı onaylar).
 // Gezegen ekibi: kask vizörü, Mars yüzeyi. Kokpit ekibi: AR gözlük, gemi içi.
-import { type ReactNode, useEffect, useState } from 'react';
+// Kendiliğinden açılma: gezegen ekibinden birinde KRİTİK olay açılınca vizör o kişinin gözünden açılır.
+// Sinematik oynuyorsa bitince açılır; jüri demo turu sırasında açılmaz.
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { CREW_BY_ID } from '../../crew';
 import { ACTION_LABELS, INCIDENT_LABELS } from '../../engine';
 import { controls } from '../../loop';
@@ -13,7 +15,7 @@ import { fmtMetric, fmtZ } from '../format';
 import { useAstra } from '../../store';
 import type { CrewId, Incident, Level } from '../../types';
 import { alpha, COLORS, fmt } from '../theme';
-import { VISOR_EVENT } from './phases';
+import { CINEMATIC_END_EVENT, runtime, VISOR_EVENT } from './phases';
 import { alarm, chime, useCue } from './sound';
 
 const HUD = '#7DD3FC';
@@ -28,6 +30,34 @@ export function VisorHud() {
     window.addEventListener(VISOR_EVENT, open);
     return () => window.removeEventListener(VISOR_EVENT, open);
   }, []);
+
+  // Kendiliğinden açılma
+  const seen = useRef(new Set<string>());
+  const pending = useRef<CrewId | null>(null);
+  useEffect(() => {
+    const unsub = useAstra.subscribe((s) => {
+      if (s.incidents.length === 0) seen.current.clear(); // simülasyon sıfırlandı
+      for (const i of s.incidents) {
+        if (i.status !== 'open' || i.level !== 'critical' || seen.current.has(i.id)) continue;
+        seen.current.add(i.id);
+        const who = i.crewIds.find((id) => CREW_BY_ID[id].location === 'GEZEGEN');
+        if (!who || runtime.tourActive) continue;
+        if (runtime.cinematicPlaying) pending.current = who;
+        else setCrewId((cur) => cur ?? who);
+      }
+    });
+    const afterCinematic = () => {
+      const who = pending.current;
+      pending.current = null;
+      if (who && !runtime.tourActive) setCrewId((cur) => cur ?? who);
+    };
+    window.addEventListener(CINEMATIC_END_EVENT, afterCinematic);
+    return () => {
+      unsub();
+      window.removeEventListener(CINEMATIC_END_EVENT, afterCinematic);
+    };
+  }, []);
+
   if (!crewId) return null;
   return <Visor key={crewId} crewId={crewId} onClose={() => setCrewId(null)} />;
 }
@@ -142,7 +172,7 @@ function Visor({ crewId, onClose }: { crewId: CrewId; onClose: () => void }) {
         Prototip · veriler ARES-1 simülasyonundan canlı
       </div>
       <style>{`
-        @keyframes visor-in { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: none; } }
+        @keyframes visor-in { from { transform: scale(1.04); } to { transform: none; } }
         @keyframes visor-pulse { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
       `}</style>
     </div>
