@@ -66,7 +66,7 @@ export function toolLabel(tool: { ad: string; girdi?: Record<string, unknown> })
   return `${TOOL_TR[tool.ad] ?? tool.ad}${args.length ? ` · ${args.join(', ')}` : ''}`;
 }
 
-/** 'kerem' -> 'Kerem'. Mürettebata ilk adıyla hitap edilir (Muhammed Emir -> Emir). */
+/** 'kerem' -> 'Kerem'. Mürettebata ilk adıyla hitap edilir (Emir Çelik -> Emir). */
 export function shortName(id: CrewId): string {
   return id.charAt(0).toLocaleUpperCase('tr-TR') + id.slice(1);
 }

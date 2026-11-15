@@ -13,7 +13,7 @@ export type CrewLocation = 'KOKPIT' | 'GEZEGEN'; // Kokpit = yörüngedeki gemi,
 export interface CrewMember {
   id: CrewId;
   name: string; // "Dr. Elif Yılmaz"
-  role: string; // "Uzay Biyoloğu"
+  role: string; // "Komutan", "Uçuş Mühendisi", "Görev Uzmanı · Jeolog"
   location: CrewLocation;
   unit: string; // "IVA-01" (gemi içi) | "xEMU-01" (uzay giysisi)
   sensitivity: string; // kartta görünen kişisel risk notu
