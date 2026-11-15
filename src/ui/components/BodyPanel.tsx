@@ -5,12 +5,13 @@ import { lazy, Suspense, useMemo, useState } from 'react';
 import { METRIC_BY_KEY, readMetric } from '../../metrics';
 import { useAstra } from '../../store';
 import type { CrewId, CrewStatus, Level, MetricScore, Telemetry } from '../../types';
-import { REGION_BY_ID, REGIONS, regionState, worstRegion, type RegionId, type TabId } from '../bodyRegions';
+import { REGION_BY_ID, REGIONS, regionState, worstRegion, type RegionId } from '../bodyRegions';
 import { fmtMetric, fmtZ } from '../format';
 import { alpha, COLORS, fmt, LEVEL_COLOR, LEVEL_ICON, LEVEL_LABEL } from '../theme';
 import type { HoverInfo } from './Astronaut3D';
 import { BodyMap } from './BodyMap';
 import { LevelBadge } from './LevelBadge';
+import { RangeNote } from './RangeNote';
 import { SourceBadge } from './SourceBadge';
 import { TrendLine } from './Sparkline';
 
@@ -32,17 +33,7 @@ function topSignalIn(status: CrewStatus | undefined, region: RegionId): MetricSc
   return status?.topSignals.find((s) => keys.includes(s.key));
 }
 
-export function BodyPanel({
-  crewId,
-  status,
-  t,
-  onOpenTab,
-}: {
-  crewId: CrewId;
-  status: CrewStatus | undefined;
-  t: Telemetry | undefined;
-  onOpenTab: (tab: TabId) => void;
-}) {
+export function BodyPanel({ crewId, status, t }: { crewId: CrewId; status: CrewStatus | undefined; t: Telemetry | undefined }) {
   const [webgl] = useState(hasWebGL);
   const [failed, setFailed] = useState(false);
   const [hover, setHover] = useState<HoverInfo | null>(null);
@@ -97,7 +88,7 @@ export function BodyPanel({
         })}
       </div>
 
-      <RegionDetail crewId={crewId} region={selected} status={status} t={t} onOpenTab={onOpenTab} />
+      <RegionDetail crewId={crewId} region={selected} status={status} t={t} />
     </div>
   );
 }
@@ -148,31 +139,21 @@ function RiskTip({ hover, status, t }: { hover: HoverInfo; status: CrewStatus | 
   );
 }
 
-/** Seçili bölgenin bütün ölçümleri. */
-function RegionDetail({
-  crewId,
-  region,
-  status,
-  t,
-  onOpenTab,
-}: {
-  crewId: CrewId;
-  region: RegionId;
-  status: CrewStatus | undefined;
-  t: Telemetry | undefined;
-  onOpenTab: (tab: TabId) => void;
-}) {
+/** Seçili bölgenin bütün ölçümleri. Sayfadaki tek ölçüm listesi budur (ayrı sekme yok). */
+function RegionDetail({ crewId, region, status, t }: { crewId: CrewId; region: RegionId; status: CrewStatus | undefined; t: Telemetry | undefined }) {
   const r = REGION_BY_ID[region];
   const s = regionState(status, region);
   const hist = useAstra((st) => st.history[crewId] ?? EMPTY);
   return (
-    <div className="rounded-lg border border-space-border bg-white/[0.02]">
+    <div className="@container rounded-lg border border-space-border bg-white/[0.03]">
       <div className="flex items-center justify-between gap-2 border-b border-space-border px-3 py-2">
         <div className="min-w-0">
           <div className="font-semibold text-slate-100">
             {r.name} <span className="font-normal text-slate-400">· {r.detail}</span>
           </div>
-          <div className="text-sm text-slate-400">Veri {r.groups}</div>
+          <div className="text-sm text-slate-400">
+            {r.metrics.length} ölçüm, veri {r.groups}
+          </div>
         </div>
         <div className="flex shrink-0 flex-col items-end">
           <span className="font-mono text-lg leading-tight font-semibold" style={{ color: s.level ? LEVEL_COLOR[s.level] : COLORS.offline }}>
@@ -187,35 +168,30 @@ function RegionDetail({
           const sig = status?.topSignals.find((x) => x.key === k);
           const l = sig?.level;
           const off = l && l !== 'normal';
+          const v = t ? readMetric(t, k) : undefined;
           return (
             <li key={k} className="flex min-w-0 items-center gap-2 border-b border-space-border/60 py-1.5 last:border-b-0">
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm text-slate-300" title={m.label}>
+                <span className="block truncate text-sm text-slate-200" title={m.label}>
                   {m.label}
                 </span>
-                {sig && (
-                  <span className="block text-sm text-slate-500">
-                    normal {fmtMetric(k, sig.mean)} · {fmtZ(sig.z)}
-                  </span>
-                )}
+                <span className="block truncate text-sm text-slate-400">
+                  {sig ? `kişisel ${fmtMetric(k, sig.mean)} · ${fmtZ(sig.z)}` : ''}
+                  <RangeNote crewId={crewId} k={k} value={v} />
+                </span>
               </span>
-              <span className="hidden min-[1400px]:block">
-                <TrendLine values={hist.map((x) => readMetric(x, k))} color={off ? LEVEL_COLOR[l] : COLORS.calm} width={56} height={20} />
+              <span className="hidden @[440px]:block">
+                <TrendLine values={hist.map((x) => readMetric(x, k))} color={off ? LEVEL_COLOR[l] : COLORS.calm} width={56} height={20} minSpan={0} />
               </span>
               <span className="shrink-0 text-right font-mono whitespace-nowrap" style={{ color: off ? LEVEL_COLOR[l] : COLORS.text }}>
                 {off && <span className="mr-1 text-sm">{LEVEL_ICON[l]}</span>}
-                {t ? fmtMetric(k, readMetric(t, k)) : '—'}
+                {t ? fmtMetric(k, v) : '—'}
               </span>
               <SourceBadge metric={k} crewId={crewId} />
             </li>
           );
         })}
       </ul>
-      <div className="border-t border-space-border px-3 py-1.5">
-        <button type="button" onClick={() => onOpenTab(r.tab)} className="rounded-md px-1.5 py-0.5 text-sm text-calm hover:bg-calm/10">
-          Grafiklerle aşağıdaki sekmede aç
-        </button>
-      </div>
     </div>
   );
 }

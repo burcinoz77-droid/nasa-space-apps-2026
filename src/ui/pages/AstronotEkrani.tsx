@@ -1,91 +1,44 @@
-// Parça 3 · Astronot Ekranı: seçili astronotun 5 veri grubundaki tüm ölçümleri.
-// Solda 2B vücut haritası, sağda sağlık kartı ve stres faktörleri, altta sekmeler
-// (Genel bakış / Sağlık / Performans / Çevre). Her sayının yanında birimi ve kaynak rozeti var.
-import { type ReactNode, useMemo, useRef, useState } from 'react';
+// Parça 3 · Mürettebat sayfası (eski "Astronot Ekranı" + "Astronotlar" tek sayfada).
+// Üstte altı astronot kartı (kişi seçici, ekip ekip), altında seçili kişinin vücut haritası ve bölgesinin tüm
+// ölçümleri (solda), sağlık kartı ve stres faktörleri (sağda). Ayrı sekme yok: bütün ölçümler bölge panelinde.
+// Her sayının yanında birimi ve kaynak rozeti var.
+import { type ReactNode, useMemo } from 'react';
 import { CREW, CREW_BY_ID } from '../../crew';
-import { GROUP_NAMES, METRIC_BY_KEY, METRICS, readMetric, type MetricInfo, type MetricKey } from '../../metrics';
-import { normalRangeFor, PARAMS } from '../../sim/parameters';
+import { readMetric, type MetricKey } from '../../metrics';
+import { PARAMS } from '../../sim/parameters';
 import { useAstra } from '../../store';
-import type { CrewId, CrewStatus, Level, MetricScore, Telemetry } from '../../types';
-import { type TabId } from '../bodyRegions';
+import type { CrewId, CrewLocation, CrewStatus, Level, Telemetry } from '../../types';
 import { BodyPanel } from '../components/BodyPanel';
 import { Card } from '../components/Card';
 import { LevelBadge } from '../components/LevelBadge';
+import { RangeNote } from '../components/RangeNote';
 import { SourceBadge } from '../components/SourceBadge';
-import { Sparkline, TrendLine } from '../components/Sparkline';
-import { domainLevel, fmtMetric, fmtUnit, fmtZ, initials, LOCATION_LONG, signalLevel } from '../format';
+import { Sparkline } from '../components/Sparkline';
+import { fmtMetric, fmtUnit, initials, LOCATION_LONG, signalLevel } from '../format';
 import { alpha, COLORS, fmt, LEVEL_COLOR, LEVEL_ICON, LEVEL_LABEL, worstLevel } from '../theme';
 
 const EMPTY: Telemetry[] = [];
 
-const TABS: { id: TabId; label: string; groups: MetricInfo['group'][] }[] = [
-  { id: 'genel', label: 'Genel bakış', groups: [] },
-  { id: 'saglik', label: 'Sağlık', groups: [1, 2, 3] },
-  { id: 'performans', label: 'Performans', groups: [4] },
-  { id: 'cevre', label: 'Çevre', groups: [5] },
-];
-
 const levelColor = (l: Level | undefined) => (l ? LEVEL_COLOR[l] : COLORS.text);
+
+const TEAMS: { loc: CrewLocation; title: string }[] = [
+  { loc: 'KOKPIT', title: 'Kokpit ekibi · yörüngede' },
+  { loc: 'GEZEGEN', title: 'Gezegen ekibi · yüzeyde' },
+];
 
 export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect: (id: CrewId) => void }) {
   const t = useAstra((s) => s.telemetry[crewId]);
   const st = useAstra((s) => s.statuses[crewId]);
-  const statuses = useAstra((s) => s.statuses);
   const incidents = useAstra((s) => s.incidents);
-  const [tab, setTab] = useState<TabId>('genel');
-  const tabsRef = useRef<HTMLDivElement>(null);
-  const openTab = (id: TabId) => {
-    setTab(id);
-    tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
   const member = CREW_BY_ID[crewId];
   const mine = incidents.filter((i) => i.status !== 'resolved' && i.crewIds.includes(crewId));
 
-  const tabLevel = (id: TabId): Level | undefined => {
-    if (!st) return undefined;
-    if (id === 'genel') return st.level;
-    if (id === 'saglik') return worstLevel(domainLevel(st, 'cardio'), domainLevel(st, 'resp'), domainLevel(st, 'biochem'));
-    if (id === 'performans') return domainLevel(st, 'cog');
-    return domainLevel(st, 'env');
-  };
-
   return (
     <div className="space-y-4">
-      {/* Astronot hap düğmeleri */}
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Astronot seç">
-        {CREW.map((m) => {
-          const l = statuses[m.id]?.level;
-          const on = m.id === crewId;
-          return (
-            <button
-              key={m.id}
-              role="tab"
-              aria-selected={on}
-              onClick={() => onSelect(m.id)}
-              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm ${on ? 'bg-calm/20 font-semibold text-calm ring-1 ring-calm' : 'bg-white/5 text-slate-200 hover:bg-white/10'}`}
-            >
-              <span style={{ color: l ? LEVEL_COLOR[l] : COLORS.offline }} aria-label={l ? LEVEL_LABEL[l] : 'veri yok'}>
-                {l ? LEVEL_ICON[l] : '●'}
-              </span>
-              {m.name.replace(/^Dr\.\s*/, '')}
-            </button>
-          );
-        })}
-      </div>
+      <CrewPicker selected={crewId} onSelect={onSelect} />
 
-      {/* Kişi başlığı */}
+      {/* Seçili kişi */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-space-border bg-space-panel px-4 py-3">
-        <span
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-mono text-lg font-bold"
-          style={{
-            color: levelColor(st?.level),
-            backgroundColor: alpha(levelColor(st?.level), 0.14),
-            boxShadow: `inset 0 0 0 2px ${alpha(levelColor(st?.level), 0.6)}`,
-          }}
-          aria-hidden
-        >
-          {initials(crewId)}
-        </span>
         <div className="min-w-0 flex-1">
           <div className="text-xl font-bold">{member.name}</div>
           <div className="text-sm text-slate-400">
@@ -93,31 +46,30 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
           </div>
         </div>
         {st?.restRequired && (
-          <span className="rounded-full px-3 py-1 text-sm font-semibold" style={{ color: COLORS.calm, backgroundColor: alpha(COLORS.calm, 0.12) }}>
+          <span className="rounded-full px-3 py-1 text-sm font-semibold" style={{ color: COLORS.calm, backgroundColor: alpha(COLORS.calm, 0.14) }}>
             ✓ Zorunlu dinlenme · otomatik
           </span>
         )}
         <LevelBadge level={st?.level} pill />
+        {mine.length > 0 && (
+          <div className="flex w-full flex-wrap gap-2">
+            {mine.map((i) => (
+              <span
+                key={i.id}
+                className="max-w-full truncate rounded-lg px-3 py-1 text-sm"
+                style={{ color: LEVEL_COLOR[i.level], backgroundColor: alpha(LEVEL_COLOR[i.level], 0.12) }}
+              >
+                {LEVEL_ICON[i.level]} {i.title}
+                {i.status === 'acknowledged' ? ' · onaylandı' : ''}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
-      {mine.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {mine.map((i) => (
-            <span
-              key={i.id}
-              className="max-w-full truncate rounded-lg px-3 py-1 text-sm"
-              style={{ color: LEVEL_COLOR[i.level], backgroundColor: alpha(LEVEL_COLOR[i.level], 0.1) }}
-            >
-              {LEVEL_ICON[i.level]} {i.title}
-              {i.status === 'acknowledged' ? ' · onaylandı' : ''}
-            </span>
-          ))}
-        </div>
-      )}
-
       <div className="grid grid-cols-1 gap-4 min-[1180px]:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]">
-        <Card title="Vücut haritası" right={<span className="text-sm text-slate-400">3B · canlı</span>}>
-          <BodyPanel key={crewId} crewId={crewId} status={st} t={t} onOpenTab={openTab} />
+        <Card title="Vücut haritası ve ölçümler" right={<span className="text-sm text-slate-400">bölge seçin</span>}>
+          <BodyPanel key={crewId} crewId={crewId} status={st} t={t} />
         </Card>
 
         <div className="flex min-w-0 flex-col gap-4">
@@ -130,39 +82,61 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
           </div>
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Sekmeler (vücut panelindeki "sekmede aç" buraya kaydırır; yapışkan olay bandının altında kalsın diye pay bırakılır) */}
-      <div ref={tabsRef} className="scroll-mt-48">
-        <Card>
-          <div className="mb-3 flex flex-wrap gap-1 rounded-xl bg-white/5 p-1" role="tablist" aria-label="Ölçüm grupları">
-            {TABS.map((x) => {
-              const l = tabLevel(x.id);
-              const on = tab === x.id;
+/** Altı astronot, ekip ekip. Kart = kişi seçici: ad, skor, seviye. Seçili kart parlak mavi. */
+function CrewPicker({ selected, onSelect }: { selected: CrewId; onSelect: (id: CrewId) => void }) {
+  const statuses = useAstra((s) => s.statuses);
+  return (
+    <div className="grid grid-cols-1 gap-3 min-[1180px]:grid-cols-2" role="tablist" aria-label="Astronot seç">
+      {TEAMS.map((team) => (
+        <div key={team.loc} className="min-w-0">
+          <div className="mb-1.5 text-sm font-semibold text-slate-300">{team.title}</div>
+          <div className="grid grid-cols-3 gap-2">
+            {CREW.filter((m) => m.location === team.loc).map((m) => {
+              const st = statuses[m.id];
+              const l = st?.level;
+              const c = l ? LEVEL_COLOR[l] : COLORS.offline;
+              const on = m.id === selected;
               return (
                 <button
-                  key={x.id}
+                  key={m.id}
+                  type="button"
                   role="tab"
                   aria-selected={on}
-                  onClick={() => setTab(x.id)}
-                  className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm ${on ? 'bg-calm/20 font-semibold text-calm ring-1 ring-calm/50' : 'text-slate-300 hover:bg-white/5'}`}
+                  onClick={() => onSelect(m.id)}
+                  className={`flex min-w-0 items-center gap-2 rounded-xl px-2.5 py-2 text-left transition-colors ${
+                    on ? 'bg-calm text-space-bg shadow-lg shadow-calm/25' : 'bg-space-panel text-slate-100 ring-1 ring-space-border hover:bg-white/10'
+                  }`}
                 >
-                  {x.label}
-                  {l && l !== 'normal' && (
-                    <span style={{ color: LEVEL_COLOR[l] }} aria-label={LEVEL_LABEL[l]}>
-                      {LEVEL_ICON[l]}
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-mono text-sm font-bold"
+                    style={{
+                      color: on ? COLORS.bg : c,
+                      backgroundColor: on ? alpha(COLORS.bg, 0.12) : alpha(c, 0.14),
+                      boxShadow: `inset 0 0 0 2px ${on ? COLORS.bg : c}`,
+                    }}
+                    aria-hidden
+                  >
+                    {initials(m.id)}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm leading-tight font-semibold">{m.name.replace(/^Dr\.\s*/, '')}</span>
+                    <span className="flex items-center gap-1.5 font-mono text-sm leading-tight">
+                      <span style={{ color: on ? COLORS.bg : c }} aria-label={l ? LEVEL_LABEL[l] : 'veri yok'}>
+                        {l ? LEVEL_ICON[l] : '●'}
+                      </span>
+                      <span className={on ? '' : 'text-slate-300'}>%{fmt(st?.healthScore)}</span>
                     </span>
-                  )}
+                  </span>
                 </button>
               );
             })}
           </div>
-          {tab === 'genel' ? (
-            <Overview crewId={crewId} st={st} />
-          ) : (
-            <GroupTables crewId={crewId} t={t} st={st} groups={TABS.find((x) => x.id === tab)!.groups} />
-          )}
-        </Card>
-      </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -182,28 +156,6 @@ function Vital({ crewId, t, st, k, label }: { crewId: CrewId; t: Telemetry | und
       </div>
       <RangeNote crewId={crewId} k={k} value={t ? readMetric(t, k) : undefined} block />
     </div>
-  );
-}
-
-/** Resmi normal aralık: değer aralıktaysa ✓ (uyarı verilmez), dışındaysa ! (kişisel normalden sapma değerlendirilir). */
-function RangeNote({ crewId, k, value, block }: { crewId: CrewId; k: MetricKey; value: number | undefined; block?: boolean }) {
-  const r = normalRangeFor(k, CREW_BY_ID[crewId].location);
-  if (!r || value === undefined) return null;
-  const inside = value >= r[0] && value <= r[1];
-  const d = (n: number) => fmt(n, Number.isInteger(n) ? 0 : 1);
-  const text = r[0] === 0 ? `≤ ${d(r[1])}` : `${d(r[0])}–${d(r[1])}`;
-  return (
-    <span
-      className={`${block ? 'mt-1 block' : 'ml-1.5'} text-xs whitespace-nowrap`}
-      style={{ color: inside ? COLORS.normal : COLORS.caution }}
-      title={
-        inside
-          ? 'Resmi kaynağın normal aralığında: bu değer için uyarı verilmez (kaynak rozetine bakın).'
-          : 'Resmi normal aralığın dışında: kişisel normalden sapma değerlendirilir.'
-      }
-    >
-      normal {text} {inside ? '✓' : '!'}
-    </span>
   );
 }
 
@@ -407,137 +359,5 @@ function PvtCard({ crewId, t, st }: { crewId: CrewId; t: Telemetry | undefined; 
       </div>
       <div className="mt-1 text-sm text-slate-400">dinlenmiş ~{fmtUnit(PARAMS.pvtMeanRtRested.value, 'ms')}</div>
     </FactorCard>
-  );
-}
-
-// ---------- Sekmeler ----------
-function Overview({ crewId, st }: { crewId: CrewId; st: CrewStatus | undefined }) {
-  const hist = useAstra((s) => s.history[crewId] ?? EMPTY);
-  if (!st || !st.topSignals.length) return <p className="text-sm text-slate-400">Kişisel baseline kuruluyor; en çok sapan ölçümler birazdan görünür.</p>;
-  const allNormal = st.topSignals.every((s) => s.level === 'normal');
-  return (
-    <div>
-      <p className="mb-3 text-sm text-slate-400">
-        {allNormal
-          ? 'Tüm ölçümler kişisel normal aralığında. Aşağıda kişisel normalden en çok uzaklaşan 3 ölçüm var.'
-          : 'Katman 1, kişisel normaline göre en çok sapan 3 ölçümü gösteriyor. Uyarıyı sadece Katman 1 açar.'}
-      </p>
-      <div className="grid grid-cols-1 gap-3 min-[900px]:grid-cols-3">
-        {st.topSignals.map((s) => (
-          <SignalCard key={s.key} s={s} crewId={crewId} series={hist.map((x) => readMetric(x, s.key))} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function SignalCard({ s, crewId, series }: { s: MetricScore; crewId: CrewId; series: number[] }) {
-  const m = METRIC_BY_KEY[s.key];
-  const c = LEVEL_COLOR[s.level];
-  return (
-    <div className="min-w-0 rounded-xl border border-space-border bg-white/[0.02] p-3" style={{ borderLeft: `4px solid ${c}` }}>
-      <div className="flex items-start justify-between gap-2">
-        <span className="min-w-0 text-sm font-medium text-slate-200">{m.label}</span>
-        <LevelBadge level={s.level} />
-      </div>
-      <div className="mt-1 flex items-baseline justify-between gap-2">
-        <span className="font-mono text-2xl font-bold tabular-nums" style={{ color: s.level === 'normal' ? COLORS.text : c }}>
-          {fmtMetric(s.key, s.value)}
-        </span>
-        <SourceBadge metric={s.key} crewId={crewId} />
-      </div>
-      <div className="mt-1 text-sm text-slate-400">
-        kişisel normal {fmtMetric(s.key, s.mean)}
-        {s.key !== 'env.doseCumulative_mSv' && <> · sapma {fmtZ(s.z)}</>}
-      </div>
-      <div className="mt-2">
-        <TrendLine values={series} color={s.level === 'normal' ? COLORS.calm : c} width={220} height={32} />
-      </div>
-    </div>
-  );
-}
-
-function GroupTables({ crewId, t, st, groups }: { crewId: CrewId; t: Telemetry | undefined; st: CrewStatus | undefined; groups: MetricInfo['group'][] }) {
-  const hist = useAstra((s) => s.history[crewId] ?? EMPTY);
-  return (
-    <div className="space-y-4">
-      {groups.map((g) => (
-        <div key={g}>
-          <h3 className="mb-1 text-sm font-semibold tracking-wide text-slate-300">
-            Veri grubu {g} · {GROUP_NAMES[g]}
-          </h3>
-          <div className="grid grid-cols-1 gap-x-6 min-[1400px]:grid-cols-2">
-            {g === 1 && t && (
-              <Row
-                label="EKG ritmi"
-                value={t.cardio.ecg_rhythm === 'sinus' ? 'Sinüs ritmi' : 'Düzensiz'}
-                level={t.cardio.ecg_rhythm === 'irregular' ? 'caution' : undefined}
-                badge={<SourceBadge param="ecgIrregularThreshold" />}
-              />
-            )}
-            {METRICS.filter((m) => m.group === g).map((m) => {
-              const l = signalLevel(st, m.key);
-              return (
-                <Row
-                  key={m.key}
-                  label={m.label}
-                  note={<RangeNote crewId={crewId} k={m.key} value={t ? readMetric(t, m.key) : undefined} />}
-                  value={t ? fmtMetric(m.key, readMetric(t, m.key)) : '—'}
-                  level={l}
-                  daily={m.cadence === 'daily'}
-                  trend={
-                    <TrendLine
-                      values={hist.map((x) => readMetric(x, m.key))}
-                      color={l && l !== 'normal' ? LEVEL_COLOR[l] : COLORS.calm}
-                      width={72}
-                      height={22}
-                    />
-                  }
-                  badge={<SourceBadge metric={m.key} crewId={crewId} />}
-                />
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function Row({
-  label,
-  value,
-  level,
-  trend,
-  badge,
-  daily,
-  note,
-}: {
-  label: string;
-  note?: ReactNode;
-  value: string;
-  level?: Level;
-  trend?: ReactNode;
-  badge?: ReactNode;
-  daily?: boolean;
-}) {
-  const off = level && level !== 'normal';
-  return (
-    <div className="flex min-w-0 items-center gap-3 border-b border-space-border/70 py-1.5">
-      <span className="min-w-0 flex-1 truncate text-sm text-slate-300" title={label}>
-        {label}
-        {daily && <span className="ml-1.5 text-slate-500">· günlük</span>}
-        {note}
-      </span>
-      <span className="hidden min-[1000px]:block">{trend}</span>
-      <span
-        className="w-[124px] shrink-0 text-right font-mono text-sm font-semibold whitespace-nowrap tabular-nums"
-        style={{ color: off ? LEVEL_COLOR[level] : COLORS.text }}
-      >
-        {off && <span className="mr-1">{LEVEL_ICON[level]}</span>}
-        {value}
-      </span>
-      <span className="flex w-[130px] shrink-0 justify-end">{badge}</span>
-    </div>
   );
 }

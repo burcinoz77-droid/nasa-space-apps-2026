@@ -11,14 +11,22 @@
 
 /* Renkler src/ui/theme.ts ile aynı; Tailwind sınıfları (bg-space-panel, text-calm ...) buradan gelir. */
 @theme {
-  --color-space-bg: #070b1a;
-  --color-space-panel: #0e1530;
-  --color-space-border: #1e2a4a;
-  --color-calm: #38bdf8;
-  --color-safe: #34d399;
-  --color-caution: #fbbf24;
-  --color-critical: #f87171;
-  --color-ai: #a78bfa;
+  --color-space-bg: #0c2547;
+  --color-space-panel: #14396b;
+  --color-space-border: #2c5a92;
+  --color-calm: #4fc3ff;
+  --color-safe: #3ee0a1;
+  --color-caution: #ffc53d;
+  --color-critical: #ff6b6b;
+  --color-ai: #b9a2ff;
+  --color-glow: #3d6cff; /* zemin ışıması (dekor) */
+  /* Tailwind'in gri (slate) tonları mavi temaya çekildi: yardımcı yazılar soluk gri değil, açık mavi-beyaz */
+  --color-slate-100: #f0f6ff;
+  --color-slate-200: #dfeafb;
+  --color-slate-300: #c7d9f2;
+  --color-slate-400: #a8c2e6;
+  --color-slate-500: #86a3cc;
+  --color-slate-600: #6683ad;
   --font-sans: 'Barlow', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   /* "mono" sınıfı sayılar içindir: dar, tabular rakamlı Barlow Semi Condensed (kokpit göstergeleri gibi) */
   --font-mono: 'Barlow Semi Condensed', 'Barlow', ui-monospace, monospace;
@@ -32,8 +40,13 @@ body,
 
 body {
   margin: 0;
-  background: var(--color-space-bg);
-  color: #e6edf7;
+  background-color: var(--color-space-bg);
+  /* Üstten hafif aydınlık: düz koyu zemin yerine canlı, derinlikli mavi */
+  background-image:
+    radial-gradient(1200px 600px at 20% -10%, color-mix(in srgb, var(--color-calm) 16%, transparent), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, color-mix(in srgb, var(--color-glow) 14%, transparent), transparent 60%);
+  background-attachment: fixed;
+  color: #f3f8ff;
   font-family: var(--font-sans);
   font-size: 15px;
   -webkit-font-smoothing: antialiased;

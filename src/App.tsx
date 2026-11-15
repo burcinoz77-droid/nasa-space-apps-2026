@@ -1,7 +1,8 @@
 // Uygulama iskeleti: yan menü + üst bar + olay bandı + sayfa (Sahibi: Parça 3).
-// Sayfa sahipleri: Kokpit/Astronot Ekranı/Astronotlar = Parça 3,
+// Sayfa sahipleri: Kokpit/Mürettebat = Parça 3,
 // Raporlar = Parça 2, Ayarlar = Parça 1, Görevler ve ASTRA sohbet paneli = Parça 4.
-// Seçili astronot burada tutulur: Kokpit ve Astronotlar'dan tıklanınca Astronot Ekranı o kişiyle açılır.
+// Seçili astronot burada tutulur: Kokpit'ten bir kişiye tıklanınca Mürettebat sayfası o kişiyle açılır.
+// Sade gezinme: 5 sayfa, her birinin altında ne işe yaradığını söyleyen kısa bir satır.
 import { type ReactNode, useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { CREW, CREW_BY_ID } from './crew';
@@ -11,38 +12,25 @@ import { useAstra } from './store';
 import type { CrewId, ScenarioId, Telemetry } from './types';
 import { AstraChatPanel } from './ui/components/AstraChatPanel';
 import { ScenarioCinematics } from './ui/cinematic';
-import {
-  IconAstronaut,
-  IconBell,
-  IconCockpit,
-  IconCrew,
-  IconReports,
-  IconReset,
-  IconSettings,
-  IconSignal,
-  IconTasks,
-  OrbitalisMark,
-} from './ui/components/Icons';
+import { IconBell, IconCockpit, IconCrew, IconReports, IconReset, IconSettings, IconSignal, IconTasks, OrbitalisMark } from './ui/components/Icons';
 import { IncidentBanner } from './ui/components/IncidentBanner';
 import { SourceBadge } from './ui/components/SourceBadge';
 import { fmtDelay, initials } from './ui/format';
 import { AstronotEkrani } from './ui/pages/AstronotEkrani';
-import { Astronotlar } from './ui/pages/Astronotlar';
 import { Ayarlar } from './ui/pages/Ayarlar';
 import { Gorevler } from './ui/pages/Gorevler';
 import { Kokpit } from './ui/pages/Kokpit';
 import { Raporlar } from './ui/pages/Raporlar';
 import { alpha, COLORS, fmt } from './ui/theme';
 
-type PageId = 'kokpit' | 'astronot' | 'astronotlar' | 'gorevler' | 'raporlar' | 'ayarlar';
+type PageId = 'kokpit' | 'murettebat' | 'gorevler' | 'raporlar' | 'ayarlar';
 
-const PAGES: { id: PageId; label: string; icon: () => ReactNode; subtitle: string }[] = [
-  { id: 'kokpit', label: 'Kokpit', icon: IconCockpit, subtitle: 'Görevin tek bakışta özeti' },
-  { id: 'astronot', label: 'Astronot Ekranı', icon: IconAstronaut, subtitle: 'Bir astronotun 5 veri grubundaki tüm ölçümleri' },
-  { id: 'astronotlar', label: 'Astronotlar', icon: IconCrew, subtitle: 'Kokpit ve Gezegen ekipleri' },
-  { id: 'gorevler', label: 'Görevler', icon: IconTasks, subtitle: 'Günün EVA görevi ve ekipman kontrolü' },
-  { id: 'raporlar', label: 'Raporlar', icon: IconReports, subtitle: 'Olay kaydı: olaylar, otonom adımlar, onaylar' },
-  { id: 'ayarlar', label: 'Ayarlar', icon: IconSettings, subtitle: 'Senaryolar, örnekleme hızı, veri kaynakları' },
+const PAGES: { id: PageId; label: string; hint: string; icon: () => ReactNode; subtitle: string }[] = [
+  { id: 'kokpit', label: 'Kokpit', hint: 'Genel durum', icon: IconCockpit, subtitle: 'Görevin tek bakışta özeti' },
+  { id: 'murettebat', label: 'Mürettebat', hint: 'Kişi kişi sağlık', icon: IconCrew, subtitle: 'Bir astronot seçin: vücut haritası ve tüm ölçümler' },
+  { id: 'gorevler', label: 'Görevler', hint: 'EVA ve ekipman', icon: IconTasks, subtitle: 'Günün EVA görevi ve ekipman kontrolü' },
+  { id: 'raporlar', label: 'Raporlar', hint: 'Olay kaydı', icon: IconReports, subtitle: 'Olaylar, otonom adımlar, onaylar' },
+  { id: 'ayarlar', label: 'Ayarlar', hint: 'Senaryo, kaynaklar', icon: IconSettings, subtitle: 'Senaryolar, örnekleme hızı, veri kaynakları' },
 ];
 
 // Üst bardaki senaryo hapları (kısa adlar); tam adlar loop.ts → SCENARIO_NAMES
@@ -66,7 +54,7 @@ export default function App() {
 
   const openCrew = (id: CrewId) => {
     setCrew(id);
-    setPage('astronot');
+    setPage('murettebat');
   };
   const current = PAGES.find((p) => p.id === page)!;
 
@@ -82,8 +70,7 @@ export default function App() {
             <span className="text-sm text-slate-400">{current.subtitle}</span>
           </div>
           {page === 'kokpit' && <Kokpit onOpenCrew={openCrew} onOpenReports={() => setPage('raporlar')} />}
-          {page === 'astronot' && <AstronotEkrani crewId={crew} onSelect={setCrew} />}
-          {page === 'astronotlar' && <Astronotlar onOpenCrew={openCrew} />}
+          {page === 'murettebat' && <AstronotEkrani crewId={crew} onSelect={setCrew} />}
           {page === 'gorevler' && <Gorevler />}
           {page === 'raporlar' && <Raporlar crewId={crew} />}
           {page === 'ayarlar' && <Ayarlar />}
@@ -122,11 +109,16 @@ function Sidebar({ page, onPage }: { page: PageId; onPage: (p: PageId) => void }
               key={p.id}
               onClick={() => onPage(p.id)}
               aria-current={on ? 'page' : undefined}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[15px] ${on ? 'bg-calm/15 font-semibold text-calm ring-1 ring-calm/50' : 'text-slate-300 hover:bg-white/5'}`}
+              className={`flex items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors ${on ? 'bg-calm text-space-bg shadow-lg shadow-calm/20' : 'text-slate-200 hover:bg-white/8'}`}
             >
               {p.icon()}
-              <span className="min-w-0 flex-1 truncate">{p.label}</span>
-              {p.id === 'raporlar' && openCount > 0 && <span className="rounded-full bg-white/10 px-2 font-mono text-sm text-slate-200">{openCount}</span>}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-base leading-tight font-semibold">{p.label}</span>
+                <span className={`block truncate text-sm leading-tight ${on ? 'text-space-bg/80' : 'text-slate-400'}`}>{p.hint}</span>
+              </span>
+              {p.id === 'raporlar' && openCount > 0 && (
+                <span className={`rounded-full px-2 font-mono text-sm ${on ? 'bg-space-bg/20 text-space-bg' : 'bg-white/10 text-slate-100'}`}>{openCount}</span>
+              )}
             </button>
           );
         })}
@@ -185,7 +177,7 @@ function TopBar({ onBell }: { onBell: () => void }) {
               aria-pressed={on}
               aria-label={p.label}
               title={SCENARIO_NAMES[p.id]}
-              className={`rounded-full px-2.5 py-1 text-sm whitespace-nowrap min-[1180px]:px-3 ${on ? 'bg-calm/20 font-semibold text-calm ring-1 ring-calm' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}
+              className={`rounded-full px-2.5 py-1 text-sm whitespace-nowrap min-[1180px]:px-3 ${on ? 'bg-calm font-semibold text-space-bg shadow-md shadow-calm/25' : 'bg-white/8 text-slate-200 hover:bg-white/15'}`}
             >
               {p.short ? (
                 <>

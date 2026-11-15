@@ -3,18 +3,20 @@
 // Uyarı renkleri havacılıktaki kuralla aynı: uyarı kırmızı, ikaz amber (14 CFR 25.1322).
 import type { Level } from '../types';
 
+// Tema: canlı okyanus mavisi. Zemin siyah değil koyu mavi; paneller bir ton açık; vurgu parlak gök mavisi.
+// Projeksiyonda soluk görünmesin diye zemin eskisinden belirgin şekilde açık (kontrast yine WCAG AA üstü).
 export const COLORS = {
-  bg: '#070B1A', // derin lacivert: karanlık kabinde göz yormaz
-  panel: '#0E1530',
-  border: '#1E2A4A',
-  text: '#E6EDF7',
-  textMuted: '#8EA0C0',
-  calm: '#38BDF8', // mavi: sakin, bilgi, ana vurgu
-  normal: '#34D399', // yeşil: güvenli
-  caution: '#FBBF24', // amber: dikkat, izlenmeli
-  critical: '#F87171', // kırmızı: acil, hemen eylem
-  ai: '#A78BFA', // mor: ASTRA'nın (yapay zekâ) sesi; Katman 1 uyarılarından ayrılsın
-  offline: '#94A3B8', // gri: veri yok / bağlantı yok
+  bg: '#0C2547', // koyu okyanus mavisi zemin
+  panel: '#14396B', // paneller: zeminden bir ton açık mavi
+  border: '#2C5A92',
+  text: '#F3F8FF',
+  textMuted: '#A8C2E6',
+  calm: '#4FC3FF', // parlak gök mavisi: ana vurgu, seçili öğe, bilgi
+  normal: '#3EE0A1', // yeşil: güvenli
+  caution: '#FFC53D', // amber: dikkat, izlenmeli
+  critical: '#FF6B6B', // kırmızı: acil, hemen eylem
+  ai: '#B9A2FF', // mor: ASTRA'nın (yapay zekâ) sesi; Katman 1 uyarılarından ayrılsın
+  offline: '#9DB0CC', // gri-mavi: veri yok / bağlantı yok
 } as const;
 
 export const LEVEL_COLOR: Record<Level, string> = {

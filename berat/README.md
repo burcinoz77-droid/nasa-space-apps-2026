@@ -26,6 +26,12 @@ Kaynak rozeti (`SourceBadge`) her sayının yanında: NASA-STD-3001 / OSDR / Cur
 - Model `src/ui/assets/astronaut.glb`; Draco kod çözücüsü three paketinden gelir. İkisi de derlemeye gömülü, internet gerekmez.
 - Yazı tipi Barlow / Barlow Semi Condensed (`@fontsource`, çevrimdışı).
 
+## Sürüm 3 (canlı mavi tema, sade düzen)
+
+- **Tema:** zemin siyaha yakın lacivert yerine koyu okyanus mavisi, paneller bir ton açık mavi, vurgu parlak gök mavisi (`theme.ts`, `index.css`). Tailwind'in gri tonları mavi temaya çekildi. Seviye renkleri (yeşil / amber / kırmızı) aynı anlamda kaldı.
+- **Sade gezinme:** 5 sayfa (Kokpit, Mürettebat, Görevler, Raporlar, Ayarlar); her birinin altında ne işe yaradığını söyleyen kısa satır. Seçili sayfa ve senaryo düz parlak mavi.
+- **Mürettebat sayfası:** eski "Astronot Ekranı" ve "Astronotlar" birleşti. Üstte 6 kişi kartı (ekip ekip), altta seçili kişinin 3B vücut haritası ve bölgesinin bütün ölçümleri, sağda sağlık ve stres kartları. Alttaki sekmeler kaldırıldı; ölçümlerin tamamı bölge panelinde. Azra'nın resmi normal aralık göstergesi (`RangeNote`) bölge panelinin her satırına taşındı.
+
 ## Nasıl denenir
 
 ```bash
