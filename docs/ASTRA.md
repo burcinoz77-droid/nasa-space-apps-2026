@@ -105,7 +105,7 @@ anlaşılır. Örnek cevaplar `api/astra.ts` içindeki `SYSTEM_PROMPT`'ta.
 `.env` (yerel) ve Vercel ortam değişkenleri:
 
 ```
-ASTRA_PROVIDER=gemini          # demo günü: claude
+ASTRA_PROVIDER=gemini          # yayında Gemini kullanıldı; claude isteğe bağlı
 GEMINI_API_KEY=...
 GEMINI_MODEL=gemini-3.8-flash
 GEMINI_FALLBACK_MODELS=gemini-3.5-flash-lite,gemini-3.7-flash  # ana model 503/429 verirse ya da 12 sn cevap vermezse sırayla denenir
