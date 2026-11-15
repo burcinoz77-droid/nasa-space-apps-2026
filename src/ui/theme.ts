@@ -17,15 +17,6 @@ export const COLORS = {
   offline: '#94A3B8', // gri: veri yok / bağlantı yok
 } as const;
 
-/** Kokpit'teki dönen gezegen. Bilerek kırmızı/turuncu değil: kırmızı kritik için ayrıldı. Sadece dekor. */
-export const PLANET = {
-  light: '#7C8DB5',
-  mid: '#46557F',
-  dark: '#1A2246',
-  band: '#5D6E98',
-  atmosphere: COLORS.calm,
-} as const;
-
 export const LEVEL_COLOR: Record<Level, string> = {
   normal: COLORS.normal,
   caution: COLORS.caution,

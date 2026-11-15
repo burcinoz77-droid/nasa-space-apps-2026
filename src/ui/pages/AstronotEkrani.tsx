@@ -1,14 +1,14 @@
 // Parça 3 · Astronot Ekranı: seçili astronotun 5 veri grubundaki tüm ölçümleri.
 // Solda 2B vücut haritası, sağda sağlık kartı ve stres faktörleri, altta sekmeler
 // (Genel bakış / Sağlık / Performans / Çevre). Her sayının yanında birimi ve kaynak rozeti var.
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useRef, useState } from 'react';
 import { CREW, CREW_BY_ID } from '../../crew';
 import { GROUP_NAMES, METRIC_BY_KEY, METRICS, readMetric, type MetricInfo, type MetricKey } from '../../metrics';
 import { PARAMS } from '../../sim/parameters';
 import { useAstra } from '../../store';
 import type { CrewId, CrewStatus, Level, MetricScore, Telemetry } from '../../types';
-import { REGIONS, type TabId } from '../bodyRegions';
-import { BodyMap } from '../components/BodyMap';
+import { type TabId } from '../bodyRegions';
+import { BodyPanel } from '../components/BodyPanel';
 import { Card } from '../components/Card';
 import { LevelBadge } from '../components/LevelBadge';
 import { SourceBadge } from '../components/SourceBadge';
@@ -33,6 +33,11 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
   const statuses = useAstra((s) => s.statuses);
   const incidents = useAstra((s) => s.incidents);
   const [tab, setTab] = useState<TabId>('genel');
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const openTab = (id: TabId) => {
+    setTab(id);
+    tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
   const member = CREW_BY_ID[crewId];
   const mine = incidents.filter((i) => i.status !== 'resolved' && i.crewIds.includes(crewId));
 
@@ -111,8 +116,8 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
       )}
 
       <div className="grid grid-cols-1 gap-4 min-[1180px]:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]">
-        <Card title="Vücut haritası" right={<span className="text-sm text-slate-400">bölgeye tıkla</span>}>
-          <BodyMap status={st} onRegion={(r) => setTab(REGIONS.find((x) => x.id === r)!.tab)} />
+        <Card title="Vücut haritası" right={<span className="text-sm text-slate-400">3B · canlı</span>}>
+          <BodyPanel key={crewId} crewId={crewId} status={st} t={t} onOpenTab={openTab} />
         </Card>
 
         <div className="flex min-w-0 flex-col gap-4">
@@ -126,32 +131,38 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
         </div>
       </div>
 
-      {/* Sekmeler */}
-      <Card>
-        <div className="mb-3 flex flex-wrap gap-1 rounded-xl bg-white/5 p-1" role="tablist" aria-label="Ölçüm grupları">
-          {TABS.map((x) => {
-            const l = tabLevel(x.id);
-            const on = tab === x.id;
-            return (
-              <button
-                key={x.id}
-                role="tab"
-                aria-selected={on}
-                onClick={() => setTab(x.id)}
-                className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm ${on ? 'bg-calm/20 font-semibold text-calm ring-1 ring-calm/50' : 'text-slate-300 hover:bg-white/5'}`}
-              >
-                {x.label}
-                {l && l !== 'normal' && (
-                  <span style={{ color: LEVEL_COLOR[l] }} aria-label={LEVEL_LABEL[l]}>
-                    {LEVEL_ICON[l]}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-        {tab === 'genel' ? <Overview crewId={crewId} st={st} /> : <GroupTables crewId={crewId} t={t} st={st} groups={TABS.find((x) => x.id === tab)!.groups} />}
-      </Card>
+      {/* Sekmeler (vücut panelindeki "sekmede aç" buraya kaydırır; yapışkan olay bandının altında kalsın diye pay bırakılır) */}
+      <div ref={tabsRef} className="scroll-mt-48">
+        <Card>
+          <div className="mb-3 flex flex-wrap gap-1 rounded-xl bg-white/5 p-1" role="tablist" aria-label="Ölçüm grupları">
+            {TABS.map((x) => {
+              const l = tabLevel(x.id);
+              const on = tab === x.id;
+              return (
+                <button
+                  key={x.id}
+                  role="tab"
+                  aria-selected={on}
+                  onClick={() => setTab(x.id)}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm ${on ? 'bg-calm/20 font-semibold text-calm ring-1 ring-calm/50' : 'text-slate-300 hover:bg-white/5'}`}
+                >
+                  {x.label}
+                  {l && l !== 'normal' && (
+                    <span style={{ color: LEVEL_COLOR[l] }} aria-label={LEVEL_LABEL[l]}>
+                      {LEVEL_ICON[l]}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {tab === 'genel' ? (
+            <Overview crewId={crewId} st={st} />
+          ) : (
+            <GroupTables crewId={crewId} t={t} st={st} groups={TABS.find((x) => x.id === tab)!.groups} />
+          )}
+        </Card>
+      </div>
     </div>
   );
 }

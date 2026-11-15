@@ -19,6 +19,13 @@ Arayüz veri üretmez, karar vermez: sadece `useAstra`'dan okur, `controls.setSc
 
 Kaynak rozeti (`SourceBadge`) her sayının yanında: NASA-STD-3001 / OSDR / Curiosity RAD / NASA HRP / hakemli çalışma (ör. "Norsk 2015") / gri "Varsayım". Tıklayınca `PARAMS`'taki kaynak linki açılır. Gezegen ekibinde doz hızı rozeti yüzey ölçümüne (Mars yüzeyi RAD), basınç ve O₂ rozeti giysi kaynağına döner.
 
+## Sürüm 2 (Kokpit ve 3B astronot)
+
+- **Kokpit** görev kontrol konsolu düzenine geçti: tek parça durum şeridi, mürettebat tablosu (nabız trendi, SpO₂, sıcaklık), tel çerçeve Mars yörünge ekranı (gemi işareti Kokpit ekibinin, EVA işareti Gezegen ekibinin durum rengini taşır), yaşam ortamı (kabin ve giysiler) ve son kayıtlar.
+- **Astronot Ekranı**'nda vücut haritası 3B astronot modeli oldu (`src/ui/components/Astronaut3D.tsx`, three.js, sayfa açılınca ayrı yüklenir). Model yavaşça döner, fareyle sürüklenir. Bölgeler: **baş** (kask: bilişsel ve göz), **göğüs** (gövde, kollar, sırt çantası: kalp ve solunum), **alt gövde** (kalça ve bacaklar: metabolizma, ter ve ısı) ve ayak altındaki **çevre** halkası. İmleç bir bölgenin üstüne gelince risk kutusu (seviye, skor, en çok sapan ölçüm) çıkar; tıklayınca bölgenin bütün ölçümleri açılır. WebGL yoksa 2B çizime düşer.
+- Model `src/ui/assets/astronaut.glb`; Draco kod çözücüsü three paketinden gelir. İkisi de derlemeye gömülü, internet gerekmez.
+- Yazı tipi Barlow / Barlow Semi Condensed (`@fontsource`, çevrimdışı).
+
 ## Nasıl denenir
 
 ```bash
