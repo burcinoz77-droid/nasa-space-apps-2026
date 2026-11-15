@@ -12,6 +12,7 @@ import { controls } from '../../loop';
 import { PARAMS } from '../../sim/parameters';
 import { useAstra } from '../../store';
 import { alpha, COLORS, fmt } from '../theme';
+import { Astronaut } from './Astronaut';
 import { usePhases } from './phases';
 import { Caption, Stage } from './shared';
 
@@ -228,30 +229,28 @@ function Cabin({ ppco2, fan, rr, level, showKerem }: { ppco2: number; fan: 'run'
 
       {/* Mürettebat */}
       {[
-        { name: 'Elif', x: '18%' },
-        { name: 'Kerem', x: '38%', kerem: true },
-        { name: 'Zeynep', x: '58%' },
-      ].map((c) => (
-        <div key={c.name} className="absolute flex flex-col items-center" style={{ left: c.x, bottom: '14%' }}>
-          <svg width="70" height="110" viewBox="-35 -55 70 110">
-            <circle cy="-38" r="14" fill="#cbd5e1" />
-            <g
-              style={{
-                transformOrigin: '0px 10px',
-                animation: c.kerem && showKerem ? `astra-breathe ${breath}s ease-in-out infinite` : 'astra-breathe 4.3s ease-in-out infinite',
-              }}
-            >
-              <rect x="-22" y="-20" width="44" height="58" rx="16" fill={c.kerem && showKerem ? alpha(level, 0.85) : '#64748b'} />
-            </g>
-          </svg>
-          <div className="text-sm font-semibold" style={{ color: c.kerem && showKerem ? level : COLORS.textMuted }}>
-            {c.name}
+        { name: 'Elif', x: '9%', stripe: COLORS.calm },
+        { name: 'Kerem', x: '32%', stripe: COLORS.caution, kerem: true },
+        { name: 'Zeynep', x: '55%', stripe: COLORS.ai },
+      ].map((c) => {
+        const live = c.kerem && showKerem;
+        return (
+          <div key={c.name} className="absolute flex flex-col items-center" style={{ left: c.x, bottom: '6%' }}>
+            <Astronaut
+              stripe={c.stripe}
+              glow={live && level !== COLORS.normal ? level : undefined}
+              breath={live ? breath : 4.3}
+              fog={Math.max(0, Math.min(1, (ppco2 - MEDIAN) / (CRITICAL + 1 - MEDIAN)))}
+              height={190}
+            />
+            <div className="mt-1 rounded-full px-2 text-sm font-semibold" style={{ color: live ? level : COLORS.text, background: alpha('#02040b', 0.6) }}>
+              {c.name}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
       <style>{`
         @keyframes astra-spin { to { transform: rotate(360deg); } }
-        @keyframes astra-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.12, 1.06); } }
       `}</style>
     </div>
   );
