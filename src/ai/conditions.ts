@@ -1,8 +1,8 @@
-// Parça 4 · Olası durum taraması (kesin teşhis DEĞİL). Bir astronotun hangi ölçümlerinin kişisel
-// normalinden saptığına bakar ve bu sapmaların birlikte hangi durumla UYUMLU OLABİLECEĞİNİ söyler.
-// Her sonuç: dayanak sinyaller (güncel değer + kişisel normal), olasılık (düşük / orta; asla "kesin"),
-// kaynak ve önerilen kontrol. ASTRA bunu assess_possible_conditions aracıyla okur ve ihtimal diliyle anlatır.
-// Uyarı açmaz, Katman 1'in kararlarını değiştirmez.
+// Part 4 · Possible-condition screening (NOT a definitive diagnosis). Looks at which of an astronaut's metrics
+// deviate from their personal baseline and says which condition these deviations together MAY BE CONSISTENT WITH.
+// Each result: supporting signals (current value + personal baseline), likelihood (low / medium; never "certain"),
+// source and recommended check. ASTRA reads this with the assess_possible_conditions tool and words it as a possibility.
+// Raises no alerts and does not change Layer 1's decisions.
 import { METRIC_BY_KEY, readMetric, type MetricKey } from '../metrics';
 import type { AstraState } from '../store';
 import type { CrewId } from '../types';
@@ -14,7 +14,7 @@ type Dir = 'high' | 'low';
 interface Sign {
   key: MetricKey;
   dir: Dir;
-  /** Mutlak eşik: aşılırsa kişisel normale bakmadan sapma sayılır. */
+  /** Absolute threshold: if exceeded, counts as a deviation regardless of the personal baseline. */
   abs?: number;
 }
 
@@ -24,18 +24,18 @@ export interface ConditionRule {
   kaynak: string;
   oneri: string;
   isaretler: Sign[];
-  /** Bu kuralın tetiklenmesi için gereken en az sapmış işaret sayısı. */
+  /** Minimum number of deviating signs needed to trigger this rule. */
   enAz: number;
-  /** Bu işaret sapmadan kural tetiklenmez. */
+  /** The rule does not trigger unless this sign deviates. */
   zorunlu?: MetricKey;
 }
 
 export const CONDITION_RULES: ConditionRule[] = [
   {
-    durum: 'CO₂ birikmesine bağlı etkilenme (hiperkapni)',
-    aciklama: 'Ortamdaki CO₂ yükselince solunum ve nabız hızlanabilir; baş ağrısı ve dikkat kaybı görülebilir.',
+    durum: 'Effects of CO₂ build-up (hypercapnia)',
+    aciklama: 'When ambient CO₂ rises, breathing and heart rate may speed up; headache and loss of concentration may occur.',
     kaynak: 'OCHMO-TB-004 CO₂',
-    oneri: 'Havalandırma ve CO₂ temizleyici kontrolü; baş ağrısı ve dikkat belirtilerinin izlenmesi',
+    oneri: 'Check ventilation and the CO₂ scrubber; monitor headache and concentration symptoms',
     isaretler: [
       { key: 'env.ppCO2_mmHg', dir: 'high', abs: 2.3 },
       { key: 'resp.etco2_mmHg', dir: 'high', abs: 45 },
@@ -47,10 +47,10 @@ export const CONDITION_RULES: ConditionRule[] = [
     zorunlu: 'env.ppCO2_mmHg',
   },
   {
-    durum: 'Oksijen yetersizliği (hipoksi)',
-    aciklama: 'Kandaki oksijen doygunluğu düşerse vücut solunumu ve nabzı hızlandırarak telafi etmeye çalışır.',
-    kaynak: 'NASA HRP hipoksi riski (SpO₂ eşiği klinik varsayım)',
-    oneri: 'Oksijen beslemesi, kabin ya da giysi basıncının kontrolü ve medikal kontrol',
+    durum: 'Oxygen deficiency (hypoxia)',
+    aciklama: 'If blood oxygen saturation falls, the body tries to compensate by speeding up breathing and heart rate.',
+    kaynak: 'NASA HRP hypoxia risk (SpO₂ threshold is a clinical assumption)',
+    oneri: 'Check oxygen supply and cabin or suit pressure, plus a medical check',
     isaretler: [
       { key: 'cardio.spo2_pct', dir: 'low', abs: 94 },
       { key: 'cardio.hr_bpm', dir: 'high' },
@@ -61,10 +61,10 @@ export const CONDITION_RULES: ConditionRule[] = [
     zorunlu: 'cardio.spo2_pct',
   },
   {
-    durum: 'Isı stresi ve aşırı efor',
-    aciklama: 'Yoğun efor ve giysi içinde ısı birikmesi çekirdek sıcaklığı, nabzı ve laktatı birlikte yükseltir.',
-    kaynak: 'Stahn vd. 2017, Sci Rep',
-    oneri: 'Eforun azaltılması, soğutma sisteminin kontrolü ve dinlenme',
+    durum: 'Heat stress and overexertion',
+    aciklama: 'Heavy exertion and heat build-up inside the suit raise core temperature, heart rate and lactate together.',
+    kaynak: 'Stahn et al. 2017, Sci Rep',
+    oneri: 'Reduce exertion, check the cooling system, and rest',
     isaretler: [
       { key: 'resp.coreTemp_C', dir: 'high', abs: 38.5 },
       { key: 'cardio.hr_bpm', dir: 'high' },
@@ -76,10 +76,10 @@ export const CONDITION_RULES: ConditionRule[] = [
     zorunlu: 'resp.coreTemp_C',
   },
   {
-    durum: 'Sıvı ve elektrolit kaybı (dehidratasyon) eğilimi',
-    aciklama: 'Yoğun terlemede ter sodyumu ve laktat artar; sıvı kaybı nabzı da yükseltebilir.',
-    kaynak: 'Ter biyobelirteçleri tablosu',
-    oneri: 'Sıvı ve elektrolit alımının değerlendirilmesi, eforun azaltılması',
+    durum: 'Tendency toward fluid and electrolyte loss (dehydration)',
+    aciklama: 'Heavy sweating raises sweat sodium and lactate; fluid loss can also raise heart rate.',
+    kaynak: 'Sweat biomarker table',
+    oneri: 'Review fluid and electrolyte intake, reduce exertion',
     isaretler: [
       { key: 'biochem.sweatSodium_mM', dir: 'high' },
       { key: 'biochem.sweatLactate_mM', dir: 'high' },
@@ -90,10 +90,10 @@ export const CONDITION_RULES: ConditionRule[] = [
     zorunlu: 'biochem.sweatSodium_mM',
   },
   {
-    durum: 'Kalp ritim düzensizliği (aritmi) olasılığı',
-    aciklama: "EKG'de düzensiz atımların artması ritim bozukluğuna işaret edebilir; yorgunluk, stres ve efor da etkiler.",
-    kaynak: 'NASA HRP kalp-damar riski',
-    oneri: 'Eforun azaltılması, EKG izleminin sürdürülmesi ve medikal kontrol',
+    durum: 'Possible heart rhythm irregularity (arrhythmia)',
+    aciklama: 'More irregular beats on the ECG may point to a rhythm disturbance; fatigue, stress and exertion also play a role.',
+    kaynak: 'NASA HRP cardiovascular risk',
+    oneri: 'Reduce exertion, continue ECG monitoring, and a medical check',
     isaretler: [
       { key: 'cardio.ecg_ectopic_per_min', dir: 'high', abs: 6 },
       { key: 'cardio.hr_bpm', dir: 'high' },
@@ -103,10 +103,10 @@ export const CONDITION_RULES: ConditionRule[] = [
     zorunlu: 'cardio.ecg_ectopic_per_min',
   },
   {
-    durum: 'Uyku yoksunluğu ve yorgunluk',
-    aciklama: 'Yetersiz uyku tepki süresini uzatır, dikkat kayıplarını ve olumsuz duyguyu artırır.',
-    kaynak: 'Barger vd. 2014; Jones vd. 2022',
-    oneri: 'Dinlenme ve uyku planının gözden geçirilmesi, kritik görevlerin devri',
+    durum: 'Sleep deprivation and fatigue',
+    aciklama: 'Insufficient sleep lengthens reaction time and increases lapses and negative affect.',
+    kaynak: 'Barger et al. 2014; Jones et al. 2022',
+    oneri: 'Review the rest and sleep plan, hand over critical tasks',
     isaretler: [
       { key: 'env.sleepLastNight_h', dir: 'low' },
       { key: 'cog.pvtMeanRt_ms', dir: 'high' },
@@ -119,10 +119,10 @@ export const CONDITION_RULES: ConditionRule[] = [
     enAz: 3,
   },
   {
-    durum: 'Akut stres yükü (kaygı belirtileri)',
-    aciklama: 'Deri iletkenliği, ter kortizolü ve olumsuz duygunun birlikte artması stres tepkisiyle uyumludur.',
-    kaynak: 'NASA HRP davranışsal sağlık riski',
-    oneri: 'Kısa mola, ekip içi görüşme; sürerse uçuş doktoru ve psikolojik destek değerlendirmesi',
+    durum: 'Acute stress load (anxiety symptoms)',
+    aciklama: 'Skin conductance, sweat cortisol and negative affect rising together are consistent with a stress response.',
+    kaynak: 'NASA HRP behavioral health risk',
+    oneri: 'Short break, team check-in; if it persists, flight surgeon and psychological support review',
     isaretler: [
       { key: 'resp.gsr_uS', dir: 'high' },
       { key: 'biochem.sweatCortisol_ng_mL', dir: 'high' },
@@ -134,10 +134,10 @@ export const CONDITION_RULES: ConditionRule[] = [
     enAz: 3,
   },
   {
-    durum: 'Göz ve görmeyle ilgili değişiklik (SANS) şüphesi',
-    aciklama: 'Göz bebeği tepkisindeki değişiklik, uzun uçuşta görülen nöro-oküler değişikliklerin izlenmesini gerektirebilir.',
-    kaynak: 'NASA HRP SANS riski (göz bebeği ölçümleri varsayım)',
-    oneri: 'Göz muayenesi ve görme testlerinin planlanması',
+    durum: 'Suspected eye and vision change (SANS)',
+    aciklama: 'A change in pupil response may warrant monitoring for the neuro-ocular changes seen in long-duration flight.',
+    kaynak: 'NASA HRP SANS risk (pupil measures are an assumption)',
+    oneri: 'Plan an eye examination and vision tests',
     isaretler: [
       { key: 'cog.pupilLatency_ms', dir: 'high' },
       { key: 'cog.pupilDiameter_mm', dir: 'high' },
@@ -145,10 +145,10 @@ export const CONDITION_RULES: ConditionRule[] = [
     enAz: 2,
   },
   {
-    durum: 'Radyasyon maruziyetinde artış',
-    aciklama: 'Doz hızının artması toplam dozu hızla yükseltir; uzun vadeli sağlık riski toplam dozla artar.',
-    kaynak: 'NASA-STD-3001 (OCHMO radyasyon özeti)',
-    oneri: 'Radyasyon sığınağına geçişin değerlendirilmesi ve doz takibi',
+    durum: 'Increased radiation exposure',
+    aciklama: 'A higher dose rate raises cumulative dose quickly; long-term health risk increases with cumulative dose.',
+    kaynak: 'NASA-STD-3001 (OCHMO radiation brief)',
+    oneri: 'Consider moving to the storm shelter and track dose',
     isaretler: [
       { key: 'env.doseRate_uSv_h', dir: 'high' },
       { key: 'env.doseCumulative_mSv', dir: 'high', abs: 480 },
@@ -157,12 +157,12 @@ export const CONDITION_RULES: ConditionRule[] = [
   },
 ];
 
-/** Bu z değerinin üstü sapma sayılır. Tek ölçümlük gürültüyü elemek için 2,5. */
+/** A z value above this counts as a deviation. 2.5 to filter out single-reading noise. */
 const Z_LIMIT = 2.5;
 
 /**
- * Sapma tabanları (plan: "Sd tabanları", Katman 1 ile aynı). Günlük ölçümlerde sapma 0 çıkar ve
- * z sonsuza gider; taban bunu önler. Tabloda olmayan ölçüm için ortalamanın %3'ü.
+ * Deviation floors (plan: "SD floors", same as Layer 1). For daily readings the standard deviation is 0 and
+ * z goes to infinity; the floor prevents this. For metrics not in the table, 3% of the mean.
  */
 const SD_FLOOR: Partial<Record<MetricKey, number>> = {
   'cardio.hr_bpm': 3,
@@ -200,7 +200,7 @@ export interface Deviation {
   text: string;
 }
 
-/** Ölçüm kişisel normalinden riskli yöne sapmış mı? */
+/** Has the metric deviated from its personal baseline in the risky direction? */
 function deviation(s: AstraState, id: CrewId, sign: Sign): Deviation | undefined {
   const t = s.telemetry[id];
   if (!t) return undefined;
@@ -212,13 +212,13 @@ function deviation(s: AstraState, id: CrewId, sign: Sign): Deviation | undefined
   const byAbs = sign.abs !== undefined && (sign.dir === 'high' ? value >= sign.abs : value <= sign.abs);
   if (!byZ && !byAbs) return undefined;
   const label = METRIC_BY_KEY[sign.key]?.label ?? sign.key;
-  const text = pn ? `${label} ${valueText(sign.key, value)} (kişisel normal ${valueText(sign.key, pn.mean)})` : `${label} ${valueText(sign.key, value)}`;
+  const text = pn ? `${label} ${valueText(sign.key, value)} (personal baseline ${valueText(sign.key, pn.mean)})` : `${label} ${valueText(sign.key, value)}`;
   return { key: sign.key, value, normal: pn?.mean, z, text };
 }
 
 export interface PossibleCondition {
   durum: string;
-  olasilik: 'düşük' | 'orta';
+  olasilik: 'low' | 'medium';
   dayanak: string[];
   aciklama: string;
   oneri: string;
@@ -226,8 +226,8 @@ export interface PossibleCondition {
 }
 
 /**
- * Bir astronot için olası durumlar (en fazla 3, en güçlü dayanaklı önce).
- * Kişisel normal henüz kurulmadıysa (ilk 30 ölçüm) boş döner.
+ * Possible conditions for an astronaut (at most 3, best-supported first).
+ * Returns empty if the personal baseline is not built yet (first 30 readings).
  */
 export function possibleConditions(s: AstraState, id: CrewId): PossibleCondition[] {
   if (!baselineReady() || !s.telemetry[id]) return [];
@@ -239,7 +239,7 @@ export function possibleConditions(s: AstraState, id: CrewId): PossibleCondition
     const strong = devs.length >= rule.enAz + 1 || devs.some((d) => Math.abs(d.z ?? 0) >= 4);
     found.push({
       durum: rule.durum,
-      olasilik: strong ? 'orta' : 'düşük',
+      olasilik: strong ? 'medium' : 'low',
       dayanak: devs.map((d) => d.text),
       aciklama: rule.aciklama,
       oneri: rule.oneri,
@@ -254,4 +254,4 @@ export function possibleConditions(s: AstraState, id: CrewId): PossibleCondition
 }
 
 export const CONDITION_DISCLAIMER =
-  'Bu değerlendirme kesin değildir; ölçümlerdeki değişikliklere dayanan bir olasılıktır ve teşhis yerine geçmez. Medikal kontrol ve uçuş doktoru değerlendirmesi gerekir.';
+  'This assessment is not certain; it is a possibility based on changes in the readings and is not a diagnosis. A medical check and flight surgeon review are needed.';

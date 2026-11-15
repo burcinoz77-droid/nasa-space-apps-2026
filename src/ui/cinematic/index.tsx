@@ -1,6 +1,6 @@
-// Parça 1 · Senaryo sinematikleri: senaryo değişince o senaryonun sinematiği tam ekran oynar.
-// Tekrar oynatmak için: window.dispatchEvent(new CustomEvent(CINEMATIC_EVENT, { detail: senaryoId }))
-// Yeni sinematik eklemek: SHOWS'a bir satır.
+// Part 1 · Scenario cinematics: when the scenario changes, that scenario's cinematic plays full screen.
+// To replay: window.dispatchEvent(new CustomEvent(CINEMATIC_EVENT, { detail: scenarioId }))
+// Adding a new cinematic: one line in SHOWS.
 import { useEffect, useRef, useState } from 'react';
 import { useAstra } from '../../store';
 import type { ScenarioId } from '../../types';

@@ -1,4 +1,4 @@
-// Parça 3 · Başlık + büyük sayı kutusu (Kokpit'in üç özet kutusu, Astronot Ekranı'ndaki ölçümler).
+// Part 3 · Title + large number tile (the three summary tiles on Mission Status, the metrics on the Astronaut View).
 import type { ReactNode } from 'react';
 import { COLORS } from '../theme';
 
@@ -19,7 +19,7 @@ export function StatTile({
   icon?: ReactNode;
   footer?: ReactNode;
   badge?: ReactNode;
-  size?: 'lg' | 'md'; // md: uzun yazılar için ("Müdahale gerekiyor")
+  size?: 'lg' | 'md'; // md: for long text ("Intervention needed")
 }) {
   return (
     <div className="flex min-w-0 flex-col rounded-2xl border border-space-border bg-space-panel p-4">

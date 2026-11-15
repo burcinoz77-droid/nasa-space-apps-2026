@@ -1,8 +1,8 @@
-// Parça 1 · Jüri demo turu (≈2 dk, tek tuş). Sunumda tıklama ve bekleme derdi olmasın diye.
-//   Açılış : proje kartı; bu sırada simülasyon sıfırlanır ve kişisel normaller hızla öğrenilir (gerçek ilerleme).
-//   Krizler: Güneş fırtınası → CO₂ arızası → EVA. Her biri kendi sinematiğiyle oynar, sonra Kokpit'te kısa duruş.
-//   Kapanış: ana mesaj; senaryo "Tüm mürettebatı stabilize et"e döner.
-// "Turu bitir" ile her an durur. Demo videosu da bununla tek seferde kaydedilebilir.
+// Part 1 · Jury demo tour (≈2 min, one button). So there is no clicking and waiting during the presentation.
+//   Opening: project card; meanwhile the simulation is reset and the personal baselines are learned quickly (real progress).
+//   Crises : solar particle event → CO₂ scrubber failure → EVA. Each plays with its own cinematic, then a short pause on Mission Status.
+//   Closing: main message; the scenario returns to "Stabilize all crew".
+// "End tour" stops it at any time. The demo video can also be recorded in one take with this.
 import { type ReactNode, useEffect, useState } from 'react';
 import { controls, SCENARIO_NAMES } from '../../loop';
 import { PARAMS, SIM } from '../../sim/parameters';
@@ -13,9 +13,9 @@ import { CINEMATIC_END_EVENT, DEMO_EVENT, NAVIGATE_EVENT, runtime } from './phas
 import { Stars } from './shared';
 
 const TOUR: { id: ScenarioId; action: string }[] = [
-  { id: 'SOLAR_STORM', action: 'radyasyon sığınağı' },
-  { id: 'CO2_SCRUBBER_FAIL', action: 'havalandırma artırıldı' },
-  { id: 'EVA_OVEREXERTION', action: 'zorunlu dinlenme' },
+  { id: 'SOLAR_STORM', action: 'storm shelter' },
+  { id: 'CO2_SCRUBBER_FAIL', action: 'ventilation increased' },
+  { id: 'EVA_OVEREXERTION', action: 'mandatory crew rest' },
 ];
 const CALIBRATION_TICK_MS = 100;
 const INTRO_MS = 8000;
@@ -60,7 +60,7 @@ async function run(signal: AbortSignal, setStage: (s: Stage) => void) {
   const nav = (page: string) => window.dispatchEvent(new CustomEvent(NAVIGATE_EVENT, { detail: page }));
   runtime.tourActive = true;
   try {
-    // Açılış: sıfırla, kişisel normalleri hızlı öğren
+    // Opening: reset, learn the personal baselines quickly
     setStage({ kind: 'intro' });
     controls.reset();
     controls.setSpeed(CALIBRATION_TICK_MS);
@@ -120,7 +120,7 @@ function waitFor(event: string, maxMs: number, signal: AbortSignal) {
   });
 }
 
-// ---------- Ekranlar ----------
+// ---------- Screens ----------
 
 function StopButton({ onStop }: { onStop: () => void }) {
   return (
@@ -129,7 +129,7 @@ function StopButton({ onStop }: { onStop: () => void }) {
       className="rounded-full border px-4 py-1.5 text-sm backdrop-blur hover:bg-white/10"
       style={{ borderColor: alpha(COLORS.text, 0.3), color: COLORS.text }}
     >
-      Turu bitir ✕
+      End tour ✕
     </button>
   );
 }
@@ -162,17 +162,17 @@ function Intro({ onStop }: { onStop: () => void }) {
         ASTRA-MED OS
       </div>
       <p className="mx-auto mt-6 max-w-2xl text-xl leading-relaxed" style={{ color: COLORS.textMuted }}>
-        Dünya'dan 25 dakika uzaktaki bir Mars görevinde mürettebatın sağlığını izleyen, krizde önce{' '}
-        <b style={{ color: COLORS.text }}>güvenli adımı atan</b> yapay zekâ.
+        An AI that monitors crew health on a Mars mission 25 minutes from Earth and, in a crisis,{' '}
+        <b style={{ color: COLORS.text }}>takes the safe action first</b>.
       </p>
       <div className="mt-8 flex justify-center gap-10 font-mono">
-        <Stat value="6" label="astronot" />
-        <Stat value={String(Object.keys(PARAMS).length)} label="kaynaklı parametre" />
-        <Stat value="3" label="gerçekçi kriz" />
+        <Stat value="6" label="astronauts" />
+        <Stat value={String(Object.keys(PARAMS).length)} label="sourced parameters" />
+        <Stat value="3" label="realistic crises" />
       </div>
       <div className="mx-auto mt-10 max-w-md">
         <div className="mb-2 font-mono text-sm" style={{ color: COLORS.textMuted }}>
-          {pct < 100 ? 'ASTRA her astronotun kişisel normalini öğreniyor…' : 'Kişisel normaller hazır'} ({Math.min(samples, SIM.baselineWindow)}/{SIM.baselineWindow})
+          {pct < 100 ? 'ASTRA is learning each astronaut\'s personal baseline…' : 'Personal baselines ready'} ({Math.min(samples, SIM.baselineWindow)}/{SIM.baselineWindow})
         </div>
         <div className="h-2 overflow-hidden rounded-full" style={{ background: alpha(COLORS.text, 0.1) }}>
           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: pct < 100 ? COLORS.calm : COLORS.normal, transition: 'width .2s, background .5s' }} />
@@ -211,7 +211,7 @@ function Dwell({ i, onStop }: { i: number; onStop: () => void }) {
             DEMO {i + 1}/{TOUR.length} · {SCENARIO_NAMES[t.id].toUpperCase()}
           </div>
           <div>
-            Kokpit: Katman 1 olayı kaydetti, güvenli adım uygulandı (<b>{t.action}</b>). Açıklama ve onay mürettebatta.
+            Mission Status: Layer 1 logged the incident and applied the safe action (<b>{t.action}</b>). Explanation and acknowledgement are with the crew.
           </div>
         </div>
         <StopButton onStop={onStop} />
@@ -225,9 +225,9 @@ function Outro({ onStop }: { onStop: () => void }) {
   return (
     <Card onStop={onStop}>
       <div className="text-4xl leading-tight font-bold md:text-5xl">
-        ASTRA önce güvenli adımı atar.
+        ASTRA takes the safe action first.
         <br />
-        <span style={{ color: COLORS.normal }}>Son karar her zaman mürettebatta.</span>
+        <span style={{ color: COLORS.normal }}>The final decision always stays with the crew.</span>
       </div>
       <div className="mt-10 grid gap-3 text-left sm:grid-cols-3">
         {TOUR.map((t) => (

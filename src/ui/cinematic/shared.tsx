@@ -1,9 +1,9 @@
-// Parça 1 · Sinematiklerin ortak parçaları: çerçeve, yıldız alanı, alt yazı kutusu, sahne makinesi.
+// Part 1 · Shared pieces of the cinematics: frame, star field, caption box, scene machine.
 import { type CSSProperties, type ReactNode, useEffect, useRef } from 'react';
 import { alpha, COLORS } from '../theme';
 import { setMuted, useMuted } from './sound';
 
-/** Tam ekran çerçeve: koyu arka plan, yıldızlar, Atla düğmesi, Esc, alt kaynak satırı, kapanışta solma. */
+/** Full-screen frame: dark background, stars, Skip button, Esc, credit line at the bottom, fade-out on close. */
 export function Stage({ fading, onClose, credit, label, children }: { fading: boolean; onClose: () => void; credit: string; label: string; children: ReactNode }) {
   const muted = useMuted();
   useEffect(() => {
@@ -24,7 +24,7 @@ export function Stage({ fading, onClose, credit, label, children }: { fading: bo
         onClick={() => setMuted(!muted)}
         className="absolute top-4 right-28 z-20 rounded-full border px-3 py-1.5 text-sm backdrop-blur hover:bg-white/10"
         style={{ borderColor: alpha(COLORS.text, 0.3), color: COLORS.text }}
-        aria-label={muted ? 'Sesi aç' : 'Sesi kapat'}
+        aria-label={muted ? 'Unmute' : 'Mute'}
       >
         {muted ? '🔇' : '🔊'}
       </button>
@@ -33,7 +33,7 @@ export function Stage({ fading, onClose, credit, label, children }: { fading: bo
         className="absolute top-4 right-4 z-20 rounded-full border px-4 py-1.5 text-sm backdrop-blur hover:bg-white/10"
         style={{ borderColor: alpha(COLORS.text, 0.3), color: COLORS.text }}
       >
-        Atla ✕
+        Skip ✕
       </button>
       <div className="absolute right-4 bottom-3 z-20 font-mono text-[11px]" style={{ color: alpha(COLORS.text, 0.45) }}>
         {credit}
@@ -59,7 +59,7 @@ export function Caption({ show, pos, children }: { show: boolean; pos: 'top' | '
   );
 }
 
-/** Yıldız alanı (bir kez çizilir). */
+/** Star field (drawn once). */
 export function Stars() {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {

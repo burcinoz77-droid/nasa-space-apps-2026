@@ -1,5 +1,5 @@
-// Ana döngü: Simülasyon (Parça 1) -> Katman 1 (Parça 2) -> ortak durum -> ekranlar.
-// Bu dosya parçaları birbirine bağlar; değiştirmeden önce ekibe haber verin.
+// Main loop: Simulation (Part 1) -> Layer 1 (Part 2) -> shared state -> screens.
+// This file connects the parts; tell the team before changing it.
 import { createDetector } from './engine';
 import { applyTestResults, useTests } from './psych/store';
 import { createSimulation } from './sim';
@@ -7,11 +7,11 @@ import { useAstra } from './store';
 import type { ScenarioId } from './types';
 
 const SCENARIO_NAMES: Record<ScenarioId, string> = {
-  NORMAL: 'Normal gün',
-  SOLAR_STORM: 'Güneş fırtınası',
-  MARS_DAY_180: 'Mars 180. gün yükü',
-  CO2_SCRUBBER_FAIL: 'CO₂ temizleyici arızası',
-  EVA_OVEREXERTION: 'EVA aşırı efor',
+  NORMAL: 'Nominal day',
+  SOLAR_STORM: 'Solar particle event',
+  MARS_DAY_180: 'Mars day 180 load',
+  CO2_SCRUBBER_FAIL: 'CO₂ scrubber failure',
+  EVA_OVEREXERTION: 'EVA overexertion',
 };
 
 const sim = createSimulation();
@@ -20,9 +20,9 @@ let timer: ReturnType<typeof setInterval> | undefined;
 
 function step() {
   const { ship, telemetry } = sim.tick();
-  applyTestResults(telemetry); // Parça 4: astronotun yaptığı PVT-B sonucu simüle PVT değerinin yerine geçer
+  applyTestResults(telemetry); // Part 4: the PVT-B result an astronaut takes replaces the simulated PVT value
   const out = detector.process(ship, telemetry);
-  for (const action of out.newActions) sim.onAutoAction(action); // güvenli adımın fiziksel etkisi
+  for (const action of out.newActions) sim.onAutoAction(action); // physical effect of the safe action
   useAstra.getState().applyTick(ship, telemetry, out);
 }
 
@@ -42,7 +42,7 @@ export const controls = {
   },
   setScenario(id: ScenarioId) {
     sim.setScenario(id);
-    log(`Senaryo değişti: ${SCENARIO_NAMES[id]}`);
+    log(`Scenario changed: ${SCENARIO_NAMES[id]}`);
   },
   setSpeed(ms: number) {
     useAstra.getState().setTickMs(ms);
@@ -57,7 +57,7 @@ export const controls = {
     detector.reset();
     useAstra.getState().clearAll();
     useTests.getState().clear();
-    log('Simülasyon sıfırlandı');
+    log('Simulation reset');
     controls.start();
   },
 };

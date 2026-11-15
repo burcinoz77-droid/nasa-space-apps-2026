@@ -1,5 +1,5 @@
-// Parça 2 · Kişisel baseline, yönlü z-skoru ve ardışık ölçüm (streak) kuralı.
-// Her astronot × her ölçüm için bir MetricTracker vardır.
+// Part 2 · Personal baseline, directional z-score and consecutive-reading (streak) rule.
+// There is one MetricTracker per astronaut × metric.
 import { METRIC_BY_KEY, type MetricKey } from '../metrics';
 import type { Level, MetricScore } from '../types';
 import {
@@ -15,7 +15,7 @@ import {
   Z_EXCLUDED,
 } from './config';
 
-/** Welford yöntemiyle akan ortalama ve standart sapma (tek geçiş, sayısal olarak kararlı). */
+/** Running mean and standard deviation with Welford's method (single pass, numerically stable). */
 export class RunningStat {
   n = 0;
   mean = 0;
@@ -31,7 +31,7 @@ export class RunningStat {
   }
 }
 
-/** Ölçümün riskli yönündeki z: high → max(z,0), low → max(−z,0), both → |z|. */
+/** z in the metric's risky direction: high → max(z,0), low → max(−z,0), both → |z|. */
 export function riskZ(z: number, badWhen: 'high' | 'low' | 'both'): number {
   if (badWhen === 'high') return Math.max(z, 0);
   if (badWhen === 'low') return Math.max(-z, 0);
@@ -63,10 +63,10 @@ const maxLevel = (a: Level, b: Level): Level => (LEVEL_RANK[a] >= LEVEL_RANK[b] 
 const minLevel = (a: Level, b: Level): Level => (LEVEL_RANK[a] <= LEVEL_RANK[b] ? a : b);
 
 /**
- * Bir astronotun bir ölçümünü izler.
- *  - İlk BASELINE_WINDOW ölçümde baseline öğrenir, sonra dondurur (anomali kendi normalini kirletmesin).
- *  - Ham seviye: mutlak eşik varsa o (NASA sınırı z-skorundan önce gelir), yoksa yönlü z-skoru.
- *  - Görünen seviye ancak STREAK_REQUIRED ardışık ölçüm aynı yönde kalırsa değişir (yukarı da aşağı da).
+ * Tracks one metric of one astronaut.
+ *  - Learns the baseline over the first BASELINE_WINDOW readings, then freezes it (so an anomaly does not contaminate its own baseline).
+ *  - Raw level: the absolute threshold if there is one (a NASA limit takes precedence over the z-score), otherwise the directional z-score.
+ *  - The displayed level only changes once STREAK_REQUIRED consecutive readings stay in the same direction (both up and down).
  */
 export class MetricTracker {
   readonly key: MetricKey;
@@ -74,9 +74,9 @@ export class MetricTracker {
   private readonly limit: AbsoluteLimit | undefined;
   private readonly useZ: boolean;
   readonly stat = new RunningStat();
-  private recent: Level[] = []; // son STREAK_REQUIRED ham seviye
+  private recent: Level[] = []; // last STREAK_REQUIRED raw levels
   level: Level = 'normal';
-  streak = 0; // eşiği (≥ dikkat) üst üste kaç ölçümdür aşıyor
+  streak = 0; // for how many consecutive readings it has exceeded the threshold (≥ caution)
   last: MetricScore;
 
   constructor(key: MetricKey) {
@@ -93,17 +93,17 @@ export class MetricTracker {
     return this.frozenEarly || this.stat.n >= BASELINE_WINDOW;
   }
 
-  /** Senaryo kalibrasyon bitmeden başlarsa baseline o ana kadarki ölçümlerle dondurulur. */
+  /** If a scenario starts before calibration ends, the baseline is frozen with the readings so far. */
   freeze() {
     this.frozenEarly = true;
   }
 
-  /** Yeni ölçümü işler ve güncel MetricScore'u döndürür. */
+  /** Processes a new reading and returns the current MetricScore. */
   push(value: number): MetricScore {
     let z = 0;
     let sd: number;
     if (!this.frozen) {
-      this.stat.push(value); // kalibrasyon: baseline'a katılır, z hesaplanmaz
+      this.stat.push(value); // calibration: added to the baseline, no z computed
       sd = Math.max(this.stat.sd, sdFloor(this.key, this.stat.mean));
     } else {
       sd = Math.max(this.stat.sd, sdFloor(this.key, this.stat.mean));
@@ -117,8 +117,8 @@ export class MetricTracker {
     this.recent.push(raw);
     if (this.recent.length > STREAK_REQUIRED) this.recent.shift();
     if (this.recent.length === STREAK_REQUIRED) {
-      const floor = this.recent.reduce(minLevel); // son 3 ölçümün hepsinin ulaştığı seviye
-      const ceil = this.recent.reduce(maxLevel); // son 3 ölçümün hiçbirinin geçmediği seviye
+      const floor = this.recent.reduce(minLevel); // the level all of the last 3 readings reached
+      const ceil = this.recent.reduce(maxLevel); // the level none of the last 3 readings exceeded
       if (LEVEL_RANK[floor] > LEVEL_RANK[this.level]) this.level = floor;
       else if (LEVEL_RANK[ceil] < LEVEL_RANK[this.level]) this.level = ceil;
     }
@@ -127,7 +127,7 @@ export class MetricTracker {
     return this.last;
   }
 
-  /** Sağlık skorunda kullanılan risk z'si (dondurulmamışsa 0). */
+  /** Risk z used in the health score (0 if not frozen yet). */
   get riskZ(): number {
     return riskZ(this.last.z, this.badWhen);
   }

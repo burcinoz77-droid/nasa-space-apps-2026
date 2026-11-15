@@ -2,10 +2,10 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 
-// Yerel geliştirmede POST /api/astra isteğini api/astra.ts dosyasına yönlendirir.
-// Vercel'de aynı dosya kendi başına çalışır; böylece kod tek, davranış aynı.
-// .env içindeki değişkenler SADECE sunucu tarafına (process.env) yüklenir.
-// UYARI: Anahtar değişkenlerine asla VITE_ ön eki koymayın; VITE_ olanlar tarayıcıya gider.
+// In local development, routes POST /api/astra requests to api/astra.ts.
+// On Vercel the same file runs on its own; so there is one codebase and the same behavior.
+// Variables in .env are loaded ONLY on the server side (process.env).
+// WARNING: never put the VITE_ prefix on key variables; anything with VITE_ is sent to the browser.
 function astraDevApi(): Plugin {
   return {
     name: 'astra-dev-api',
@@ -38,8 +38,8 @@ function astraDevApi(): Plugin {
   };
 }
 
-// BASE_PATH sadece GitHub Pages yedeği için verilir (.github/workflows/pages.yml).
-// Vercel ve yerel geliştirmede boş kalır, site kök dizinde ('/') çalışır.
+// BASE_PATH is only set for the GitHub Pages backup (.github/workflows/pages.yml).
+// On Vercel and in local development it stays empty, and the site runs at the root ('/').
 export default defineConfig({
   base: process.env.BASE_PATH || '/',
   plugins: [react(), tailwindcss(), astraDevApi()],

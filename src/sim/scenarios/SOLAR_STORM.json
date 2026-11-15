@@ -1,9 +1,9 @@
 {
   "id": "SOLAR_STORM",
-  "name": "Güneş fırtınası",
+  "name": "Solar particle event",
   "seed": 2024,
-  "source": "DONKI SEP/FLR kayıtları, Mayıs 2024: https://ccmc.gsfc.nasa.gov/DONKI-API/get/SEP?startDate=2024-05-01&endDate=2024-05-31",
-  "note": "Olay sırası ve zamanları DONKI Mayıs 2024 kayıtlarından (data/donki_sep_2024-05.json): X3.9 patlama → GOES >10 MeV → X5.8 patlama → GOES >100 MeV. Demo için sıkıştırıldı: gerçekte 19 saat süren sıra 40 ölçümde oynar. DONKI olayın zamanını verir, doz değerini vermez: doz çarpanları (Kokpit ×25 sonra ×60, yüzey ×5) varsayımdır. Stres tepkisi (GSR, kortizol, nabız) varsayımdır; Elif radyasyona hassastır.",
+  "source": "DONKI SEP/FLR records, May 2024: https://ccmc.gsfc.nasa.gov/DONKI-API/get/SEP?startDate=2024-05-01&endDate=2024-05-31",
+  "note": "Event order and times from DONKI May 2024 records (data/donki_sep_2024-05.json): X3.9 flare → GOES >10 MeV → X5.8 flare → GOES >100 MeV. Compressed for the demo: a 19-hour sequence plays in 40 readings. DONKI gives event times, not doses: dose multipliers (spacecraft ×25 then ×60, surface ×5) are assumptions. The stress response (GSR, cortisol, heart rate) is assumed; Elif is radiation-sensitive.",
   "events": [
     {
       "atTick": 0,
@@ -11,7 +11,7 @@
       "type": "FLARE_X",
       "utc": "2024-05-10T06:54Z",
       "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/30666/-1",
-      "text": "X3.9 güneş patlaması (DONKI, 10 May 2024 06:54 UTC): parçacık gelebilir, sığınağı hazırla"
+      "text": "X3.9 solar flare (DONKI, 10 May 2024 06:54 UTC): particles may follow, prepare the shelter"
     },
     {
       "atTick": 10,
@@ -19,7 +19,7 @@
       "type": "SPE_ONSET",
       "utc": "2024-05-10T13:35Z",
       "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30677/-1",
-      "text": "GOES >10 MeV parçacık olayı başladı (DONKI, 10 May 2024 13:35 UTC)"
+      "text": "GOES >10 MeV particle event began (DONKI, 10 May 2024 13:35 UTC)"
     },
     {
       "atTick": 35,
@@ -27,7 +27,7 @@
       "type": "FLARE_X",
       "utc": "2024-05-11T01:23Z",
       "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/FLR/30711/-1",
-      "text": "X5.8 güneş patlaması (DONKI, 11 May 2024 01:23 UTC)"
+      "text": "X5.8 solar flare (DONKI, 11 May 2024 01:23 UTC)"
     },
     {
       "atTick": 40,
@@ -35,13 +35,13 @@
       "type": "SPE_PEAK",
       "utc": "2024-05-11T02:10Z",
       "url": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/30714/-1",
-      "text": "GOES >100 MeV yüksek enerjili parçacık olayı (DONKI, 11 May 2024 02:10 UTC): sığınakta kal"
+      "text": "GOES >100 MeV high-energy particle event (DONKI, 11 May 2024 02:10 UTC): stay in the shelter"
     },
     {
       "atTick": 100,
       "untilTick": 130,
       "type": "SPE_END",
-      "text": "Parçacık akısı normale dönüyor"
+      "text": "Particle flux returning to background levels"
     }
   ],
   "effects": [

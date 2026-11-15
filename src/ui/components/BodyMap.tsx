@@ -1,5 +1,5 @@
-// Parça 3 · 2B vücut haritası: 3B model yüklenirken ya da tarayıcıda WebGL yoksa gösterilen yedek çizim.
-// Bölgeler 3B modelle aynı: baş, göğüs (kollar dahil), alt gövde (karın ve bacaklar), çevre halkası.
+// Part 3 · 2D body map: the fallback drawing shown while the 3D model loads or if the browser has no WebGL.
+// Same regions as the 3D model: head, chest (including arms), lower body (abdomen and legs), environment ring.
 import type { KeyboardEvent } from 'react';
 import type { CrewStatus, Level } from '../../types';
 import { REGION_BY_ID, regionState, type RegionId } from '../bodyRegions';
@@ -23,7 +23,7 @@ export function BodyMap({ status, selected, onSelect }: { status: CrewStatus | u
       ? {
           role: 'button',
           tabIndex: 0,
-          'aria-label': `${REGION_BY_ID[id].name}: ayrıntıyı göster`,
+          'aria-label': `${REGION_BY_ID[id].name}: show details`,
           onClick: () => onSelect(id),
           onKeyDown: (e: KeyboardEvent) => (e.key === 'Enter' || e.key === ' ') && onSelect(id),
           className: 'cursor-pointer focus:outline-none',
@@ -40,7 +40,7 @@ export function BodyMap({ status, selected, onSelect }: { status: CrewStatus | u
       viewBox="0 0 260 340"
       className="mx-auto h-full max-h-[340px] w-auto"
       role="img"
-      aria-label="Vücut haritası (2B): bölgeler sağlık seviyesine göre renkli"
+      aria-label="Body map (2D): regions colored by health level"
     >
       <defs>
         <filter id="bm-glow" x="-50%" y="-50%" width="200%" height="200%">

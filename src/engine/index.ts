@@ -1,15 +1,15 @@
-// Parça 2 · Katman 1: anomali tespiti, erken uyarı, otonom güvenli adımlar, olay kaydı.
-// Gemide internetsiz çalışır. Uyarıyı SADECE bu katman açar; Katman 2 (yapay zekâ) açamaz.
+// Part 2 · Layer 1: anomaly detection, early warning, autonomous safe actions, incident log.
+// Runs onboard without internet. ONLY this layer raises alerts; Layer 2 (AI) cannot.
 //
-// Her ölçümde (process):
-//  1. Kişisel baseline: her astronot × her ölçüm için ilk 30 ölçümün ortalaması ve sd'si (Welford), sonra dondurulur.
-//  2. Yönlü z-skoru: z = (değer − ortalama) / max(sd, taban); riskli yön metrics.ts'teki badWhen.
-//     NASA'nın kesin sınırı olan ölçümlerde (ppCO₂, toplam doz, SpO₂, çekirdek sıcaklık) mutlak eşik önce gelir.
-//  3. Seviye ancak 3 ardışık ölçüm aynı yönde kalırsa değişir: tek sıçrama alarm vermez.
-//  4. Sağlık skoru: alan skoru = 100 − 12 × Σ max(0, riskZ − 1); healthScore = 5 alanın ortalaması.
-//  5. Olay kuralları (rules.ts): aynı kişi/yer + aynı tür için tek açık olay; seviye yükselirse olay yükselir.
-//  6. Otonom adım (sadece 3 tür) olay başına en fazla bir kez; newActions → loop.ts → simülasyon.
-//  7. Bütün sinyaller 10 ölçüm normal kalırsa olay "çözüldü". Hepsi olay kaydına (ledger) düşer.
+// On every reading (process):
+//  1. Personal baseline: mean and SD of the first 30 readings for each astronaut × metric (Welford), then frozen.
+//  2. Directional z-score: z = (value − mean) / max(sd, floor); the risky direction is badWhen in metrics.ts.
+//     For metrics with a firm NASA limit (ppCO₂, total dose, SpO₂, core temperature) the absolute threshold takes precedence.
+//  3. The level only changes if 3 consecutive readings stay in the same direction: a single spike raises no alarm.
+//  4. Health score: domain score = 100 − 12 × Σ max(0, riskZ − 1); healthScore = mean of the 5 domains.
+//  5. Incident rules (rules.ts): one open incident per person/location + type; if the level rises, the incident escalates.
+//  6. Autonomous action (only 3 types) at most once per incident; newActions → loop.ts → simulation.
+//  7. If all signals stay nominal for 10 readings, the incident is "resolved". Everything goes to the incident log (ledger).
 import { CREW, CREW_BY_ID, CREW_IDS } from '../crew';
 import { METRICS, readMetric, type MetricKey } from '../metrics';
 import type {
@@ -48,16 +48,16 @@ interface CrewTrack {
   location: CrewLocation;
   trackers: Record<MetricKey, MetricTracker>;
   irregularStreak: number;
-  lastLevel: Partial<Record<MetricKey, Level>>; // son verilen seviye (normal aralık kuralı için)
+  lastLevel: Partial<Record<MetricKey, Level>>; // last level given (for the reference-range rule)
   n: number;
-  frozen: boolean; // baseline donduruldu mu
+  frozen: boolean; // has the baseline been frozen
 }
 
 interface OpenIncident {
   inc: Incident;
   rule: Rule;
   location: CrewLocation;
-  clearStreak: number; // tüm sinyaller kaç ölçümdür normal
+  clearStreak: number; // for how many readings all signals have been nominal
 }
 
 function newTrack(id: CrewId): CrewTrack {
@@ -71,7 +71,7 @@ function freezeTrack(track: CrewTrack) {
   track.frozen = true;
 }
 
-/** Bir astronotun ölçümünü işler, kuralların girdisini (CrewEval) üretir. */
+/** Processes one astronaut's reading and produces the rules' input (CrewEval). */
 function evaluate(track: CrewTrack, t: Telemetry): CrewEval {
   track.n++;
   const scores = {} as Record<MetricKey, MetricScore>;
@@ -81,8 +81,8 @@ function evaluate(track: CrewTrack, t: Telemetry): CrewEval {
     const tr = track.trackers[k];
     const value = readMetric(t, k);
     const s = tr.push(value);
-    // Resmi kaynağın normal aralığındaki değer yeni bir uyarı başlatmaz (z ekranda kalır).
-    // Uyarı zaten açıksa seviye, Katman 1'in histerezisiyle iner; aralık içinde asla yükselmez.
+    // A value within the official source's reference range does not start a new alert (z stays on screen).
+    // If an alert is already open, the level drops with Layer 1's hysteresis; it never rises inside the range.
     const range = normalRangeFor(k, track.location);
     const inRange = range !== undefined && value >= range[0] && value <= range[1];
     const prev = track.lastLevel[k] ?? 'normal';
@@ -106,7 +106,7 @@ function evaluate(track: CrewTrack, t: Telemetry): CrewEval {
   };
 }
 
-/** Sağlık skoru: alan skoru = 100 − 12 × Σ max(0, riskZ − 1), 0–100; healthScore = 5 alanın ortalaması. */
+/** Health score: domain score = 100 − 12 × Σ max(0, riskZ − 1), 0–100; healthScore = mean of the 5 domains. */
 export function scoreDomains(riskZ: Record<MetricKey, number>): { domainScores: Record<Domain, number>; healthScore: number } {
   const sum: Record<Domain, number> = { cardio: 0, resp: 0, biochem: 0, cog: 0, env: 0 };
   for (const k of Z_KEYS) sum[domainOf(k)] += Math.max(0, (riskZ[k] ?? 0) - 1);
@@ -124,9 +124,9 @@ export function createDetector(): Detector {
   let tracks = {} as Record<CrewId, CrewTrack>;
   let evals: Partial<Record<CrewId, CrewEval>> = {};
   let statuses = {} as Record<CrewId, CrewStatus>;
-  let incidents: Incident[] = []; // en yeni başta
-  let open = new Map<string, OpenIncident>(); // "CO2:KOKPIT" / "FATIGUE:elif" -> açık olay
-  let restBy = new Map<CrewId, string>(); // zorunlu dinlenme verilen kişi -> olay id
+  let incidents: Incident[] = []; // newest first
+  let open = new Map<string, OpenIncident>(); // "CO2:KOKPIT" / "FATIGUE:elif" -> open incident
+  let restBy = new Map<CrewId, string>(); // person placed on mandatory crew rest -> incident id
 
   function init() {
     epoch = Date.now().toString(36);
@@ -148,7 +148,7 @@ export function createDetector(): Detector {
     return { id: nextId('L'), at, kind, text, ...extra };
   }
 
-  /** Bir kuralın bu ölçümdeki bulgularını gruplar: yer kapsamlı kurallar Kokpit/Gezegen başına, diğerleri kişi başına. */
+  /** Groups a rule's findings for this reading: location-scoped rules per orbit/surface, the others per person. */
   function groupHits(rule: Rule) {
     const groups = new Map<string, { location: CrewLocation; members: { id: CrewId; hit: RuleHit }[] }>();
     for (const id of CREW_IDS) {
@@ -169,7 +169,7 @@ export function createDetector(): Detector {
 
   function runRules(at: number, ledger: LedgerEntry[], actions: AutoAction[]) {
     for (const rule of RULES) {
-      // 1) Olay aç / güncelle / yükselt
+      // 1) Raise / update / escalate an incident
       for (const [key, g] of groupHits(rule)) {
         const worst = worstOf(g.members);
         const level = worst.hit.level;
@@ -196,18 +196,18 @@ export function createDetector(): Detector {
           const joined = memberIds.filter((id) => !inc.crewIds.includes(id));
           if (joined.length) {
             inc.crewIds = CREW_IDS.filter((id) => inc.crewIds.includes(id) || joined.includes(id));
-            ledger.push(entry(at, 'SYSTEM', `Olaya eklendi (${names(joined)}): ${inc.title}`, { incidentId: inc.id, crewIds: joined }));
+            ledger.push(entry(at, 'SYSTEM', `Added to incident (${names(joined)}): ${inc.title}`, { incidentId: inc.id, crewIds: joined }));
           }
           if (LEVEL_RANK[level] > LEVEL_RANK[inc.level]) {
             inc.level = level;
             inc.title = rule.title(inc.crewIds, worst.hit, g.location);
-            inc.status = 'open'; // onaylanmış olay kritikleşirse yeniden onay ister
-            ledger.push(entry(at, 'SYSTEM', `Olay kritik seviyeye yükseldi: ${inc.title}`, { incidentId: inc.id, crewIds: [...inc.crewIds] }));
+            inc.status = 'open'; // an acknowledged incident that escalates to Warning needs acknowledging again
+            ledger.push(entry(at, 'SYSTEM', `Incident escalated to Warning: ${inc.title}`, { incidentId: inc.id, crewIds: [...inc.crewIds] }));
           }
-          inc.signals = worst.hit.signals; // olay açıkken sinyaller canlı güncellenir
+          inc.signals = worst.hit.signals; // while the incident is open, the signals update live
         }
 
-        // 2) Otonom güvenli adım: olay başına en fazla bir kez
+        // 2) Autonomous safe action: at most once per incident
         const inc = o.inc;
         const actionable = g.members.filter((m) => m.hit.actionable);
         if (rule.action && actionable.length && !inc.autoActions.includes(rule.action)) {
@@ -217,12 +217,12 @@ export function createDetector(): Detector {
           const action: AutoAction = { type: rule.action, crewIds, at, reason: rule.reason(memberIds, w.hit, g.location), incidentId: inc.id };
           inc.autoActions = [...inc.autoActions, rule.action];
           actions.push(action);
-          ledger.push(entry(at, 'AUTO_ACTION', `${ACTION_LABELS[rule.action]} · otomatik — ${action.reason}`, { incidentId: inc.id, crewIds }));
+          ledger.push(entry(at, 'AUTO_ACTION', `${ACTION_LABELS[rule.action]} · automatic — ${action.reason}`, { incidentId: inc.id, crewIds }));
           if (rule.action === 'MANDATORY_REST') for (const id of crewIds) restBy.set(id, inc.id);
         }
       }
 
-      // 3) Çözülme: olayın bütün sinyalleri RESOLVE_AFTER ölçüm boyunca normal
+      // 3) Resolution: all of the incident's signals nominal for RESOLVE_AFTER readings
       for (const [key, o] of open) {
         if (o.rule !== rule) continue;
         const clear = o.inc.crewIds.every((id) => {
@@ -234,7 +234,7 @@ export function createDetector(): Detector {
         o.inc.status = 'resolved';
         open.delete(key);
         ledger.push(
-          entry(at, 'INCIDENT_RESOLVED', `Çözüldü: ${o.inc.title} — sinyaller ${RESOLVE_AFTER} ölçümdür normal`, {
+          entry(at, 'INCIDENT_RESOLVED', `Resolved: ${o.inc.title} — signals nominal for ${RESOLVE_AFTER} readings`, {
             incidentId: o.inc.id,
             crewIds: [...o.inc.crewIds],
           }),
@@ -261,7 +261,7 @@ export function createDetector(): Detector {
     const { domainScores, healthScore } = scoreDomains(e.riskZ);
     let level: Level = 'normal';
     for (const k of KEYS) level = maxLevel(level, e.scores[k].level);
-    // Açık olay kişinin seviyesini taşır; sinyalleri normale döndüyse (çözülme sayacı işliyor) artık taşımaz
+    // An open incident carries the person's level; once its signals are back to nominal (resolution counter running) it no longer does
     for (const o of open.values()) if (o.inc.crewIds.includes(id) && !o.rule.isClear(e)) level = maxLevel(level, o.inc.level);
     const topSignals = KEYS.map((k) => e.scores[k])
       .filter((s) => !Z_EXCLUDED.has(s.key) || s.level !== 'normal')
@@ -270,7 +270,7 @@ export function createDetector(): Detector {
     return { crewId: id, level, healthScore, domainScores, topSignals, restRequired: restBy.has(id) };
   }
 
-  /** Store'a giden kopya: React seçicileri değişikliği görsün, içerideki durum dışarıdan bozulmasın. */
+  /** Copy sent to the store: so React selectors see the change and the internal state cannot be corrupted from outside. */
   const snapshot = (inc: Incident): Incident => ({ ...inc, crewIds: [...inc.crewIds], signals: [...inc.signals], autoActions: [...inc.autoActions] });
 
   return {
@@ -284,19 +284,19 @@ export function createDetector(): Detector {
           entry(
             at,
             'SYSTEM',
-            `Katman 1 devrede: kişisel baseline için ilk ${BASELINE_WINDOW} ölçüm toplanıyor. Bu sürede sadece mutlak eşikler (CO₂, SpO₂, sıcaklık, toplam doz) izleniyor.`,
+            `Layer 1 active: collecting the first ${BASELINE_WINDOW} readings for personal baselines. Until then only absolute limits (CO₂, SpO₂, temperature, cumulative dose) are monitored.`,
           ),
         );
       }
       ticks++;
 
-      // Senaryo kalibrasyon bitmeden başladıysa: baseline'ı anomaliyle kirletmeden erken dondur
+      // If the scenario started before calibration ended: freeze the baseline early without contaminating it with the anomaly
       if (ship.scenario !== 'NORMAL' && !baselineAnnounced) {
         const early = CREW_IDS.filter((id) => !tracks[id].frozen && tracks[id].n >= BASELINE_MIN_WINDOW);
         for (const id of early) freezeTrack(tracks[id]);
         if (early.length) {
           ledger.push(
-            entry(at, 'SYSTEM', `Senaryo kalibrasyon bitmeden başladı: ${early.length === CREW_IDS.length ? 'tüm mürettebatın' : `${names(early)} için`} baseline'ı ${tracks[early[0]].n} ölçümle erken donduruldu.`, {
+            entry(at, 'SYSTEM', `Scenario started before calibration finished: ${early.length === CREW_IDS.length ? 'all crew' : names(early)} baseline frozen early with ${tracks[early[0]].n} readings.`, {
               crewIds: early,
             }),
           );
@@ -311,7 +311,7 @@ export function createDetector(): Detector {
       if (!baselineAnnounced && CREW_IDS.every((id) => tracks[id].frozen)) {
         baselineAnnounced = true;
         ledger.push(
-          entry(at, 'SYSTEM', `Kişisel baseline'lar kuruldu ve donduruldu: ${CREW_IDS.length} astronot × ${Z_KEYS.length} ölçüm. Z-skoru ve erken uyarı devrede.`),
+          entry(at, 'SYSTEM', `Personal baselines built and frozen: ${CREW_IDS.length} astronauts × ${Z_KEYS.length} metrics. Z-scores and early warning active.`),
         );
       }
 
@@ -332,7 +332,7 @@ export function createDetector(): Detector {
       const inc = incidents.find((i) => i.id === incidentId);
       if (!inc || inc.status !== 'open') return null;
       inc.status = 'acknowledged';
-      return entry(Date.now(), 'ACK', `Mürettebat onayladı: ${inc.title}`, { incidentId, crewIds: [...inc.crewIds] });
+      return entry(Date.now(), 'ACK', `Crew acknowledged: ${inc.title}`, { incidentId, crewIds: [...inc.crewIds] });
     },
 
     reset() {

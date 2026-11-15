@@ -1,14 +1,14 @@
-// ARES-1 mürettebatı: altı kurgusal astronot. Görev unvanları gerçek mürettebat unvanlarıdır
-// (Komutan, Uçuş Mühendisi, Görev Uzmanı, Sağlık Sorumlusu). Gerçek bir astronotun adı ve sağlık verisi kullanılmaz.
+// ARES-1 crew: six fictional astronauts. The mission titles are real crew titles
+// (Commander, Flight Engineer, Mission Specialist, Crew Medical Officer). No real astronaut's name or health data is used.
 import type { CrewId, CrewMember } from './types';
 
 export const CREW: CrewMember[] = [
-  { id: 'elif', name: 'Dr. Elif Yılmaz', role: 'Görev Uzmanı · Sağlık Sorumlusu', location: 'KOKPIT', unit: 'IVA-01', sensitivity: 'EVA radyasyon hassasiyeti' },
-  { id: 'kerem', name: 'Kerem Demir', role: 'Uçuş Mühendisi', location: 'KOKPIT', unit: 'IVA-02', sensitivity: 'Yüksek kabin CO₂ duyarlılığı' },
-  { id: 'zeynep', name: 'Zeynep Arslan', role: 'Komutan', location: 'KOKPIT', unit: 'IVA-03', sensitivity: 'Yüksek G ve kardiyak dayanıklılık' },
-  { id: 'emir', name: 'Emir Çelik', role: 'Görev Uzmanı · Bilim İnsanı', location: 'GEZEGEN', unit: 'xEMU-01', sensitivity: 'Sirkadiyen ve yüzey radyasyon izlemi' },
-  { id: 'deniz', name: 'Deniz Özkan', role: 'Uçuş Mühendisi · Yüzey Sistemleri', location: 'GEZEGEN', unit: 'xEMU-02', sensitivity: 'Düşük yerçekimi kas-iskelet yükü' },
-  { id: 'mert', name: 'Mert Şahin', role: 'Görev Uzmanı · Jeolog', location: 'GEZEGEN', unit: 'xEMU-03', sensitivity: 'Yüzey keşfi ve metabolik adaptasyon' },
+  { id: 'elif', name: 'Dr. Elif Yılmaz', role: 'Mission Specialist · Crew Medical Officer', location: 'KOKPIT', unit: 'IVA-01', sensitivity: 'EVA radiation sensitivity' },
+  { id: 'kerem', name: 'Kerem Demir', role: 'Flight Engineer', location: 'KOKPIT', unit: 'IVA-02', sensitivity: 'High cabin CO₂ sensitivity' },
+  { id: 'zeynep', name: 'Zeynep Arslan', role: 'Commander', location: 'KOKPIT', unit: 'IVA-03', sensitivity: 'High-G and cardiac resilience' },
+  { id: 'emir', name: 'Emir Çelik', role: 'Mission Specialist · Scientist', location: 'GEZEGEN', unit: 'xEMU-01', sensitivity: 'Circadian and surface radiation monitoring' },
+  { id: 'deniz', name: 'Deniz Özkan', role: 'Flight Engineer · Surface Systems', location: 'GEZEGEN', unit: 'xEMU-02', sensitivity: 'Low-gravity musculoskeletal load' },
+  { id: 'mert', name: 'Mert Şahin', role: 'Mission Specialist · Geologist', location: 'GEZEGEN', unit: 'xEMU-03', sensitivity: 'Surface exploration and metabolic adaptation' },
 ];
 
 export const CREW_IDS = CREW.map((c) => c.id) as CrewId[];

@@ -1,14 +1,14 @@
-// Parça 3 · 3B astronot (Astronot Ekranı'ndaki vücut haritası). three.js ile çizilir; sayfa açılınca ayrı parça
-// olarak yüklenir (React.lazy), böylece uygulamanın ilk açılışı yavaşlamaz. Model ve Draco kod çözücü projenin
-// içinde (Draco çözücüsü three paketinden gelir): internetsiz çalışır.
+// Part 3 · 3D astronaut (the body map on the Astronaut View). Drawn with three.js; loaded as a separate chunk when the page
+// opens (React.lazy), so the app's first load is not slowed down. The model and the Draco decoder are inside the project
+// (the Draco decoder comes from the three package): works without internet.
 //
-// Bölgeler modelin boyuna göre ayrılır (shader içinde, her pikselde):
-//   baş (boyun üstü, kask) · göğüs (boyun ile bel arası, kollar ve sırt çantası dahil) · alt gövde (bel altı: kalça ve bacaklar)
-//   · çevre (ayak altındaki zemin halkası)
-// Her bölge Katman 1 seviyesinin renginde boyanır, KRİTİK bölge nabız gibi parlar. İmleç bir bölgenin üstüne gelince
-// bölge vurgulanır ve onHover ile ekran koordinatı bildirilir (risk kutusunu üst bileşen çizer); tıklayınca onSelect.
-// Kamera modelin etrafında sürekli ve yavaşça döner (imleç üstündeyken yavaşlar); fareyle sürüklenebilir.
-// Windows'ta "Animasyon efektleri" kapalı olsa da döner; o ayar açıksa sadece KRİTİK yanıp sönmesi kapanır.
+// Regions are split along the model's height (in the shader, per pixel):
+//   head (above the neck, helmet) · chest (between neck and waist, including arms and backpack) · lower body (below the waist: hips and legs)
+//   · environment (the ground ring under the feet)
+// Each region is painted in the color of its Layer 1 level; a WARNING region pulses. When the cursor hovers over a region
+// it is highlighted and its screen coordinates are reported with onHover (the parent draws the risk box); clicking calls onSelect.
+// The camera rotates slowly and continuously around the model (slows down while hovered); it can be dragged with the mouse.
+// It rotates even with Windows "Animation effects" turned off; with that setting on, only the WARNING pulsing is turned off.
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -21,19 +21,19 @@ import { COLORS, LEVEL_COLOR } from '../theme';
 
 const ORDER: RegionId[] = ['head', 'chest', 'lower', 'env'];
 
-// Bölge sınırları, model 2 birim boyuna ölçeklendikten sonra (ayak y = −1, tepe y = +1).
-// Değerler bu modelin oranlarına göre ayarlandı (kask, gövde, bel).
+// Region boundaries, after the model is scaled to a height of 2 units (feet y = −1, top y = +1).
+// Values tuned to this model's proportions (helmet, torso, waist).
 const BOUNDS = {
-  neckY: 0.52, // bunun üstü baş (kask)
-  headR: 0.22, // kask gövde eksenine yakındır; boyun üstündeki omuz ve sırt çantası göğse sayılır
-  waistY: -0.06, // boyun ile bel arası göğüs (T pozundaki kollar da bu aralıkta); bel altı alt gövde
+  neckY: 0.52, // above this is the head (helmet)
+  headR: 0.22, // the helmet is close to the torso axis; the shoulders and backpack above the neck count as chest
+  waistY: -0.06, // chest between neck and waist (the arms in the T pose are in this range too); below the waist is lower body
 };
 
 export interface HoverInfo {
   region: RegionId;
-  x: number; // kapsayıcıya göre piksel
+  x: number; // pixels relative to the container
   y: number;
-  w: number; // kapsayıcı genişliği (risk kutusu taşmasın)
+  w: number; // container width (so the risk box does not overflow)
   h: number;
 }
 
@@ -48,7 +48,7 @@ interface Props {
 const levelColor = (l: Level | undefined) => new THREE.Color(l ? LEVEL_COLOR[l] : COLORS.offline);
 const levelStrength = (l: Level | undefined) => (l === 'critical' ? 0.55 : l === 'caution' ? 0.42 : 0.16);
 
-/** JS tarafında aynı bölge kuralı (fare isabet noktası için). Shader'daki regionOf ile birebir aynı. */
+/** The same region rule on the JS side (for the mouse hit point). Exactly the same as regionOf in the shader. */
 function regionOf(p: THREE.Vector3): RegionId {
   const r = Math.hypot(p.x, p.z);
   if (p.y > BOUNDS.neckY && r < BOUNDS.headR) return 'head';
@@ -98,7 +98,7 @@ const FRAGMENT = /* glsl */ `
   }
 
   void main() {
-    float reg = uGlass > 0.5 ? 0.0 : regionOf(vWorld); // kask camı her zaman baş
+    float reg = uGlass > 0.5 ? 0.0 : regionOf(vWorld); // the helmet visor is always head
     vec3 rc = reg < 0.5 ? uColor[0] : (reg < 1.5 ? uColor[1] : uColor[2]);
     float st = reg < 0.5 ? uStrength[0] : (reg < 1.5 ? uStrength[1] : uStrength[2]);
     float pu = reg < 0.5 ? uPulse[0] : (reg < 1.5 ? uPulse[1] : uPulse[2]);
@@ -112,7 +112,7 @@ const FRAGMENT = /* glsl */ `
     float fres = pow(1.0 - max(dot(N, V), 0.0), 2.4);
     vec3 lit = base * (0.22 + 0.9 * diff);
     if (uGlass > 0.5) {
-      // Kask camı: koyu, kenarda parlak yansıma
+      // Helmet visor: dark, bright reflection at the edge
       lit = vec3(0.02, 0.03, 0.06) + vec3(0.5, 0.6, 0.75) * pow(max(dot(reflect(-L, N), V), 0.0), 24.0) + vec3(0.15, 0.2, 0.3) * fres;
     }
 
@@ -123,10 +123,10 @@ const FRAGMENT = /* glsl */ `
     vec3 col = mix(lit, rc * (0.3 + 0.85 * diff), tint);
     col += rc * fres * (0.55 + 0.35 * sel + 0.9 * hov + 0.9 * pulse);
 
-    // Aşağıdan yukarı yavaşça geçen tarama çizgisi (canlı izleme hissi)
+    // Scan line moving slowly from bottom to top (live monitoring feel)
     float scanY = mod(uTime * 0.32, 2.8) - 1.2;
     col += rc * 0.55 * (1.0 - smoothstep(0.0, 0.02, abs(vWorld.y - scanY)));
-    // Bölge sınırlarında ince çizgi
+    // Thin line at region boundaries
     float edge = (1.0 - smoothstep(0.0, 0.006, abs(vWorld.y - uNeckY))) + (1.0 - smoothstep(0.0, 0.006, abs(vWorld.y - uWaistY)));
     col += vec3(0.6, 0.75, 0.9) * 0.25 * edge;
 
@@ -152,7 +152,7 @@ export default function Astronaut3D({ levels, selected, onHover, onSelect, onErr
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     } catch {
-      propsRef.current.onError(); // üst bileşen 2B çizime geçer
+      propsRef.current.onError(); // the parent switches to the 2D drawing
       return;
     }
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
@@ -176,10 +176,10 @@ export default function Astronaut3D({ levels, selected, onHover, onSelect, onErr
     controls.minPolarAngle = Math.PI * 0.32;
     controls.maxPolarAngle = Math.PI * 0.56;
     controls.autoRotate = true;
-    controls.autoRotateSpeed = 1.6; // ~37 sn'de bir tur
+    controls.autoRotateSpeed = 1.6; // one turn every ~37 s
     controls.update();
 
-    // --- Bölge uniform'ları (tüm malzemeler paylaşır)
+    // --- Region uniforms (shared by all materials)
     const shared = {
       uColor: { value: [new THREE.Color(), new THREE.Color(), new THREE.Color()] },
       uStrength: { value: [0.12, 0.12, 0.12] },
@@ -192,7 +192,7 @@ export default function Astronaut3D({ levels, selected, onHover, onSelect, onErr
       uWaistY: { value: BOUNDS.waistY },
     };
 
-    // --- Çevre: ayak altındaki zemin halkası (kesikli, yavaşça döner) ve görünmez isabet halkası
+    // --- Environment: the ground ring under the feet (dashed, rotates slowly) and an invisible hit ring
     const envGroup = new THREE.Group();
     envGroup.position.y = -1.0;
     scene.add(envGroup);
@@ -216,7 +216,7 @@ export default function Astronaut3D({ levels, selected, onHover, onSelect, onErr
 
     // --- Model
     const meshes: THREE.Mesh[] = [];
-    // three, Draco kod çözücüsünü kendi paketinden yükler (Vite derlemeye ekler): internet gerekmez
+    // three loads the Draco decoder from its own package (Vite adds it to the build): no internet needed
     const draco = new DRACOLoader();
     const loader = new GLTFLoader().setDRACOLoader(draco);
     let disposed = false;
@@ -242,7 +242,7 @@ export default function Astronaut3D({ levels, selected, onHover, onSelect, onErr
           const src = mesh.material as THREE.MeshStandardMaterial;
           const map = src.map ?? null;
           if (map) map.colorSpace = THREE.SRGBColorSpace;
-          const glass = /2$/.test(src.name ?? '') ? 1 : 0; // ikinci malzeme kask camı
+          const glass = /2$/.test(src.name ?? '') ? 1 : 0; // the second material is the helmet visor
           mesh.material = new THREE.ShaderMaterial({
             vertexShader: VERTEX,
             fragmentShader: FRAGMENT,
@@ -262,7 +262,7 @@ export default function Astronaut3D({ levels, selected, onHover, onSelect, onErr
       },
     );
 
-    // --- Boyut
+    // --- Size
     const resize = () => {
       const w = wrap.clientWidth;
       const h = wrap.clientHeight;
@@ -271,7 +271,7 @@ export default function Astronaut3D({ levels, selected, onHover, onSelect, onErr
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
       camera.aspect = w / h;
-      // Dar kapsayıcıda model sığsın diye kamerayı uzaklaştır
+      // Move the camera back so the model fits in a narrow container
       const fit = Math.max(1, 0.62 / camera.aspect);
       camera.position.setLength(4.6 * fit);
       camera.updateProjectionMatrix();
@@ -280,7 +280,7 @@ export default function Astronaut3D({ levels, selected, onHover, onSelect, onErr
     ro.observe(wrap);
     resize();
 
-    // --- Fare: üstüne gelince bölge, tıklayınca seçim
+    // --- Mouse: hover shows the region, click selects
     const ray = new THREE.Raycaster();
     const ndc = new THREE.Vector2();
     let hovered: RegionId | null = null;
@@ -319,7 +319,7 @@ export default function Astronaut3D({ levels, selected, onHover, onSelect, onErr
     canvas.addEventListener('pointerdown', onDown);
     canvas.addEventListener('pointerup', onUp);
 
-    // --- Çizim döngüsü
+    // --- Render loop
     let raf = 0;
     const t0 = performance.now();
     const tick = () => {
@@ -334,7 +334,7 @@ export default function Astronaut3D({ levels, selected, onHover, onSelect, onErr
       shared.uHover.value = hovered && hovered !== 'env' ? ORDER.indexOf(hovered) : -1;
       shared.uSelected.value = sel && sel !== 'env' ? ORDER.indexOf(sel) : -1;
       shared.uTime.value = t;
-      // Çevre halkası
+      // Environment ring
       const envLevel = lv.env;
       const envC = levelColor(envLevel);
       envMat.color.copy(envC);
@@ -344,7 +344,7 @@ export default function Astronaut3D({ levels, selected, onHover, onSelect, onErr
       envSoft.opacity = (envLevel && envLevel !== 'normal' ? 0.22 : 0.1) + (envOn ? 0.14 : 0) + pulse * 0.2;
       envMat.opacity = envOn ? 1 : 0.75;
       dashes.rotation.y = t * 0.15;
-      // Sürekli yavaş dönüş; imleç modelin üstündeyken yavaşlar, okuması kolay olsun
+      // Continuous slow rotation; slows down while the cursor is over the model, so it is easy to read
       controls.autoRotate = true;
       controls.autoRotateSpeed = hovered ? 0.5 : 1.6;
       controls.update();
@@ -380,7 +380,7 @@ export default function Astronaut3D({ levels, selected, onHover, onSelect, onErr
     <div ref={wrapRef} className="absolute inset-0">
       {state === 'loading' && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-slate-400" role="status">
-          3B model yükleniyor…
+          Loading 3D model…
         </div>
       )}
     </div>

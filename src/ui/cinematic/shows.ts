@@ -1,4 +1,4 @@
-// Parça 1 · Hangi senaryonun sinematiği var. Yeni sinematik: buraya bir satır.
+// Part 1 · Which scenarios have a cinematic. New cinematic: one line here.
 import type { ComponentType } from 'react';
 import type { ScenarioId } from '../../types';
 import { Co2Show } from './Co2Show';

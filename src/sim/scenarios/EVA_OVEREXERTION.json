@@ -1,12 +1,12 @@
 {
   "id": "EVA_OVEREXERTION",
-  "name": "EVA aşırı efor",
+  "name": "EVA overexertion",
   "seed": 155,
-  "source": "Stahn vd. 2017 (uzayda egzersizde çekirdek sıcaklık 40 °C'yi aşabiliyor); ter biyobelirteçleri tablosu (laktat, sodyum aralıkları)",
-  "note": "Mert yüzeyde ağır iş yaparken (panel taşıma) aşırı efor ve ısı birikimi yaşar. Hedef değerler plandaki tablodan. Zorunlu dinlenme verilince nabız, solunum, laktat ve çekirdek sıcaklık baseline'a döner.",
+  "source": "Stahn et al. 2017 (core temperature can exceed 40 °C during exercise in space); sweat biomarker table (lactate, sodium ranges)",
+  "note": "Mert overexerts and builds up heat while doing heavy surface work (carrying a panel). Target values come from the plan table. When mandatory crew rest is applied, heart rate, breathing, lactate and core temperature recover to baseline.",
   "events": [
-    { "atTick": 0, "untilTick": 40, "type": "EVA_HEAVY", "text": "Mert: habitat güneş paneli taşıma, ağır EVA görevi" },
-    { "atTick": 40, "type": "EVA_HEAT", "text": "Mert: giysi içi ısı birikimi" }
+    { "atTick": 0, "untilTick": 40, "type": "EVA_HEAVY", "text": "Mert: carrying habitat solar panel, heavy EVA task" },
+    { "atTick": 40, "type": "EVA_HEAT", "text": "Mert: heat building up inside the suit" }
   ],
   "effects": [
     { "metric": "cardio.hr_bpm", "crew": ["mert"], "to": 155, "rampTicks": 40 },

@@ -1,16 +1,16 @@
-// Parça 3 · Kokpit'in yörünge ekranı: tel çerçeve Mars (ortografik izdüşüm), ARES-1'in yörüngesi ve
-// Gezegen ekibinin EVA bölgesi. Görev kontrol konsolundaki vektör ekranlar gibi: çizgi, ızgara, işaret.
-// Renk = anlam: gemi işareti Kokpit ekibinin, yüzey işareti Gezegen ekibinin en kötü seviyesiyle boyanır;
-// KRİTİK'te işaret nabız gibi atar. Gezegen kırmızı değil (kırmızı kritik için ayrıldı).
-// Canvas'a çizilir; React her karede yeniden çizmez. prefers-reduced-motion'da sabit kare çizilir.
+// Part 3 · Orbit display on Mission Status: wireframe Mars (orthographic projection), ARES-1's orbit and
+// the surface crew's EVA zone. Like the vector displays on a mission control console: lines, grid, markers.
+// Color = meaning: the spacecraft marker is painted with the orbit crew's worst level, the surface marker with the surface crew's;
+// at WARNING the marker pulses. The planet is not red (red is reserved for Warning).
+// Drawn on a canvas; React does not redraw every frame. With prefers-reduced-motion a still frame is drawn.
 import { useEffect, useRef } from 'react';
 import type { Level } from '../../types';
 import { alpha, COLORS, LEVEL_COLOR } from '../theme';
 
 const DEG = Math.PI / 180;
-// EVA bölgesi (kurgusal koordinat; ekranda sayı olarak gösterilmez)
+// EVA zone (fictional coordinates; not shown as numbers on screen)
 const SITE = { lat: 18 * DEG, lon: 77 * DEG };
-// Yüzeyde birkaç krater halkası: gezegene doku verir, karikatür olmadan
+// A few crater rings on the surface: give the planet texture without looking cartoonish
 const CRATERS = [
   { lat: -22, lon: 40, r: 9 },
   { lat: 35, lon: 110, r: 6 },
@@ -19,18 +19,18 @@ const CRATERS = [
   { lat: -40, lon: 120, r: 7 },
   { lat: 8, lon: 15, r: 3.5 },
 ];
-const TILT = 22 * DEG; // bakış açısı: ekvatorun biraz üstünden
-const INCLINATION = 28 * DEG; // yörünge eğikliği (görsel)
-const ORBIT_K = 1.32; // yörünge yarıçapı / gezegen yarıçapı (görsel)
+const TILT = 22 * DEG; // viewing angle: slightly above the equator
+const INCLINATION = 28 * DEG; // orbit inclination (visual)
+const ORBIT_K = 1.32; // orbit radius / planet radius (visual)
 
 export interface OrbitalMarkers {
-  ship: Level | undefined; // Kokpit ekibinin en kötü seviyesi
-  surface: Level | undefined; // Gezegen ekibinin en kötü seviyesi
+  ship: Level | undefined; // worst level of the orbit crew
+  surface: Level | undefined; // worst level of the surface crew
 }
 
-type Vec = { x: number; y: number; z: number }; // z > 0: izleyiciye bakan yüz
+type Vec = { x: number; y: number; z: number }; // z > 0: the face toward the viewer
 
-/** Küre üstündeki (enlem, boylam) noktayı bakış uzayına çevirir: önce boylam dönmesi, sonra eğiklik. */
+/** Converts a (latitude, longitude) point on the sphere to view space: first the longitude rotation, then the inclination. */
 function sphere(lat: number, lon: number, rot: number): Vec {
   const l = lon - rot;
   const x = Math.cos(lat) * Math.sin(l);
@@ -39,7 +39,7 @@ function sphere(lat: number, lon: number, rot: number): Vec {
   return { x, y: y0 * Math.cos(TILT) - z0 * Math.sin(TILT), z: y0 * Math.sin(TILT) + z0 * Math.cos(TILT) };
 }
 
-/** Yörüngedeki açı θ → bakış uzayı (yörünge gezegenle dönmez). */
+/** Angle θ on the orbit → view space (the orbit does not rotate with the planet). */
 function orbitPoint(theta: number): Vec {
   const x = ORBIT_K * Math.cos(theta);
   const yo = ORBIT_K * Math.sin(theta) * Math.sin(INCLINATION);
@@ -47,7 +47,7 @@ function orbitPoint(theta: number): Vec {
   return { x, y: yo * Math.cos(TILT) - zo * Math.sin(TILT), z: yo * Math.sin(TILT) + zo * Math.cos(TILT) };
 }
 
-/** Bakış uzayındaki nokta gezegenin arkasında mı kalıyor? */
+/** Is a point in view space behind the planet? */
 const hidden = (p: Vec) => p.z < 0 && p.x * p.x + p.y * p.y < 1;
 
 function readFont(canvas: HTMLCanvasElement) {
@@ -55,7 +55,7 @@ function readFont(canvas: HTMLCanvasElement) {
   return (weight: number, size: number) => `${weight} ${size}px ${ff}`;
 }
 
-/** height verilmezse kapsayıcının kalan yüksekliğini doldurur (en az 280 px). */
+/** If height is not given, fills the remaining height of the container (at least 280 px). */
 export function OrbitalDisplay({ markers, height }: { markers: OrbitalMarkers; height?: number }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -91,10 +91,10 @@ export function OrbitalDisplay({ markers, height }: { markers: OrbitalMarkers; h
       const cy = h * 0.52;
       const R = Math.min(w / (2 * ORBIT_K + 0.35), h / 2.25);
       const P = (p: Vec) => [cx + p.x * R, cy - p.y * R] as const;
-      // Gezegen yavaşça sağa sola salınır: EVA bölgesi hep görünür kalır
+      // The planet sways slowly left and right: the EVA zone always stays visible
       const rot = SITE.lon + (still ? -0.35 : Math.sin(t / 14) * 0.75 - 0.2);
 
-      // --- Atmosfer halesi ve gövde
+      // --- Atmosphere halo and body
       const halo = ctx.createRadialGradient(cx, cy, R * 0.95, cx, cy, R * 1.22);
       halo.addColorStop(0, alpha(COLORS.calm, 0.22));
       halo.addColorStop(1, alpha(COLORS.calm, 0));
@@ -112,7 +112,7 @@ export function OrbitalDisplay({ markers, height }: { markers: OrbitalMarkers; h
       ctx.arc(cx, cy, R, 0, Math.PI * 2);
       ctx.fill();
 
-      // --- Yörüngenin arka yarısı (gezegenin arkasında kalan kısım)
+      // --- Back half of the orbit (the part behind the planet)
       const N = 180;
       const theta = still ? 2.2 : t * 0.32;
       const strokeOrbit = (front: boolean) => {
@@ -135,7 +135,7 @@ export function OrbitalDisplay({ markers, height }: { markers: OrbitalMarkers; h
       ctx.strokeStyle = alpha(COLORS.calm, 0.18);
       strokeOrbit(false);
 
-      // --- Izgara: meridyenler ve paraleller (ön yüz parlak, arka yüz çizilmez)
+      // --- Grid: meridians and parallels (front face bright, back face not drawn)
       const line = (pts: Vec[], a: number) => {
         ctx.strokeStyle = alpha(COLORS.calm, a);
         ctx.beginPath();
@@ -162,7 +162,7 @@ export function OrbitalDisplay({ markers, height }: { markers: OrbitalMarkers; h
         for (let lon = 0; lon <= 360; lon += 3) pts.push(sphere(lat * DEG, lon * DEG, rot));
         line(pts, lat === 0 ? 0.42 : 0.14);
       }
-      // Kraterler
+      // Craters
       ctx.lineWidth = 1;
       for (const c of CRATERS) {
         const pts: Vec[] = [];
@@ -174,7 +174,7 @@ export function OrbitalDisplay({ markers, height }: { markers: OrbitalMarkers; h
         line(pts, 0.28);
       }
 
-      // --- Gece yarısı: sağ alttan koyulaşan gölge (gün-gece sınırı)
+      // --- Night side: shadow darkening from the bottom right (terminator)
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, R, 0, Math.PI * 2);
@@ -187,26 +187,26 @@ export function OrbitalDisplay({ markers, height }: { markers: OrbitalMarkers; h
       ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
       ctx.restore();
 
-      // Gezegen kenarı
+      // Planet limb
       ctx.strokeStyle = alpha(COLORS.calm, 0.65);
       ctx.lineWidth = 1.4;
       ctx.beginPath();
       ctx.arc(cx, cy, R, 0, Math.PI * 2);
       ctx.stroke();
 
-      // --- Yüzey işareti: Gezegen ekibi (EVA)
+      // --- Surface marker: surface crew (EVA)
       const site = sphere(SITE.lat, SITE.lon, rot);
       const [sx, sy] = P(site);
       drawMarker(ctx, sx, sy, surface, t, still, 'square');
-      label(ctx, font, sx, sy, 'Gezegen ekibi · EVA', surface, w, 'below');
+      label(ctx, font, sx, sy, 'Surface crew · EVA', surface, w, 'below');
 
-      // --- Yörüngenin ön yarısı, gemi ve iz
+      // --- Front half of the orbit, spacecraft and trail
       ctx.setLineDash([3, 5]);
       ctx.lineWidth = 1.2;
       ctx.strokeStyle = alpha(COLORS.calm, 0.45);
       strokeOrbit(true);
       ctx.setLineDash([]);
-      // Geminin arkasındaki parlak iz
+      // Bright trail behind the spacecraft
       const trail = 26;
       for (let i = trail; i > 0; i--) {
         const a = orbitPoint(theta - i * 0.6 * DEG * 3);
@@ -242,7 +242,7 @@ export function OrbitalDisplay({ markers, height }: { markers: OrbitalMarkers; h
       raf = requestAnimationFrame(draw);
     };
     start();
-    // Hareketsiz modda: yazı tipi yüklenince ve işaret seviyesi değişince bir kez yeniden çiz
+    // In still mode: redraw once when the font loads and when the marker level changes
     const redraw = () => still && draw(performance.now());
     document.fonts?.ready.then(redraw);
     canvas.addEventListener('redraw', redraw);
@@ -253,7 +253,7 @@ export function OrbitalDisplay({ markers, height }: { markers: OrbitalMarkers; h
     };
   }, []);
 
-  // Seviye değişince çizim döngüsü yeni rengi okusun; hareketsiz modda bir kez yeniden çiz
+  // When the level changes let the render loop read the new color; in still mode redraw once
   useEffect(() => {
     markersRef.current = markers;
     canvasRef.current?.dispatchEvent(new Event('redraw'));
@@ -265,7 +265,7 @@ export function OrbitalDisplay({ markers, height }: { markers: OrbitalMarkers; h
         ref={canvasRef}
         className="absolute inset-0 font-sans"
         role="img"
-        aria-label={`Mars yörünge ekranı. ARES-1 gemisi: ${markers.ship ?? 'veri yok'}. Gezegen ekibi EVA bölgesi: ${markers.surface ?? 'veri yok'}.`}
+        aria-label={`Mars orbit display. ARES-1 spacecraft: ${markers.ship ?? 'no data'}. Surface crew EVA zone: ${markers.surface ?? 'no data'}.`}
       />
     </div>
   );
@@ -277,7 +277,7 @@ function levelColor(level: Level | undefined) {
 
 function drawMarker(ctx: CanvasRenderingContext2D, x: number, y: number, level: Level | undefined, t: number, still: boolean, shape: 'square' | 'diamond') {
   const c = levelColor(level);
-  // KRİTİK: genişleyen halka (dikkat çeker); diğerlerinde sakin halka
+  // WARNING: expanding ring (draws attention); otherwise a calm ring
   if (level === 'critical' && !still) {
     const k = (t % 1.4) / 1.4;
     ctx.strokeStyle = alpha(c, 0.8 * (1 - k));
@@ -321,7 +321,7 @@ function label(
   let lx = x + 16;
   if (lx + tw + pad * 2 > w - 4) lx = x - 16 - tw - pad * 2;
   const ly = where === 'above' ? y - 30 : y + 14;
-  // ince bağlantı çizgisi
+  // thin leader line
   ctx.strokeStyle = alpha(COLORS.text, 0.35);
   ctx.lineWidth = 1;
   ctx.beginPath();

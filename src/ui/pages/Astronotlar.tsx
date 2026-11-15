@@ -1,6 +1,6 @@
-// Parça 3 · Astronotlar: iki ekip başlığı (ekip ortalamasıyla) ve altı kart.
-// Kart: konum, birim, rol, kişisel hassasiyet, sağlık skoru, seviye, nabız mini grafiği.
-// Karta tıklayınca o kişinin Astronot Ekranı açılır (seçili kişi App.tsx'te tutulur).
+// Part 3 · Crew: two crew headers (with the crew average) and six cards.
+// Card: location, unit, role, personal sensitivity, health score, level, heart rate mini chart.
+// Clicking a card opens that person's Astronaut View (the selected person is kept in App.tsx).
 import { useShallow } from 'zustand/react/shallow';
 import { CREW } from '../../crew';
 import { useAstra } from '../../store';
@@ -13,8 +13,8 @@ import { averageScore, fmtMetric, initials, LOCATION_LONG } from '../format';
 import { alpha, COLORS, fmt, LEVEL_COLOR, LEVEL_ICON, scoreLevel } from '../theme';
 
 const TEAMS: { loc: CrewLocation; title: string }[] = [
-  { loc: 'KOKPIT', title: 'Kokpit ekibi' },
-  { loc: 'GEZEGEN', title: 'Gezegen ekibi' },
+  { loc: 'KOKPIT', title: 'Orbit crew (IVA)' },
+  { loc: 'GEZEGEN', title: 'Surface crew' },
 ];
 
 export function Astronotlar({ onOpenCrew }: { onOpenCrew: (id: CrewId) => void }) {
@@ -36,9 +36,9 @@ export function Astronotlar({ onOpenCrew }: { onOpenCrew: (id: CrewId) => void }
                 <div className="text-sm text-slate-400">{LOCATION_LONG[loc]}</div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-sm text-slate-400">Ekip ortalaması</span>
+                <span className="text-sm text-slate-400">Team average</span>
                 <span className="font-mono text-xl font-bold tabular-nums" style={{ color: l ? LEVEL_COLOR[l] : COLORS.offline }}>
-                  %{fmt(avg)}
+                  {fmt(avg)}%
                 </span>
                 <LevelBadge level={l} />
               </div>
@@ -67,13 +67,13 @@ function CrewCard({ m, onOpen }: { m: CrewMember; onOpen: () => void }) {
   return (
     <Card
       onClick={onOpen}
-      ariaLabel={`${m.name}: astronot ekranını aç`}
+      ariaLabel={`${m.name}: open astronaut view`}
       flush
       style={{ borderTop: `3px solid ${st && st.level !== 'normal' ? c : COLORS.border}` }}
     >
       <div className="p-4">
         <div className="flex items-center justify-between font-mono text-sm text-slate-400">
-          <span>{m.location === 'KOKPIT' ? 'Kokpit · gemi içi' : 'Gezegen · yüzey'}</span>
+          <span>{m.location === 'KOKPIT' ? 'Orbit · IVA, inside the spacecraft' : 'Surface · EVA'}</span>
           <span>{m.unit}</span>
         </div>
         <div className="mt-2 flex items-center gap-3">
@@ -97,21 +97,21 @@ function CrewCard({ m, onOpen }: { m: CrewMember; onOpen: () => void }) {
 
         <div className="mt-3 flex items-end justify-between gap-2">
           <div>
-            <div className="text-sm text-slate-400">Sağlık skoru</div>
+            <div className="text-sm text-slate-400">Health score</div>
             <div className="font-mono text-3xl leading-none font-bold tabular-nums" style={{ color: c }}>
-              %{fmt(st?.healthScore)}
+              {fmt(st?.healthScore)}%
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
             <LevelBadge level={st?.level} pill />
             {st?.restRequired && (
               <span className="text-sm" style={{ color: COLORS.calm }}>
-                ✓ Zorunlu dinlenme
+                ✓ Mandatory crew rest
               </span>
             )}
             {!st?.restRequired && openInc > 0 && (
               <span className="text-sm" style={{ color: c }}>
-                {LEVEL_ICON[st?.level ?? 'caution']} {openInc} açık olay
+                {LEVEL_ICON[st?.level ?? 'caution']} {openInc} open incident(s)
               </span>
             )}
           </div>
@@ -120,7 +120,7 @@ function CrewCard({ m, onOpen }: { m: CrewMember; onOpen: () => void }) {
 
       <div className="border-t border-space-border px-4 pt-2 pb-3">
         <div className="flex items-center justify-between gap-2 text-sm">
-          <span className="text-slate-400">Nabız</span>
+          <span className="text-slate-400">Heart rate</span>
           <span className="flex items-center gap-2">
             <span className="font-mono font-semibold tabular-nums">{fmtMetric('cardio.hr_bpm', hr)}</span>
             <SourceBadge metric="cardio.hr_bpm" crewId={m.id} />

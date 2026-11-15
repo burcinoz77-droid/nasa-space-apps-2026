@@ -1,8 +1,8 @@
 {
   "id": "NORMAL",
-  "name": "Normal gün",
+  "name": "Nominal day",
   "seed": 1,
-  "note": "Etki yok: herkes kendi kişisel baseline'ında. Başka senaryodan buraya geçince değerler yumuşakça normale döner (\"Tüm mürettebatı stabilize et\").",
+  "note": "No effects: everyone at their personal baseline. Switching here from another scenario lets values recover gradually (\"Stabilize all crew\").",
   "events": [],
   "effects": []
 }

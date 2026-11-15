@@ -1,7 +1,7 @@
-// Parça 4 · Görevler (Parça 3'ten devralındı). ARES-1 Mars görevi, 180. gün:
-// Gezegen ekibi habitat güneş panellerinin bakımını EVA ile yapar, Kokpit ekibi yörüngeden izler.
-// Tarih yerine görev günü yazılır; NASA logolu fotoğraf yerine logosuz temsilî çizim kullanılır.
-// Ekip durumu ve yüzey koşulları canlı veriden (Katman 1 ve simülasyon) okunur; bu sayfa karar vermez.
+// Part 4 · Tasks (taken over from Part 3). ARES-1 Mars mission, Mission Day 180:
+// the surface crew maintains the habitat solar panels on EVA, the orbit crew monitors from orbit.
+// The mission day is shown instead of a date; a logo-free representative drawing is used instead of a NASA-logo photo.
+// Crew status and surface conditions are read from live data (Layer 1 and the simulation); this page makes no decisions.
 import { useState } from 'react';
 import { delayText, shortName, valueText } from '../../ai/labels';
 import { CREW } from '../../crew';
@@ -16,18 +16,18 @@ const EVA_TEAM = CREW.filter((c) => c.location === 'GEZEGEN');
 const SUPPORT_TEAM = CREW.filter((c) => c.location === 'KOKPIT');
 
 const EQUIPMENT = [
-  { id: 'suit', name: 'xEMU giysisi basınç testi', detail: `${fmt(PARAMS.suitPressure.value, 1)} kPa, %100 O₂` },
-  { id: 'prebreathe', name: 'Saf oksijenle ön nefes tamamlandı', detail: 'Basınç düşüşü öncesi' },
-  { id: 'cooling', name: 'Sıvı soğutmalı iç giysi', detail: 'Çekirdek sıcaklık için' },
-  { id: 'comms', name: 'Telsiz ve kask kamerası', detail: 'Kokpit ile ses ve görüntü' },
-  { id: 'tools', name: 'Panel temizleme fırçası ve tork anahtarı', detail: 'Toz ve gevşek bağlantı' },
-  { id: 'cable', name: 'Yedek güç bağlantı kablosu', detail: 'Arızalı dizi için' },
-  { id: 'tether', name: 'Emniyet halatı ve karabina', detail: 'Hava kilidine bağlı' },
+  { id: 'suit', name: 'xEMU suit pressure test', detail: `${fmt(PARAMS.suitPressure.value, 1)} kPa, 100% O₂` },
+  { id: 'prebreathe', name: 'Pure-oxygen prebreathe complete', detail: 'Before depressurization' },
+  { id: 'cooling', name: 'Liquid cooling garment', detail: 'For core temperature' },
+  { id: 'comms', name: 'Radio and helmet camera', detail: 'Voice and video with the orbit crew' },
+  { id: 'tools', name: 'Panel cleaning brush and torque wrench', detail: 'Dust and loose connectors' },
+  { id: 'cable', name: 'Spare power cable', detail: 'For the faulty string' },
+  { id: 'tether', name: 'Safety tether and carabiner', detail: 'Attached to the airlock' },
 ] as const;
 
-const STEPS = ['Giysi kontrolü', 'Hava kilidi', 'Panel temizliği', 'Bağlantı testi', 'Habitata dönüş'];
+const STEPS = ['Suit check', 'Airlock', 'Panel cleaning', 'Connection test', 'Return to habitat'];
 
-// Sayfa değişince kontrol listesi sıfırlanmasın diye modül düzeyinde tutulur.
+// Kept at module level so the checklist is not reset when the page changes.
 const savedReady = new Set<string>(['suit', 'comms']);
 
 function avgMetric(telemetry: ReturnType<typeof useAstra.getState>['telemetry'], ids: CrewId[], key: MetricKey): number | undefined {
@@ -51,7 +51,7 @@ export function Gorevler() {
       return next;
     });
 
-  // Biyosensör yaması: Gezegen ekibinin üçünden de canlı telemetri geliyorsa otomatik hazır.
+  // Biosensor patch: automatically ready if live telemetry is coming from all three surface crew members.
   const sensorsLive = EVA_TEAM.every((c) => telemetry[c.id]);
   const total = EQUIPMENT.length + 1;
   const done = EQUIPMENT.filter((e) => ready.has(e.id)).length + (sensorsLive ? 1 : 0);
@@ -61,37 +61,37 @@ export function Gorevler() {
 
   return (
     <div className="space-y-4 pb-20">
-      {/* Görev kartı */}
+      {/* Task card */}
       <section className="flex flex-col gap-5 rounded-2xl border border-space-border bg-space-panel p-5 md:flex-row">
         <HabitatIllustration />
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="rounded-full bg-calm/15 px-3 py-1 font-semibold text-calm">EVA · Gezegen ekibi</span>
-            <span className="rounded-full bg-white/5 px-3 py-1 text-slate-300">ARES-1 · Mars yüzeyi</span>
+            <span className="rounded-full bg-calm/15 px-3 py-1 font-semibold text-calm">EVA · Surface crew</span>
+            <span className="rounded-full bg-white/5 px-3 py-1 text-slate-300">ARES-1 · Mars surface</span>
           </div>
-          <h2 className="text-2xl font-bold">Habitat güneş paneli bakımı</h2>
+          <h2 className="text-2xl font-bold">Habitat solar panel maintenance</h2>
           <p className="text-slate-300">
-            Gezegen ekibi toz biriken panel dizilerini temizler ve gevşek güç bağlantılarını değiştirir. Kokpit ekibi telemetriyi yörüngeden izler.
+            The surface crew cleans dust-covered panel strings and replaces loose power connectors. The orbit crew monitors telemetry from orbit.
           </p>
           <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-slate-400">Görev penceresi</dt>
+              <dt className="text-slate-400">Task window</dt>
               <dd className="font-mono text-base">
-                Gün {day}, 10.00 – Gün {day + 1}, 14.00
+                Day {day}, 10:00 – Day {day + 1}, 14:00
               </dd>
             </div>
             <div>
-              <dt className="text-slate-400">Sorumlu</dt>
+              <dt className="text-slate-400">Assigned</dt>
               <dd className="text-base">
-                {EVA_TEAM.map((c) => shortName(c.id)).join(', ')} · destek: {SUPPORT_TEAM.map((c) => shortName(c.id)).join(', ')}
+                {EVA_TEAM.map((c) => shortName(c.id)).join(', ')} · support: {SUPPORT_TEAM.map((c) => shortName(c.id)).join(', ')}
               </dd>
             </div>
           </dl>
           <div>
             <div className="mb-1 flex justify-between text-sm">
-              <span className="text-slate-300">Hazırlık</span>
+              <span className="text-slate-300">Readiness</span>
               <span className="font-mono" style={{ color: pct === 100 ? COLORS.normal : COLORS.calm }}>
-                %{pct} · {done}/{total}
+                {pct}% · {done}/{total}
               </span>
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
@@ -109,9 +109,9 @@ export function Gorevler() {
       </section>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {/* Ekipman kontrol listesi */}
+        {/* Equipment checklist */}
         <section className="rounded-2xl border border-space-border bg-space-panel p-5">
-          <h3 className="mb-3 font-semibold">Ekipman kontrol listesi</h3>
+          <h3 className="mb-3 font-semibold">Equipment checklist</h3>
           <ul className="space-y-2">
             {EQUIPMENT.map((e) => {
               const ok = ready.has(e.id);
@@ -133,18 +133,18 @@ export function Gorevler() {
             })}
             <li className="flex items-center justify-between gap-3 rounded-lg border border-space-border px-3 py-2">
               <span>
-                <span className="block text-sm">Biyosensör yaması</span>
-                <span className="block text-sm text-slate-400">Canlı telemetriyle otomatik</span>
+                <span className="block text-sm">Biosensor patch</span>
+                <span className="block text-sm text-slate-400">Automatic via live telemetry</span>
               </span>
               <ReadyChip ok={sensorsLive} />
             </li>
           </ul>
         </section>
 
-        {/* Ekip durumu (Katman 1'den) */}
+        {/* Crew status (from Layer 1) */}
         <section className="rounded-2xl border border-space-border bg-space-panel p-5">
-          <h3 className="mb-1 font-semibold">EVA ekibi · canlı durum</h3>
-          <p className="mb-3 text-sm text-slate-400">Seviyeyi Katman 1 belirler; EVA kararını mürettebat verir.</p>
+          <h3 className="mb-1 font-semibold">EVA team · live status</h3>
+          <p className="mb-3 text-sm text-slate-400">Layer 1 sets the level; the crew decides on the EVA.</p>
           <ul className="space-y-2">
             {EVA_TEAM.map((c) => {
               const st = statuses[c.id];
@@ -158,13 +158,13 @@ export function Gorevler() {
                     <LevelBadge level={st?.level} />
                   </div>
                   <div className="mt-1 flex flex-wrap gap-x-4 text-sm text-slate-300">
-                    <span>Sağlık %{fmt(st?.healthScore)}</span>
-                    {t && <span>Nabız {valueText('cardio.hr_bpm', t.cardio.hr_bpm)}</span>}
-                    {t && <span>Çekirdek {valueText('resp.coreTemp_C', t.resp.coreTemp_C)}</span>}
+                    <span>Health {fmt(st?.healthScore)}%</span>
+                    {t && <span>Heart rate {valueText('cardio.hr_bpm', t.cardio.hr_bpm)}</span>}
+                    {t && <span>Core {valueText('resp.coreTemp_C', t.resp.coreTemp_C)}</span>}
                   </div>
                   {st?.restRequired && (
                     <div className="mt-1 text-sm font-semibold" style={{ color: COLORS.caution }}>
-                      ▲ Zorunlu dinlenme verildi
+                      ▲ Mandatory crew rest applied
                     </div>
                   )}
                 </li>
@@ -173,22 +173,22 @@ export function Gorevler() {
           </ul>
         </section>
 
-        {/* Yüzey koşulları ve Dünya bağlantısı */}
+        {/* Surface conditions and comm with Earth */}
         <div className="flex flex-col gap-4 md:col-span-2 xl:col-span-1">
           <section className="rounded-2xl border border-space-border bg-space-panel p-5">
-            <h3 className="mb-3 font-semibold">Yüzey koşulları · canlı</h3>
+            <h3 className="mb-3 font-semibold">Surface conditions · live</h3>
             <dl className="space-y-2 text-sm">
-              <Row label="Radyasyon doz hızı (ekip ort.)" value={fmtMetric('env.doseRate_uSv_h', avgMetric(telemetry, evaIds, 'env.doseRate_uSv_h'))} />
-              <Row label="Giysi basıncı" value={fmtMetric('env.pressure_kPa', avgMetric(telemetry, evaIds, 'env.pressure_kPa'))} />
-              <Row label="Giysi içi CO₂" value={fmtMetric('env.ppCO2_mmHg', avgMetric(telemetry, evaIds, 'env.ppCO2_mmHg'))} />
+              <Row label="Radiation dose rate (team avg.)" value={fmtMetric('env.doseRate_uSv_h', avgMetric(telemetry, evaIds, 'env.doseRate_uSv_h'))} />
+              <Row label="Suit pressure" value={fmtMetric('env.pressure_kPa', avgMetric(telemetry, evaIds, 'env.pressure_kPa'))} />
+              <Row label="In-suit CO₂" value={fmtMetric('env.ppCO2_mmHg', avgMetric(telemetry, evaIds, 'env.ppCO2_mmHg'))} />
             </dl>
-            <p className="mt-3 text-sm text-slate-400">Yüzey doz referansı: {PARAMS.doseRateMarsSurface.source}</p>
+            <p className="mt-3 text-sm text-slate-400">Surface dose reference: {PARAMS.doseRateMarsSurface.source}</p>
           </section>
           <section className="rounded-2xl border border-space-border bg-space-panel p-5">
-            <h3 className="font-semibold">Dünya bağlantısı</h3>
-            <p className="mt-1 font-mono text-lg text-calm">gecikme {ship ? delayText(ship.commDelayOneWay_s) : '—'}</p>
+            <h3 className="font-semibold">Comm with Earth</h3>
+            <p className="mt-1 font-mono text-lg text-calm">delay {ship ? delayText(ship.commDelayOneWay_s) : '—'}</p>
             <p className="mt-1 text-sm text-slate-400">
-              Tek yön. Gidiş-dönüş yaklaşık {ship ? fmt((ship.commDelayOneWay_s * 2) / 60) : '—'} dk · NASA Mars Relay Network
+              One way. Round trip about {ship ? fmt((ship.commDelayOneWay_s * 2) / 60) : '—'} min · NASA Mars Relay Network
             </p>
           </section>
         </div>
@@ -216,16 +216,16 @@ function ReadyChip({ ok }: { ok: boolean }) {
       className="shrink-0 rounded-full px-2.5 py-0.5 text-sm font-semibold"
       style={{ color: ok ? COLORS.normal : COLORS.textMuted, backgroundColor: ok ? `${COLORS.normal}1A` : 'transparent', border: `1px solid ${ok ? COLORS.normal : COLORS.border}` }}
     >
-      {ok ? '● Hazır' : '○ Bekliyor'}
+      {ok ? '● Ready' : '○ Pending'}
     </span>
   );
 }
 
-/** Logosuz temsilî çizim: Mars yüzeyinde habitat ve güneş paneli dizileri (alacakaranlık). */
+/** Logo-free representative drawing: habitat and solar panel arrays on the Mars surface (twilight). */
 function HabitatIllustration() {
   return (
     <figure className="shrink-0 md:w-72">
-      <svg viewBox="0 0 288 200" className="w-full rounded-xl" role="img" aria-label="Temsilî çizim: Mars yüzeyinde habitat ve güneş panelleri">
+      <svg viewBox="0 0 288 200" className="w-full rounded-xl" role="img" aria-label="Illustration: habitat and solar panels on the Mars surface">
         <defs>
           <linearGradient id="gorev-sky" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor={COLORS.bg} />
@@ -248,7 +248,7 @@ function HabitatIllustration() {
         <path d="M40 150 a34 26 0 0 1 68 0 Z" fill={COLORS.border} stroke={COLORS.textMuted} strokeWidth="1.5" />
         <rect x="64" y="138" width="20" height="12" rx="2" fill={COLORS.bg} stroke={COLORS.textMuted} strokeWidth="1" />
         <circle cx="74" cy="132" r="3" fill={COLORS.calm} opacity="0.8" />
-        {/* güneş paneli dizileri */}
+        {/* solar panel arrays */}
         {[0, 1, 2].map((i) => (
           <g key={i} transform={`translate(${136 + i * 46} ${150 - i * 3})`}>
             <line x1="18" y1="0" x2="18" y2="14" stroke={COLORS.textMuted} strokeWidth="1.5" />
@@ -256,7 +256,7 @@ function HabitatIllustration() {
             <path d="M12 -3 L16 11 M24 -5 L28 9" stroke={COLORS.calm} strokeOpacity="0.6" strokeWidth="0.8" />
           </g>
         ))}
-        {/* astronot */}
+        {/* astronaut */}
         <g transform="translate(176 160)" fill={COLORS.text}>
           <circle cx="0" cy="-12" r="3.5" />
           <rect x="-3.5" y="-8" width="7" height="10" rx="2" />
@@ -264,7 +264,7 @@ function HabitatIllustration() {
           <rect x="0.5" y="2" width="2.5" height="6" />
         </g>
       </svg>
-      <figcaption className="mt-1 text-sm text-slate-400">Temsilî çizim · Mars yüzey habitatı</figcaption>
+      <figcaption className="mt-1 text-sm text-slate-400">Illustration · Mars surface habitat</figcaption>
     </figure>
   );
 }

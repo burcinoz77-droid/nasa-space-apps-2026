@@ -1,6 +1,6 @@
-// Parça 3 · Parça 4'ün mor "ASTRA açıklaması" kutusunu (src/ui/components/AstraExplanation.tsx) olay bandına bağlar.
-// Dosya henüz main'de yokken derleme bozulmasın diye glob ile yüklenir (Raporlar sayfasıyla aynı yöntem);
-// Parça 4 birleştiği anda kendiliğinden görünür.
+// Part 3 · Connects Part 4's purple "ASTRA explanation" box (src/ui/components/AstraExplanation.tsx) to the incident banner.
+// Loaded with a glob so the build does not break while the file is not yet on main (same method as the Reports page);
+// it appears automatically as soon as Part 4 is merged.
 import type { ComponentType } from 'react';
 
 type ExplanationProps = { incidentId: string };

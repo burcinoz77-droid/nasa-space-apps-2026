@@ -1,44 +1,44 @@
-// Parça 2 · Olay ve otonom adım adları (Türkçe). Raporlar sayfası ve olay bandı buradan okuyabilir.
+// Part 2 · Incident and autonomous action names. The Reports page and the incident banner can read them from here.
 import { CREW_BY_ID } from '../crew';
 import { METRIC_BY_KEY, type MetricKey } from '../metrics';
 import type { AutoActionType, CrewId, CrewLocation, Domain, IncidentType } from '../types';
 
 export const INCIDENT_LABELS: Record<IncidentType, string> = {
-  RADIATION: 'Radyasyon',
+  RADIATION: 'Radiation',
   CO2: 'CO₂',
-  CARDIO: 'Kalp ritmi',
-  HYPOXIA: 'Oksijen doygunluğu',
-  THERMAL: 'Isı yükü',
-  FATIGUE: 'Yorgunluk',
-  STRESS: 'Stres',
-  MULTI: 'Çoklu sistem',
+  CARDIO: 'Heart rhythm',
+  HYPOXIA: 'Oxygen saturation',
+  THERMAL: 'Heat load',
+  FATIGUE: 'Fatigue',
+  STRESS: 'Stress',
+  MULTI: 'Multi-system',
 };
 
 export const ACTION_LABELS: Record<AutoActionType, string> = {
-  RADIATION_SHELTER: 'Radyasyon sığınağına geçiş',
-  INCREASE_VENTILATION: 'Havalandırma artırıldı',
-  MANDATORY_REST: 'Zorunlu dinlenme',
+  RADIATION_SHELTER: 'Storm shelter ingress',
+  INCREASE_VENTILATION: 'Ventilation increased',
+  MANDATORY_REST: 'Mandatory crew rest',
 };
 
 export const DOMAIN_LABELS: Record<Domain, string> = {
-  cardio: 'kalp-damar',
-  resp: 'solunum-metabolik',
-  biochem: 'biyokimya',
-  cog: 'bilişsel',
-  env: 'çevre',
+  cardio: 'cardiovascular',
+  resp: 'respiratory-metabolic',
+  biochem: 'biochemical',
+  cog: 'cognitive',
+  env: 'environment',
 };
 
-/** ["a","b","c"] -> "a, b ve c" */
+/** ["a","b","c"] -> "a, b and c" */
 export function joinTr(list: string[]): string {
   if (list.length <= 1) return list.join('');
-  return `${list.slice(0, -1).join(', ')} ve ${list[list.length - 1]}`;
+  return `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
 }
 
-export const LOCATION_LABELS: Record<CrewLocation, string> = { KOKPIT: 'Kokpit', GEZEGEN: 'Gezegen' };
+export const LOCATION_LABELS: Record<CrewLocation, string> = { KOKPIT: 'Orbit', GEZEGEN: 'Surface' };
 
-/** "elif" -> "Elif" (kayıt metinlerinde kısa ad). */
+/** "elif" -> "Elif" (short name in log entries). */
 export function shortName(id: CrewId): string {
-  return id.charAt(0).toLocaleUpperCase('tr-TR') + id.slice(1);
+  return id.charAt(0).toUpperCase() + id.slice(1);
 }
 
 export function names(ids: CrewId[]): string {
@@ -49,15 +49,15 @@ export function locationOf(id: CrewId): CrewLocation {
   return CREW_BY_ID[id].location;
 }
 
-/** Kayıt metni için Türkçe sayı: 36.8 -> "36,8" (ondalık sayısı ölçüm kataloğundan). */
+/** Number for log text: 36.8 -> "36.8" (decimal places from the metric catalog). */
 export function num(value: number, decimals = 0): string {
-  return value.toLocaleString('tr-TR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  return value.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
-/** "3,1 mmHg" gibi değer + birim. */
+/** Value + unit, like "3.1 mmHg". */
 export function metricText(key: MetricKey, value: number): string {
   const m = METRIC_BY_KEY[key];
-  if (m.unit === '%') return `%${num(value, m.decimals)}`;
+  if (m.unit === '%') return `${num(value, m.decimals)}%`;
   if (m.unit.startsWith('/')) return `${num(value, m.decimals)}${m.unit}`;
   return `${num(value, m.decimals)} ${m.unit}`;
 }

@@ -1,7 +1,7 @@
-// Parça 4 · ASTRA'nın kaynaklı bilgi tabanı (bağlam). Model "neden önemli?" ya da "sınır ne?"
-// sorularında lookup_reference aracıyla buradan okur ve kaynağı belirtir.
-// Sayılar planın "Veri ve kaynaklar" tablosundan ve src/sim/parameters.ts'ten gelir; yeni sayı uydurulmaz.
-// "Varsayım" yazanların NASA ya da hakemli bir kaynağı yoktur.
+// Part 4 · ASTRA's sourced knowledge base (context). For "why does it matter?" or "what is the limit?"
+// questions the model reads from here with the lookup_reference tool and cites the source.
+// Numbers come from the plan's "Data and sources" table and src/sim/parameters.ts; no new numbers are made up.
+// Entries marked "Assumption" have no NASA or peer-reviewed source.
 import { LICENSED_NOTE_LONG, TEST_SOURCES } from '../psych/instruments';
 import { PARAMS } from '../sim/parameters';
 
@@ -19,183 +19,183 @@ export interface ReferenceTopic {
 
 type ParamLike = { value: number; source?: string; url?: string };
 
-/** PARAMS'tan kaynak adı ve linki; anahtar yoksa verilen kaynak adı kullanılır. */
+/** Source name and link from PARAMS; if the key is missing, the given source name is used. */
 function src(key: string, fallback: string): Pick<Fact, 'kaynak' | 'url'> {
   const p = (PARAMS as Record<string, ParamLike | undefined>)[key];
   return { kaynak: p?.source ?? fallback, ...(p?.url ? { url: p.url } : {}) };
 }
 
-/** Test kaynağını bilgi tabanı biçimine çevirir. */
+/** Converts a test source into the knowledge-base format. */
 function fromTest(t: { ad: string; url: string }): Pick<Fact, 'kaynak' | 'url'> {
   return { kaynak: t.ad, url: t.url };
 }
 
 function val(key: string, fallback: number): string {
   const v = (PARAMS as Record<string, ParamLike | undefined>)[key]?.value ?? fallback;
-  return v.toLocaleString('tr-TR', { maximumFractionDigits: 2 });
+  return v.toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
-/** NASA HRP: 4–6 aylık görevlerde ağırlık taşıyan kemikler ayda ortalama %1–1,5 yoğunluk kaybeder. */
+/** NASA HRP: on 4–6 month missions, weight-bearing bones lose on average 1–1.5% density per month. */
 export const BONE_LOSS_PER_MONTH = { min: 1, max: 1.5 };
-const BONE_SRC = { kaynak: 'NASA HRP, kemik değişimi riski', url: 'https://www.nasa.gov/reference/risk-of-spaceflight-induced-bone-changes/' };
+const BONE_SRC = { kaynak: 'NASA HRP, risk of bone changes', url: 'https://www.nasa.gov/reference/risk-of-spaceflight-induced-bone-changes/' };
 
-/** Görev gününe göre kaba kemik yoğunluğu kaybı tahmini, örneğin 180. gün için "%6–9". Ölçüm değildir. */
+/** Rough bone density loss estimate by mission day, e.g. "6–9%" for day 180. Not a measurement. */
 export function boneLossEstimate(missionDay: number): string {
   const months = missionDay / 30.4;
   const lo = Math.round(months * BONE_LOSS_PER_MONTH.min);
   const hi = Math.round(months * BONE_LOSS_PER_MONTH.max);
-  return lo === hi ? `%${lo}` : `%${lo}–${hi}`;
+  return lo === hi ? `${lo}%` : `${lo}–${hi}%`;
 }
 
-const ASSUMPTION = { kaynak: 'Varsayım (ekip ayarı; NASA ya da hakemli kaynakta evrensel eşik yok)' };
+const ASSUMPTION = { kaynak: 'Assumption (team setting; no universal threshold in NASA or peer-reviewed sources)' };
 
 export const REFERENCES: ReferenceTopic[] = [
   {
     konu: 'radyasyon',
-    anahtarKelimeler: ['radyasyon', 'doz', 'msv', 'sievert', 'güneş', 'fırtına', 'sığınak', 'kariyer'],
+    anahtarKelimeler: ['radiation', 'dose', 'solar', 'storm', 'shelter', 'career', 'radyasyon', 'doz', 'msv', 'sievert', 'güneş', 'fırtına', 'sığınak', 'kariyer'],
     bilgiler: [
-      { bilgi: `Kariyer radyasyon limiti ${val('careerDoseLimit', 600)} mSv.`, ...src('careerDoseLimit', 'NASA-STD-3001 (OCHMO radyasyon özeti)') },
-      { bilgi: `Mars yolculuğunda (Kokpit) doz hızı ${val('doseRateMarsTransit', 1.84)} mSv/gün, yaklaşık 76,7 µSv/sa.`, ...src('doseRateMarsTransit', 'Curiosity RAD, Zeitlin vd. 2013') },
-      { bilgi: `Mars yüzeyinde doz hızı ${val('doseRateMarsSurface', 0.64)} mSv/gün, yaklaşık 26,7 µSv/sa; atmosfer kısmen kalkan olur.`, ...src('doseRateMarsSurface', 'Curiosity RAD, Hassler vd. 2013') },
-      { bilgi: 'Katman 1, toplam doz 480 mSv (kariyer limitinin %80\'i) olunca dikkat, 600 mSv olunca kritik olay açar; doz hızı kişisel normalden z ≥ 3 sapınca radyasyon sığınağına geçişi başlatır.', kaynak: 'Katman 1 kuralı, NASA-STD-3001 limitine göre' },
-      { bilgi: "ISS'teki toplam radyasyonun yaklaşık %30'u nötrondur; bu oran ISS içindir, Mars için kullanılmamalıdır.", kaynak: 'Kanada Uzay Ajansı (CSA), 2026', url: 'https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp' },
-      { bilgi: "Mars yüzeyinde nötronlar toplam doz hızının yaklaşık %7'sini, biyolojik açıdan önemli doz eşdeğerinin yaklaşık %10'unu oluşturur. Uygulama nötron payını ayrıca göstermez.", kaynak: 'Köhler vd. 2014, Curiosity RAD Mars yüzeyi nötron ölçümü' },
-      { bilgi: 'Güneş fırtınası senaryosundaki olay sırası Mayıs 2024 DONKI kayıtlarını izler (DONKI doz değeri vermez).', ...src('donkiSep', 'NASA DONKI, Mayıs 2024 SEP') },
-      { bilgi: `Mars yolculuğunda Curiosity, sakin dönemde günde yaklaşık 332 µGy, güneş fırtınalarında günde 10.000 µGy'nin üzerinde doz ölçtü; senaryodaki fırtına zirvesi bu yüzden normalin ${val('stormDoseMultiplierPeak', 30)} katıdır.`, ...src('stormDoseMultiplierPeak', 'Guo vd. 2015, A&A') },
-      { bilgi: `Artemis I'de Orion kapsülünün sığınağında doz, 1989 fırtınası simülasyonunda mürettebat bölümünün yaklaşık ${val('shelterDoseFactor', 0.23)} katıydı (414 µGy/dk yerine 95 µGy/dk).`, ...src('shelterDoseFactor', 'George vd. 2024, Nature') },
-      { bilgi: 'Mayıs 2024 fırtınasında Mars yüzeyinde Curiosity\'nin yanındaki bir astronot 8.100 mikrogray doz alırdı. Senaryodaki yüzey fırtına çarpanı (5 kat) ve fırtına başlangıç çarpanı (25 kat) varsayımdır.', ...src('stormDoseMultiplierSurface', 'NASA, Mayıs 2024') , kaynak: 'NASA, Mayıs 2024 Mars güneş fırtınası', url: 'https://www.nasa.gov/?p=670127' },
+      { bilgi: `Career radiation limit: ${val('careerDoseLimit', 600)} mSv.`, ...src('careerDoseLimit', 'NASA-STD-3001 (OCHMO radiation brief)') },
+      { bilgi: `Dose rate during the cruise to Mars (spacecraft): ${val('doseRateMarsTransit', 1.84)} mSv/day, about 76.7 µSv/h.`, ...src('doseRateMarsTransit', 'Curiosity RAD, Zeitlin et al. 2013') },
+      { bilgi: `Dose rate on the Mars surface: ${val('doseRateMarsSurface', 0.64)} mSv/day, about 26.7 µSv/h; the atmosphere provides partial shielding.`, ...src('doseRateMarsSurface', 'Curiosity RAD, Hassler et al. 2013') },
+      { bilgi: 'Layer 1 raises a caution at a cumulative dose of 480 mSv (80% of the career limit) and a warning at 600 mSv; it starts storm shelter ingress when the dose rate deviates z ≥ 3 from personal baseline.', kaynak: 'Layer 1 rule, based on the NASA-STD-3001 limit' },
+      { bilgi: 'About 30% of total radiation on the ISS is from neutrons; this ratio applies to the ISS and should not be used for Mars.', kaynak: 'Canadian Space Agency (CSA), 2026', url: 'https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp' },
+      { bilgi: 'On the Mars surface neutrons make up about 7% of the total dose rate and about 10% of the biologically relevant dose equivalent. The app does not show the neutron share separately.', kaynak: 'Köhler et al. 2014, Curiosity RAD neutron measurements on the Mars surface' },
+      { bilgi: 'The event sequence in the solar storm scenario follows the May 2024 DONKI records (DONKI does not provide dose values).', ...src('donkiSep', 'NASA DONKI, May 2024 SEP') },
+      { bilgi: `During the cruise to Mars, Curiosity measured about 332 µGy per day in quiet periods and more than 10,000 µGy per day during solar storms; the scenario's storm peak is therefore ${val('stormDoseMultiplierPeak', 30)} times normal.`, ...src('stormDoseMultiplierPeak', 'Guo et al. 2015, A&A') },
+      { bilgi: `On Artemis I, the dose in Orion's shelter in a 1989-storm simulation was about ${val('shelterDoseFactor', 0.23)} times that of the crew compartment (95 µGy/min instead of 414 µGy/min).`, ...src('shelterDoseFactor', 'George et al. 2024, Nature') },
+      { bilgi: "In the May 2024 storm, an astronaut next to Curiosity on the Mars surface would have received 8,100 micrograys. The scenario's surface storm multiplier (5×) and storm onset multiplier (25×) are assumptions.", ...src('stormDoseMultiplierSurface', 'NASA, May 2024'), kaynak: 'NASA, May 2024 solar storm at Mars', url: 'https://www.nasa.gov/?p=670127' },
     ],
   },
   {
     konu: 'co2',
-    anahtarKelimeler: ['co2', 'co₂', 'karbondioksit', 'karbon', 'havalandırma', 'temizleyici', 'kabin havası'],
+    anahtarKelimeler: ['co2', 'co₂', 'carbon dioxide', 'ventilation', 'scrubber', 'cabin air', 'karbondioksit', 'karbon', 'havalandırma', 'temizleyici', 'kabin havası'],
     bilgiler: [
-      { bilgi: `CO₂ kısmi basıncı ${val('co2CautionLimit', 2.3)} mmHg üzerinde dikkat, ${val('co2CriticalLimit', 3.0)} mmHg üzerinde kritik kabul edilir.`, ...src('co2CautionLimit', 'OCHMO-TB-004 CO₂') },
-      { bilgi: 'Yüksek CO₂ baş ağrısı ve dikkat kaybı gibi belirtilere yol açabilir.', ...src('co2CautionLimit', 'OCHMO-TB-004 CO₂') },
-      { bilgi: `ISS kabininde CO₂ medyanı ${val('cabinCO2Median', 1.9)} mmHg (2.516 ppm); ölçülen en yüksek değer ${val('cabinCO2FailurePeak', 5.3)} mmHg (6.977 ppm).`, ...src('cabinCO2Median', 'OSDR EDA (ISS çevre verisi)') },
-      { bilgi: 'Katman 1, kritik CO₂ olayında havalandırmayı otomatik artırır.', kaynak: 'Katman 1 kuralı' },
+      { bilgi: `CO₂ partial pressure above ${val('co2CautionLimit', 2.3)} mmHg is caution and above ${val('co2CriticalLimit', 3.0)} mmHg is warning.`, ...src('co2CautionLimit', 'OCHMO-TB-004 CO₂') },
+      { bilgi: 'High CO₂ can cause symptoms such as headache and loss of concentration.', ...src('co2CautionLimit', 'OCHMO-TB-004 CO₂') },
+      { bilgi: `Median CO₂ in the ISS cabin is ${val('cabinCO2Median', 1.9)} mmHg (2,516 ppm); the highest measured value is ${val('cabinCO2FailurePeak', 5.3)} mmHg (6,977 ppm).`, ...src('cabinCO2Median', 'OSDR EDA (ISS environmental data)') },
+      { bilgi: 'In a CO₂ warning, Layer 1 increases ventilation automatically.', kaynak: 'Layer 1 rule' },
     ],
   },
   {
     konu: 'oksijen',
-    anahtarKelimeler: ['oksijen', 'spo2', 'spo₂', 'doygunluk', 'hipoksi', 'basınç', 'giysi', 'kabin'],
+    anahtarKelimeler: ['oxygen', 'spo2', 'spo₂', 'saturation', 'hypoxia', 'pressure', 'suit', 'cabin', 'oksijen', 'doygunluk', 'hipoksi', 'basınç', 'giysi', 'kabin'],
     bilgiler: [
-      { bilgi: 'SpO₂ deniz seviyesi basıncında normalde %96–100 arasıdır; kabin basıncı da deniz seviyesindedir. Bu aralıktaki değerler için uyarı verilmez.', ...src('spo2Normal', 'NIH StatPearls') },
-      { bilgi: "SpO₂ için %94 altı dikkat, %90 altı kritik eşikleri klinik varsayımdır.", ...ASSUMPTION, kaynak: 'Klinik eşik, varsayım (risk: NASA HRP hipoksi)' },
-      { bilgi: `Kabin ${val('cabinPressure', 101.3)} kPa ve %21 O₂ (ISS ile aynı).`, ...src('cabinPressure', 'Kabin atmosferi (NASA NTRS)') },
-      { bilgi: `EVA giysisi ${val('suitPressure', 29.6)} kPa ve %100 O₂.`, ...src('suitPressure', 'EVA giysisi regülatörü (NASA NTRS)') },
+      { bilgi: 'SpO₂ is normally 96–100% at sea-level pressure; the cabin is also at sea-level pressure. No alert is raised for values in this range.', ...src('spo2Normal', 'NIH StatPearls') },
+      { bilgi: 'For SpO₂, below 94% caution and below 90% warning are clinical assumptions.', ...ASSUMPTION, kaynak: 'Clinical threshold, assumption (risk: NASA HRP hypoxia)' },
+      { bilgi: `Cabin: ${val('cabinPressure', 101.3)} kPa and 21% O₂ (same as the ISS).`, ...src('cabinPressure', 'Cabin atmosphere (NASA NTRS)') },
+      { bilgi: `EVA suit: ${val('suitPressure', 29.6)} kPa and 100% O₂.`, ...src('suitPressure', 'EVA suit regulator (NASA NTRS)') },
     ],
   },
   {
     konu: 'sicaklik',
-    anahtarKelimeler: ['sıcaklık', 'sicaklik', 'ateş', 'çekirdek', 'ısı', 'efor', 'termal'],
+    anahtarKelimeler: ['temperature', 'fever', 'core', 'heat', 'exertion', 'thermal', 'sıcaklık', 'sicaklik', 'ateş', 'çekirdek', 'ısı', 'efor', 'termal'],
     bilgiler: [
-      { bilgi: `Uzayda dinlenmede çekirdek sıcaklık yaklaşık ${val('coreTempRiseInSpace', 1)} °C yüksektir (37,3–37,8 °C); egzersizde 40 °C'yi aşabilir.`, ...src('coreTempRiseInSpace', 'Stahn vd. 2017, Sci Rep') },
-      { bilgi: 'Katman 1, çekirdek sıcaklık 38,5 °C olunca dikkat, 39,0 °C olunca kritik olay açar ve zorunlu dinlenme verir.', ...ASSUMPTION },
+      { bilgi: `At rest in space, core temperature is about ${val('coreTempRiseInSpace', 1)} °C higher (37.3–37.8 °C); during exercise it can exceed 40 °C.`, ...src('coreTempRiseInSpace', 'Stahn et al. 2017, Sci Rep') },
+      { bilgi: 'Layer 1 raises a caution at 38.5 °C core temperature and a warning at 39.0 °C, and applies mandatory crew rest.', ...ASSUMPTION },
     ],
   },
   {
     konu: 'uyku',
-    anahtarKelimeler: ['uyku', 'yorgunluk', 'dinlenme', 'rem', 'sirkadiyen'],
+    anahtarKelimeler: ['sleep', 'fatigue', 'rest', 'rem', 'circadian', 'uyku', 'yorgunluk', 'dinlenme', 'sirkadiyen'],
     bilgiler: [
-      { bilgi: `Uzayda ortalama uyku süresi ${val('sleepInSpaceMean', 6.09)} saattir; NASA 8,5 saat planlar.`, ...src('sleepInSpaceMean', 'Barger vd. 2014, Lancet Neurology') },
-      { bilgi: 'Uyku eksikliği PVT tepki süresini uzatır ve stresi artırır.', ...src('pvtMeanRtRested', 'Jones vd. 2022 (NASA Reaction Self Test)') },
-      { bilgi: 'Katman 1, uyku, PVT, PANAS olumlu duygu, BSI-18 ve HRV sinyallerinden en az üçü birlikte dikkate düşerse yorgunluk olayı açar ve zorunlu dinlenme verir.', kaynak: 'Katman 1 kuralı' },
+      { bilgi: `Average sleep in space is ${val('sleepInSpaceMean', 6.09)} hours; NASA schedules 8.5 hours.`, ...src('sleepInSpaceMean', 'Barger et al. 2014, Lancet Neurology') },
+      { bilgi: 'Sleep loss lengthens PVT reaction time and increases stress.', ...src('pvtMeanRtRested', 'Jones et al. 2022 (NASA Reaction Self Test)') },
+      { bilgi: 'Layer 1 raises a fatigue incident and applies mandatory crew rest if at least three of sleep, PVT, PANAS positive affect, BSI-18 and HRV reach caution together.', kaynak: 'Layer 1 rule' },
     ],
   },
   {
     konu: 'bilissel',
-    anahtarKelimeler: ['pvt', 'tepki', 'dikkat', 'bilişsel', 'bilissel', 'panas', 'bsi', 'ruh', 'stres', 'kortizol'],
+    anahtarKelimeler: ['pvt', 'reaction', 'attention', 'cognitive', 'panas', 'bsi', 'mood', 'stress', 'cortisol', 'tepki', 'dikkat', 'bilişsel', 'bilissel', 'ruh', 'stres', 'kortizol'],
     bilgiler: [
-      { bilgi: `Dinlenmiş bir kişide PVT tepki süresi yaklaşık ${val('pvtMeanRtRested', 250)} ms'dir.`, ...src('pvtMeanRtRested', 'Jones vd. 2022 (NASA Reaction Self Test)') },
-      { bilgi: `PVT'de ${val('pvtLapseThreshold', 355)} ms ve üzerindeki tepkiler dikkat kaybı sayılır.`, ...src('pvtLapseThreshold', 'Basner vd. 2011, PVT-B') },
-      { bilgi: 'PANAS olumlu duygu ortalaması 33,3, olumsuz duygu ortalaması 17,4 (10–50 ölçeği).', ...src('panasPositiveMean', 'Watson vd. 1988, PANAS') },
-      { bilgi: 'Katman 1, GSR, ter kortizolü ve PANAS olumsuz duygunun üçü birlikte yükselirse stres olayı açar.', kaynak: 'Katman 1 kuralı' },
-      { bilgi: LICENSED_NOTE_LONG, kaynak: 'Proje notu (simülasyon)' },
+      { bilgi: `In a rested person, PVT reaction time is about ${val('pvtMeanRtRested', 250)} ms.`, ...src('pvtMeanRtRested', 'Jones et al. 2022 (NASA Reaction Self Test)') },
+      { bilgi: `In the PVT, responses of ${val('pvtLapseThreshold', 355)} ms or more count as lapses.`, ...src('pvtLapseThreshold', 'Basner et al. 2011, PVT-B') },
+      { bilgi: 'PANAS positive affect mean is 33.3 and negative affect mean is 17.4 (10–50 scale).', ...src('panasPositiveMean', 'Watson et al. 1988, PANAS') },
+      { bilgi: 'Layer 1 raises a stress incident if GSR, sweat cortisol and PANAS negative affect all rise together.', kaynak: 'Layer 1 rule' },
+      { bilgi: LICENSED_NOTE_LONG, kaynak: 'Project note (simulation)' },
     ],
   },
   {
     konu: 'testler',
-    anahtarKelimeler: ['test', 'tlx', 'nasa-tlx', 'iş yükü', 'samn', 'perelli', 'yorgunluk ölçeği', 'psikolojik', 'anket', 'ölçek'],
+    anahtarKelimeler: ['test', 'tlx', 'nasa-tlx', 'workload', 'samn', 'perelli', 'fatigue scale', 'psychological', 'questionnaire', 'scale', 'iş yükü', 'yorgunluk ölçeği', 'psikolojik', 'anket', 'ölçek'],
     bilgiler: [
-      { bilgi: 'NASA-TLX, NASA Ames\'te geliştirilen iş yükü ölçeğidir: zihinsel, fiziksel ve zamansal talep, performans, efor ve engellenme olmak üzere 6 alt ölçek, her biri 0–100.', ...fromTest(TEST_SOURCES.tlx) },
-      { bilgi: 'Raw TLX, altı alt ölçeğin ağırlıksız ortalamasıdır ve ikili karşılaştırma adımı olmadan kullanılır.', ...fromTest(TEST_SOURCES.hart2006) },
-      { bilgi: 'Samn-Perelli, 1 (tamamen zinde) ile 7 (tamamen bitkin) arasında 7 basamaklı bir yorgunluk ölçeğidir; NASA–easyJet pilot yorgunluğu çalışmasında PVT ile birlikte kullanıldı.', ...fromTest(TEST_SOURCES.nasaFatigue) },
-      { bilgi: 'PVT-B, 3 dakikalık tepki testidir; uyaranlar 1–4 saniye arayla gelir, 355 ms ve üzeri tepki dikkat kaybı sayılır.', ...fromTest(TEST_SOURCES.basner2011) },
-      { bilgi: 'ISS\'te astronotlar PVT-B\'yi Reaction Self Test adıyla, kısa ruh hali ve iş yükü puanlarıyla birlikte uçuş boyunca 4 günde bir, sabah ve akşam yaptı; 6 saatten kısa uyku daha yavaş tepkiyle ilişkili bulundu.', ...fromTest(TEST_SOURCES.jones2022) },
-      { bilgi: 'Testlerin seviye eşikleri (Samn-Perelli 5 ve üzeri, NASA-TLX 50 ve üzeri dikkat) varsayımdır; resmi bir kesme noktası yoktur.', kaynak: 'Varsayım (proje kuralı)' },
+      { bilgi: 'NASA-TLX is a workload scale developed at NASA Ames: 6 subscales (mental, physical and temporal demand, performance, effort and frustration), each 0–100.', ...fromTest(TEST_SOURCES.tlx) },
+      { bilgi: 'Raw TLX is the unweighted mean of the six subscales and is used without the pairwise comparison step.', ...fromTest(TEST_SOURCES.hart2006) },
+      { bilgi: 'Samn-Perelli is a 7-point fatigue scale from 1 (fully alert) to 7 (completely exhausted); it was used together with the PVT in the NASA–easyJet pilot fatigue study.', ...fromTest(TEST_SOURCES.nasaFatigue) },
+      { bilgi: 'PVT-B is a 3-minute reaction test; stimuli appear 1–4 seconds apart and responses of 355 ms or more count as lapses.', ...fromTest(TEST_SOURCES.basner2011) },
+      { bilgi: 'On the ISS, astronauts did the PVT-B as the Reaction Self Test, with short mood and workload ratings, every 4 days morning and evening throughout the flight; sleep under 6 hours was linked to slower reactions.', ...fromTest(TEST_SOURCES.jones2022) },
+      { bilgi: 'Test level thresholds (Samn-Perelli 5 and above, NASA-TLX 50 and above = caution) are assumptions; there is no official cut-off.', kaynak: 'Assumption (project rule)' },
     ],
   },
   {
     konu: 'kalp',
-    anahtarKelimeler: ['kalp', 'nabız', 'nabiz', 'tansiyon', 'hrv', 'ekg', 'ritim'],
+    anahtarKelimeler: ['heart', 'heart rate', 'pulse', 'blood pressure', 'hrv', 'ecg', 'rhythm', 'kalp', 'nabız', 'nabiz', 'tansiyon', 'ekg', 'ritim'],
     bilgiler: [
-      { bilgi: `Uzun görevde nabız belirgin değişmez; 24 saatlik sistolik tansiyon yaklaşık ${val('bpDropInSpace', 8)} mmHg düşüktür.`, ...src('bpDropInSpace', 'Norsk vd. 2015, J Physiol') },
-      { bilgi: 'Kısa süreli HRV (RMSSD) normu 42 ± 15 ms; düşüş stres ve yorgunlukla ilişkilidir.', ...src('hrvRmssdMean', 'Nunan vd. 2010') },
-      { bilgi: "EKG'de düzensiz atımlar görülürse Katman 1 dikkat olayı açar ve medikal kontrol önerir; teşhis koymaz.", kaynak: 'Katman 1 kuralı (risk: NASA HRP kalp-damar)' },
+      { bilgi: `On long missions heart rate does not change markedly; 24-hour systolic blood pressure is about ${val('bpDropInSpace', 8)} mmHg lower.`, ...src('bpDropInSpace', 'Norsk et al. 2015, J Physiol') },
+      { bilgi: 'Short-term HRV (RMSSD) norm is 42 ± 15 ms; a drop is associated with stress and fatigue.', ...src('hrvRmssdMean', 'Nunan et al. 2010') },
+      { bilgi: 'If irregular beats appear on the ECG, Layer 1 raises a caution incident and recommends a medical check; it does not diagnose.', kaynak: 'Layer 1 rule (risk: NASA HRP cardiovascular)' },
     ],
   },
   {
     konu: 'gecikme',
-    anahtarKelimeler: ['gecikme', 'dünya', 'iletişim', 'mesaj', 'uçuş doktoru'],
+    anahtarKelimeler: ['delay', 'earth', 'communication', 'message', 'flight surgeon', 'gecikme', 'dünya', 'iletişim', 'mesaj', 'uçuş doktoru'],
     bilgiler: [
-      { bilgi: 'Dünya ile Mars arasında tek yön gecikme 3–22,4 dakika, gidiş-dönüş 6–44 dakikadır.', ...src('commDelayMin', 'NASA Mars Relay Network') },
+      { bilgi: 'One-way delay between Earth and Mars is 3–22.4 minutes; round trip is 6–44 minutes.', ...src('commDelayMin', 'NASA Mars Relay Network') },
     ],
   },
   {
     konu: 'ortam',
-    anahtarKelimeler: ['ortam', 'kabin sıcaklığı', 'ortam sıcaklığı', 'nem', 'rutubet', 'gürültü', 'ses düzeyi', 'desibel', 'dba', 'konfor'],
+    anahtarKelimeler: ['environment', 'cabin temperature', 'ambient temperature', 'humidity', 'noise', 'sound level', 'decibel', 'dba', 'comfort', 'ortam', 'kabin sıcaklığı', 'ortam sıcaklığı', 'nem', 'rutubet', 'gürültü', 'ses düzeyi', 'desibel', 'konfor'],
     bilgiler: [
-      { bilgi: 'NASA performans bölgesi: ortam sıcaklığı 20–25 °C ve bağıl nem %30–60. Sağlık sınırı 18 °C ve %75 nem ile 27 °C ve %25 nem arasıdır. Uygulamadaki normal değerler (22,5 °C, %45) bu aralığın ortasıdır.', ...src('ambientTempComfort', 'OCHMO-TB-002 ECLSS') },
-      { bilgi: 'Uzay aracı çalışma alanlarında sürekli gürültü sınırı NC-50 eğrisidir (yaklaşık 58 dBA). Uygulamadaki 55 dBA normal değeri bu sınırın altında seçilmiş bir varsayımdır.', ...src('noiseBaseline', 'OCHMO-TB-035 Akustik') },
-      { bilgi: "ISS'te astronotların gürültü maruziyeti için sınır 16 saatlik çalışma ortalamasında 72 dBA, 8 saatlik uykuda 62 dBA'dır. Uyku sırasında 50 dBA aşılırsa uçuş doktoru astronotu gürültüyü azaltma adımları konusunda bilgilendirir.", ...src('noiseWorkLimit', 'ISS gürültü sınırları') },
-      { bilgi: "ISS'te gürültü, astronotların taktığı kişisel gürültü dozimetreleriyle ölçülür.", kaynak: 'NASA NTRS, ISS akustik izleme', url: 'https://ntrs.nasa.gov/api/citations/20110013006/downloads/20110013006.pdf' },
+      { bilgi: 'NASA performance zone: ambient temperature 20–25 °C and relative humidity 30–60%. The health limit lies between 18 °C at 75% humidity and 27 °C at 25% humidity. The app\'s baseline values (22.5 °C, 45%) sit in the middle of this range.', ...src('ambientTempComfort', 'OCHMO-TB-002 ECLSS') },
+      { bilgi: 'The continuous noise limit in spacecraft work areas is the NC-50 curve (about 58 dBA). The app\'s baseline value of 55 dBA is an assumption chosen below this limit.', ...src('noiseBaseline', 'OCHMO-TB-035 Acoustics') },
+      { bilgi: 'On the ISS, the noise exposure limit for astronauts is 72 dBA averaged over a 16-hour work period and 62 dBA over 8 hours of sleep. If 50 dBA is exceeded during sleep, the flight surgeon advises the astronaut on noise reduction steps.', ...src('noiseWorkLimit', 'ISS noise limits') },
+      { bilgi: 'On the ISS, noise is measured with personal noise dosimeters worn by astronauts.', kaynak: 'NASA NTRS, ISS acoustic monitoring', url: 'https://ntrs.nasa.gov/api/citations/20110013006/downloads/20110013006.pdf' },
     ],
   },
   {
     konu: 'kemik',
-    anahtarKelimeler: ['kemik', 'osteoporoz', 'kırık', 'kemik yoğunluğu', 'kas kaybı', 'kas'],
+    anahtarKelimeler: ['bone', 'osteoporosis', 'fracture', 'bone density', 'muscle loss', 'muscle', 'kemik', 'osteoporoz', 'kırık', 'kemik yoğunluğu', 'kas kaybı', 'kas'],
     bilgiler: [
-      { bilgi: 'Kemik yoğunluğu bu sistemde ölçülmez; NASA bunu uçuş öncesi ve sonrası kemik taramalarıyla izler.', ...BONE_SRC },
-      { bilgi: `NASA'ya göre 4–6 aylık görevlerde ağırlık taşıyan kemikler ayda ortalama %1–1,5 yoğunluk kaybeder; 180. gün için bu kabaca ${boneLossEstimate(180)} eder. Bu kişisel bir ölçüm değil, genel bir tahmindir. Daha uzun görevlerde bu hızın sürüp sürmediği henüz bilinmiyor.`, ...BONE_SRC },
+      { bilgi: 'Bone density is not measured by this system; NASA tracks it with pre- and post-flight bone scans.', ...BONE_SRC },
+      { bilgi: `According to NASA, weight-bearing bones lose on average 1–1.5% density per month on 4–6 month missions; for day 180 that is roughly ${boneLossEstimate(180)}. This is a general estimate, not a personal measurement. Whether this rate continues on longer missions is not yet known.`, ...BONE_SRC },
     ],
   },
   {
     konu: 'goz',
-    anahtarKelimeler: ['göz', 'goz', 'sans', 'görme', 'optik disk', 'ödem'],
+    anahtarKelimeler: ['eye', 'eyes', 'sans', 'vision', 'optic disc', 'edema', 'göz', 'goz', 'görme', 'optik disk', 'ödem'],
     bilgiler: [
-      { bilgi: "SANS (uzay uçuşuna bağlı nöro-oküler sendrom), NASA'nın şu anda uçuşla ilgili en önde gelen sağlık riski olarak gösterdiği durumdur.", kaynak: 'NASA HRP riskler', url: 'https://www.nasa.gov/hrp/risks/' },
-      { bilgi: "Uzun görevlerde belirgin optik disk ödemi astronotların yaklaşık %16–19'unda görülür; göz taramasıyla (OCT) bakıldığında bu oran yaklaşık %70'tir.", kaynak: 'JAMA Ophthalmology, NASA Bir Yıllık Görev vaka serisi', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC8085766' },
-      { bilgi: 'Uygulamadaki göz bebeği ölçümleri SANS için yalnızca dolaylı ve varsayıma dayalı bir göstergedir; kesin değerlendirme göz taramasıyla yapılır.', ...ASSUMPTION },
+      { bilgi: 'SANS (Spaceflight Associated Neuro-ocular Syndrome) is currently listed by NASA as a leading spaceflight health risk.', kaynak: 'NASA HRP risks', url: 'https://www.nasa.gov/hrp/risks/' },
+      { bilgi: 'On long missions, clear optic disc edema is seen in about 16–19% of astronauts; with eye imaging (OCT) the share is about 70%.', kaynak: 'JAMA Ophthalmology, NASA One-Year Mission case series', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC8085766' },
+      { bilgi: 'The app\'s pupil measures are only an indirect, assumption-based indicator for SANS; a definitive assessment requires eye imaging.', ...ASSUMPTION },
     ],
   },
   {
     konu: 'yercekimi',
-    anahtarKelimeler: ['yerçekimi', 'yercekimi', 'gravite', 'çekim', 'ağırlık'],
+    anahtarKelimeler: ['gravity', 'weight', 'yerçekimi', 'yercekimi', 'gravite', 'çekim', 'ağırlık'],
     bilgiler: [
-      { bilgi: "Mars yüzeyinde ortalama yerçekimi 3,73 m/s², yani Dünya'nınkinin 0,38'idir. Simülasyon yerçekiminin vücuda etkisini modellemez.", kaynak: 'NASA Mars Fact Sheet', url: 'https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html' },
+      { bilgi: "Mean surface gravity on Mars is 3.73 m/s², or 0.38 of Earth's. The simulation does not model the effect of gravity on the body.", kaynak: 'NASA Mars Fact Sheet', url: 'https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html' },
     ],
   },
   {
     konu: 'olculmeyenler',
-    anahtarKelimeler: ['bağışıklık', 'bagisiklik', 'immün', 'denge', 'vestibüler', 'ekip uyumu', 'takım', 'ekip', 'mikrop', 'bakteri', 'ölçülmeyen', 'kapsam'],
+    anahtarKelimeler: ['immune', 'immunity', 'balance', 'vestibular', 'team cohesion', 'team', 'crew cohesion', 'microbe', 'bacteria', 'not measured', 'scope', 'bağışıklık', 'bagisiklik', 'immün', 'denge', 'vestibüler', 'ekip uyumu', 'takım', 'ekip', 'mikrop', 'bakteri', 'ölçülmeyen', 'kapsam'],
     bilgiler: [
-      { bilgi: 'Bağışıklık sistemi bu sistemde ölçülmez; kan ya da tükürük tahlili gerekir. Inspiration4 görevinin kan verileri NASA OSDR arşivinde açıktır.', kaynak: 'NASA OSDR, Inspiration4', url: 'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11094041/' },
-      { bilgi: 'Denge (vestibüler sistem) bu sistemde ölçülmez. Uzun görevden dönen astronotlar ayakta dengeyi daha geç bulur ve denge testlerinde daha az doğru adım atar.', kaynak: 'Frontiers in Physiology 2025, NASA JSC', url: 'https://www.frontiersin.org/journals/physiology/articles/10.3389/fphys.2025.1677377/full' },
-      { bilgi: 'Ekip uyumu doğrudan ölçülmez; stres ve ruh hali ölçümleri (BSI-18, PANAS) dolaylı bilgi verir. NASA, uzay uçuşundaki ekip ölçümlerinin henüz yayımlanmadığını belirtir.', kaynak: 'NASA NTRS, ekip riski kanıt raporu', url: 'https://ntrs.nasa.gov/citations/20220007465' },
-      { bilgi: "Kabin mikropları bu sistemde ölçülmez. ISS yüzeylerinde en sık görülen mikroplar insan derisiyle ilişkili türlerdir.", kaynak: 'Microbial Tracking-2, Microbiome', url: 'https://www.osti.gov/biblio/1881622' },
+      { bilgi: 'The immune system is not measured by this system; blood or saliva tests are required. Blood data from the Inspiration4 mission are open in the NASA OSDR archive.', kaynak: 'NASA OSDR, Inspiration4', url: 'https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11094041/' },
+      { bilgi: 'Balance (the vestibular system) is not measured by this system. Astronauts returning from long missions regain standing balance more slowly and take fewer accurate steps in balance tests.', kaynak: 'Frontiers in Physiology 2025, NASA JSC', url: 'https://www.frontiersin.org/journals/physiology/articles/10.3389/fphys.2025.1677377/full' },
+      { bilgi: 'Team cohesion is not measured directly; stress and mood measures (BSI-18, PANAS) give indirect information. NASA notes that team measures from spaceflight have not yet been published.', kaynak: 'NASA NTRS, team risk evidence report', url: 'https://ntrs.nasa.gov/citations/20220007465' },
+      { bilgi: 'Cabin microbes are not measured by this system. The most common microbes on ISS surfaces are species associated with human skin.', kaynak: 'Microbial Tracking-2, Microbiome', url: 'https://www.osti.gov/biblio/1881622' },
     ],
   },
   {
     konu: 'yontem',
-    anahtarKelimeler: ['yöntem', 'yontem', 'baseline', 'z-skoru', 'z skoru', 'katman', 'nasıl karar', 'eşik', 'esik'],
+    anahtarKelimeler: ['method', 'baseline', 'z-score', 'z score', 'layer', 'how does it decide', 'threshold', 'yöntem', 'yontem', 'z-skoru', 'z skoru', 'katman', 'nasıl karar', 'eşik', 'esik'],
     bilgiler: [
       {
-        bilgi: 'NASA kaynaklarında nabız, tansiyon, SpO₂ ve ruh hali için evrensel sayısal eşik yoktur; bu yüzden Katman 1 her astronotun kişisel normalinden sapmayı (z-skoru) izler: z ≥ 2 dikkat, z ≥ 3 kritik, en az 3 ardışık ölçümde.',
-        kaynak: 'Proje yöntemi (plan: Veri ve kaynaklar)',
+        bilgi: 'NASA sources give no universal numeric thresholds for heart rate, blood pressure, SpO₂ or mood; so Layer 1 tracks each astronaut\'s deviation from their personal baseline (z-score): z ≥ 2 caution, z ≥ 3 warning, over at least 3 consecutive readings.',
+        kaynak: 'Project method (plan: Data and sources)',
       },
-      { bilgi: 'Uyarıları yalnızca Katman 1 açar; ASTRA (Katman 2) sadece okur ve açıklar.', kaynak: 'Proje mimarisi' },
-      { bilgi: 'Resmi kaynağında normal aralık verilen ölçümlerde değer bu aralıktaysa uyarı verilmez: SpO₂ %96–100 (NIH), dinlenme solunumu 12–20/dk ve EtCO₂ 35–45 mmHg (JEMS), uzay yürüyüşünde nabız 100–110 bpm (NASA, Apollo), kabin CO₂ 2,3 mmHg\'ye kadar, ortam 20–25 °C ve nem %30–60 (NASA), gürültü 72 dBA\'ya kadar (ISS). Aralık dışına çıkınca kişisel normalden sapma değerlendirilir.', kaynak: 'Proje yöntemi (src/sim/parameters.ts normal aralıkları)' },
+      { bilgi: 'Only Layer 1 raises alerts; ASTRA (Layer 2) only reads and explains.', kaynak: 'Project architecture' },
+      { bilgi: 'For metrics whose official source gives a reference range, no alert is raised while the value is within it: SpO₂ 96–100% (NIH), resting breathing 12–20/min and EtCO₂ 35–45 mmHg (JEMS), EVA heart rate 100–110 bpm (NASA, Apollo), cabin CO₂ up to 2.3 mmHg, ambient 20–25 °C and humidity 30–60% (NASA), noise up to 72 dBA (ISS). Outside the range, deviation from personal baseline is evaluated.', kaynak: 'Project method (reference ranges in src/sim/parameters.ts)' },
     ],
   },
 ];

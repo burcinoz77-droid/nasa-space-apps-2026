@@ -1,5 +1,5 @@
-// Ortak durum (Zustand). Ekranlar buradan OKUR. Yazan tek yer loop.ts ve
-// Katman 2'nin explanations/chat alanları. Katman 2 telemetri ve olaylara YAZAMAZ.
+// Shared state (Zustand). Screens READ from here. The only writers are loop.ts and
+// Layer 2's explanations/chat fields. Layer 2 CANNOT write to telemetry or incidents.
 import { create } from 'zustand';
 import type {
   AstraAnswer,
@@ -13,7 +13,7 @@ import type {
   Telemetry,
 } from './types';
 
-export const HISTORY_LENGTH = 120; // grafikler için astronot başına son 120 ölçüm
+export const HISTORY_LENGTH = 120; // last 120 readings per astronaut for the charts
 
 export interface AstraState {
   ship: ShipState | null;
@@ -21,10 +21,10 @@ export interface AstraState {
   history: Partial<Record<CrewId, Telemetry[]>>;
   statuses: Partial<Record<CrewId, CrewStatus>>;
   incidents: Incident[];
-  ledger: LedgerEntry[]; // en yeni başta
-  tickMs: number; // 800 | 1200 | 2500 (Ayarlar sayfası)
-  // Katman 2 alanları (sadece src/ai/ yazar)
-  explanations: Record<string, AstraAnswer>; // incidentId -> ASTRA açıklaması
+  ledger: LedgerEntry[]; // newest first
+  tickMs: number; // 800 | 1200 | 2500 (Settings page)
+  // Layer 2 fields (only src/ai/ writes)
+  explanations: Record<string, AstraAnswer>; // incidentId -> ASTRA explanation
   chat: ChatMessage[];
 
   applyTick(ship: ShipState, telemetry: Telemetry[], out: DetectorOutput): void;

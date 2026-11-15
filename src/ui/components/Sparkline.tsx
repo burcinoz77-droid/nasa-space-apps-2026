@@ -1,7 +1,7 @@
-// Parça 3 · Mini grafik. İki çeşit:
-//  - Sparkline: Recharts ile, kartlardaki nabız grafiği gibi az sayıda yer için.
-//  - TrendLine: saf SVG, tablo satırlarında onlarca tane çizilebilsin diye hafif.
-// Seçicide her seferinde yeni [] döndürmeyin; sonsuz render olur. EMPTY sabitini kullanın.
+// Part 3 · Mini chart. Two kinds:
+//  - Sparkline: with Recharts, for a few places like the heart rate chart on the cards.
+//  - TrendLine: plain SVG, lightweight so dozens can be drawn in table rows.
+// Do not return a new [] from the selector every time; it causes infinite renders. Use the EMPTY constant.
 import { useMemo } from 'react';
 import { Line, LineChart, ReferenceLine, ResponsiveContainer, YAxis } from 'recharts';
 import { readMetric, type MetricKey } from '../../metrics';
@@ -11,7 +11,7 @@ import { COLORS } from '../theme';
 
 const EMPTY: Telemetry[] = [];
 
-/** Bir astronotun son ölçümlerinden tek bir ölçümün serisi. */
+/** The series of one metric from an astronaut's latest readings. */
 function useMetricSeries(crewId: CrewId, key: MetricKey): number[] {
   const hist = useAstra((s) => s.history[crewId] ?? EMPTY);
   return useMemo(() => hist.map((t) => readMetric(t, key)), [hist, key]);
@@ -28,14 +28,14 @@ export function Sparkline({
   metric?: MetricKey;
   color?: string;
   height?: number;
-  reference?: number; // kişisel normal gibi yatay çizgi
+  reference?: number; // horizontal line like the personal baseline
 }) {
   const series = useMetricSeries(crewId, metric);
   const data = useMemo(() => series.map((v) => ({ v })), [series]);
   if (data.length < 2)
     return (
       <div style={{ height }} className="flex items-center text-sm text-slate-500">
-        Veri toplanıyor…
+        Collecting data…
       </div>
     );
   return (
@@ -52,8 +52,8 @@ export function Sparkline({
 }
 
 /**
- * Hafif SVG trend çizgisi (son 60 ölçüm). minSpan: dikey ölçeğin en az aralığı (ör. nabız için 20 bpm);
- * küçük gürültü büyütülüp çizgi titrek görünmesin, gerçek sapma yine belirgin olsun.
+ * Lightweight SVG trend line (last 60 readings). minSpan: minimum range of the vertical scale (e.g. 20 bpm for heart rate);
+ * so small noise is not magnified into a jittery line, while a real deviation still stands out.
  */
 export function TrendLine({
   values,

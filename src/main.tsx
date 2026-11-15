@@ -4,7 +4,7 @@ import App from './App';
 import './index.css';
 import { controls } from './loop';
 
-controls.start(); // simülasyon döngüsünü başlat
+controls.start(); // start the simulation loop
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

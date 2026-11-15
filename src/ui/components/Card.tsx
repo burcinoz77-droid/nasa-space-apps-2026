@@ -1,6 +1,6 @@
-// Parça 3 · Ortak kart. Tüm paneller aynı zemin, kenar ve köşe yarıçapını kullanır.
-// onClick verilirse kart klavyeyle de açılır (Enter/Boşluk). İçinde link (SourceBadge) olabileceği için
-// <button> değil, role="button" olan bir <div> kullanılır (iç içe etkileşimli öğe olmasın).
+// Part 3 · Shared card. All panels use the same background, border and corner radius.
+// If onClick is given the card also opens with the keyboard (Enter/Space). Since it may contain a link (SourceBadge),
+// a <div> with role="button" is used instead of <button> (no nested interactive elements).
 import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 
 export function Card({
@@ -20,7 +20,7 @@ export function Card({
   style?: CSSProperties;
   onClick?: () => void;
   ariaLabel?: string;
-  flush?: boolean; // iç boşluk yok (içerik kendi boşluğunu verir)
+  flush?: boolean; // no padding (the content provides its own)
 }) {
   const body = (
     <>

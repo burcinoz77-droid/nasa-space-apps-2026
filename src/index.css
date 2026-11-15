@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* Yazı tipi: Barlow (arayüz) ve Barlow Semi Condensed (sayılar, tabular rakam). Paketin içinde: internetsiz çalışır. */
+/* Typeface: Barlow (UI) and Barlow Semi Condensed (numbers, tabular figures). Bundled with the app: works without internet. */
 @import '@fontsource/barlow/400.css';
 @import '@fontsource/barlow/500.css';
 @import '@fontsource/barlow/600.css';
@@ -9,7 +9,7 @@
 @import '@fontsource/barlow-semi-condensed/600.css';
 @import '@fontsource/barlow-semi-condensed/700.css';
 
-/* Renkler src/ui/theme.ts ile aynı; Tailwind sınıfları (bg-space-panel, text-calm ...) buradan gelir. */
+/* Colors are the same as src/ui/theme.ts; the Tailwind classes (bg-space-panel, text-calm ...) come from here. */
 @theme {
   --color-space-bg: #070b1a;
   --color-space-panel: #0e1530;
@@ -20,7 +20,7 @@
   --color-critical: #f87171;
   --color-ai: #a78bfa;
   --font-sans: 'Barlow', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  /* "mono" sınıfı sayılar içindir: dar, tabular rakamlı Barlow Semi Condensed (kokpit göstergeleri gibi) */
+  /* The "mono" class is for numbers: narrow Barlow Semi Condensed with tabular figures (like cockpit displays) */
   --font-mono: 'Barlow Semi Condensed', 'Barlow', ui-monospace, monospace;
 }
 
@@ -39,7 +39,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Projeksiyonda sayılar zıplamasın */
+/* Keep numbers from jumping on a projector */
 .font-mono,
 .tabular-nums {
   font-variant-numeric: tabular-nums;
@@ -48,7 +48,7 @@ body {
   letter-spacing: 0.01em;
 }
 
-/* Yörünge ekranının zemini: ince ölçü ızgarası, kenarlara doğru söner (vektör ekran hissi) */
+/* Orbit display background: a fine measuring grid that fades towards the edges (vector display feel) */
 .astra-scope {
   background-color: var(--color-space-bg);
   background-image:
@@ -58,13 +58,13 @@ body {
   background-position: center;
 }
 
-/* Koyu kaydırma çubuğu */
+/* Dark scrollbar */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--color-space-border) transparent;
 }
 
-/* Vücut haritasında KRİTİK bölge nabız gibi atar */
+/* On the body map, a WARNING region pulses like a heartbeat */
 @keyframes astra-pulse {
   0%,
   100% {
@@ -78,7 +78,7 @@ body {
   animation: astra-pulse 1.4s ease-in-out infinite;
 }
 
-/* Kritik bant ilk açıldığında üç kez parlar: görmezden gelinemesin (bant hep tam görünür, sadece hare atar) */
+/* The Warning banner flashes three times when it first opens so it cannot be missed (the banner is always fully visible, only the halo pulses) */
 @keyframes astra-alert-in {
   0%,
   30%,
@@ -96,7 +96,7 @@ body {
   animation: astra-alert-in 2.4s ease-out 1;
 }
 
-/* Açık kritik olay varken ekranın kenarında ince kırmızı ışık (ekranı kapatmaz) */
+/* While a Warning incident is open, a thin red glow at the screen edge (does not cover the screen) */
 @keyframes astra-edge {
   0%,
   100% {

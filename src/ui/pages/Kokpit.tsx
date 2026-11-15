@@ -1,8 +1,8 @@
-// Parça 3 · Kokpit: görevin tek bakışta özeti, görev kontrol konsolu düzeninde.
-//  1. Durum şeridi: mürettebat, ortalama sağlık (trendiyle), görev durumu, görev günü
-//  2. Mürettebat tablosu (nabız trendi, SpO₂, çekirdek ısı, sağlık) · yörünge ekranı (gemi ve EVA bölgesi)
-//  3. Ortam: kabin ve EVA giysileri yan yana · son kayıtlar
-// Tüm sayılar canlı veriden (useAstra); renkler theme.ts'ten; her sayı sütununun kaynak rozeti var.
+// Part 3 · Mission Status: the mission at a glance, in a mission control console layout.
+//  1. Status strip: crew, average health (with trend), mission status, Mission Day
+//  2. Crew table (heart rate trend, SpO₂, core temperature, health) · orbit display (spacecraft and EVA zone)
+//  3. Environment: cabin and EVA suits side by side · latest log entries
+// All numbers from live data (useAstra); colors from theme.ts; every number column has a source badge.
 import { type ReactNode, useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { CREW } from '../../crew';
@@ -20,13 +20,13 @@ import { alpha, COLORS, fmt, LEVEL_COLOR, LEVEL_ICON, LEVEL_LABEL, scoreLevel, w
 
 const EMPTY: Telemetry[] = [];
 const TEAMS: { loc: CrewLocation; title: string; where: string }[] = [
-  { loc: 'KOKPIT', title: 'Kokpit ekibi', where: 'Mars yörüngesinde, gemi içinde' },
-  { loc: 'GEZEGEN', title: 'Gezegen ekibi', where: 'Mars yüzeyinde, EVA giysisiyle' },
+  { loc: 'KOKPIT', title: 'Orbit crew', where: 'in Mars orbit, inside the spacecraft' },
+  { loc: 'GEZEGEN', title: 'Surface crew', where: 'on the Mars surface, in EVA suits' },
 ];
 const idsOf = (loc: CrewLocation) => CREW.filter((m) => m.location === loc).map((m) => m.id);
 
-// Ortalama sağlık trendi: store sağlık skoru geçmişi tutmaz; burada son 120 ölçüm biriktirilir.
-// Modül düzeyinde: sayfa değişince sıfırlanmaz; simülasyon sıfırlanınca (ship = null) temizlenir.
+// Average health trend: the store keeps no health score history; the last 120 readings are accumulated here.
+// At module level: not reset when the page changes; cleared when the simulation is reset (ship = null).
 const avgTrend: number[] = [];
 let avgTrendT = 0;
 function useAverageTrend(avg: number | undefined, t: number | undefined) {
@@ -57,31 +57,31 @@ export function Kokpit({ onOpenCrew, onOpenReports }: { onOpenCrew: (id: CrewId)
       <StatusStrip />
 
       <div className="grid grid-cols-1 gap-4 min-[1180px]:grid-cols-[minmax(0,1.18fr)_minmax(0,1fr)]">
-        <Panel title="Mürettebat" meta={<span className="text-slate-400">ayrıntı için kişiye tıklayın</span>}>
+        <Panel title="Crew" meta={<span className="text-slate-400">click a person for details</span>}>
           <CrewBoard onOpenCrew={onOpenCrew} />
         </Panel>
 
-        <Panel title="Yörünge" meta={<span className="text-slate-400">ARES-1 · Gün {fmt(ship?.missionDay)}</span>} flush>
+        <Panel title="Orbit" meta={<span className="text-slate-400">ARES-1 · Day {fmt(ship?.missionDay)}</span>} flush>
           <div className="astra-scope flex flex-1 flex-col rounded-b-xl">
             <OrbitalDisplay markers={{ ship: shipLevel, surface: surfaceLevel }} />
             <div className="grid grid-cols-2 gap-px border-t border-space-border bg-space-border">
-              <TeamMarker glyph="◆" title="ARES-1" sub="Kokpit ekibi" level={shipLevel} />
-              <TeamMarker glyph="■" title="EVA bölgesi" sub="Gezegen ekibi" level={surfaceLevel} />
+              <TeamMarker glyph="◆" title="ARES-1" sub="Orbit crew" level={shipLevel} />
+              <TeamMarker glyph="■" title="EVA zone" sub="Surface crew" level={surfaceLevel} />
             </div>
           </div>
         </Panel>
       </div>
 
       <div className="grid grid-cols-1 gap-4 min-[1180px]:grid-cols-[minmax(0,1.18fr)_minmax(0,1fr)]">
-        <Panel title="Yaşam ortamı" meta={<span className="text-slate-400">ekip ortalaması</span>}>
+        <Panel title="Habitat environment" meta={<span className="text-slate-400">team average</span>}>
           <EnvironmentTable />
         </Panel>
         <Panel
-          title="Son kayıtlar"
+          title="Recent log"
           meta={
             onOpenReports && (
               <button type="button" onClick={onOpenReports} className="rounded-md px-2 py-0.5 text-calm hover:bg-calm/10">
-                Tüm kayıtlar
+                Full log
               </button>
             )
           }
@@ -93,7 +93,7 @@ export function Kokpit({ onOpenCrew, onOpenReports }: { onOpenCrew: (id: CrewId)
   );
 }
 
-// ---------- Ortak panel ----------
+// ---------- Shared panel ----------
 function Panel({ title, meta, children, flush = false }: { title: string; meta?: ReactNode; children: ReactNode; flush?: boolean }) {
   return (
     <section className="flex min-w-0 flex-col rounded-xl border border-space-border bg-space-panel" aria-label={title}>
@@ -106,7 +106,7 @@ function Panel({ title, meta, children, flush = false }: { title: string; meta?:
   );
 }
 
-// ---------- 1. Durum şeridi ----------
+// ---------- 1. Status strip ----------
 function StatusStrip() {
   const { ship, statuses, telemetry, incidents } = useAstra(
     useShallow((s) => ({ ship: s.ship, statuses: s.statuses, telemetry: s.telemetry, incidents: s.incidents })),
@@ -129,39 +129,39 @@ function StatusStrip() {
   return (
     <section
       className="grid grid-cols-2 overflow-hidden rounded-xl border border-space-border bg-space-panel min-[1180px]:grid-cols-[1fr_1.25fr_1.25fr_1.15fr]"
-      aria-label="Görev durumu özeti"
+      aria-label="Mission status summary"
     >
-      <Cell i={0} label="Mürettebat">
+      <Cell i={0} label="Crew">
         <div className="flex items-baseline gap-2">
           <Big color={live === CREW.length ? COLORS.text : COLORS.offline}>
             {live}/{CREW.length}
           </Big>
-          <span className="text-slate-300">çevrimiçi</span>
+          <span className="text-slate-300">online</span>
         </div>
-        <Sub>{rest ? `${rest} kişi zorunlu dinlenmede` : '3 yörüngede, 3 yüzeyde'}</Sub>
+        <Sub>{rest ? `${rest} on mandatory crew rest` : '3 in orbit, 3 on the surface'}</Sub>
       </Cell>
 
-      <Cell i={1} label="Ortalama sağlık" right={<LevelBadge level={avgLevel} />}>
+      <Cell i={1} label="Average health" right={<LevelBadge level={avgLevel} />}>
         <div className="flex items-end justify-between gap-3">
-          <Big color={avgLevel ? LEVEL_COLOR[avgLevel] : COLORS.offline}>%{fmt(avg)}</Big>
+          <Big color={avgLevel ? LEVEL_COLOR[avgLevel] : COLORS.offline}>{fmt(avg)}%</Big>
           <TrendLine values={trend} color={avgLevel ? LEVEL_COLOR[avgLevel] : COLORS.calm} width={120} height={30} minSpan={20} />
         </div>
-        <Sub>6 kişinin Katman 1 skoru</Sub>
+        <Sub>Layer 1 score of 6 crew</Sub>
       </Cell>
 
-      <Cell i={2} label="Görev durumu" right={<LevelBadge level={missionLevel} />}>
+      <Cell i={2} label="Mission status" right={<LevelBadge level={missionLevel} />}>
         <div className="truncate font-mono text-[26px] leading-tight font-semibold" style={{ color: LEVEL_COLOR[missionLevel] }}>
-          {critical.length ? 'Müdahale gerekiyor' : 'Devam ediyor'}
+          {critical.length ? 'Action required' : 'Nominal'}
         </div>
         <Sub>
-          {critical.length ? `${critical.length} kritik olay onay bekliyor` : open.length ? `${open.length} dikkat bildirimi izleniyor` : 'Açık olay yok'}
+          {critical.length ? `${critical.length} warning(s) awaiting acknowledgement` : open.length ? `${open.length} caution notice(s) being monitored` : 'No open incidents'}
         </Sub>
       </Cell>
 
-      <Cell i={3} label="Görev günü" right={<SourceBadge param="missionDurationDays" />}>
+      <Cell i={3} label="Mission Day" right={<SourceBadge param="missionDurationDays" />}>
         <div className="flex items-baseline gap-2">
           <Big>{fmt(day)}</Big>
-          <span className="text-slate-300">/ ~{fmt(total)} gün</span>
+          <span className="text-slate-300">/ ~{fmt(total)} days</span>
         </div>
         <div
           className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10"
@@ -169,17 +169,17 @@ function StatusStrip() {
           aria-valuenow={Math.round(progress * 100)}
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-label="Görev ilerlemesi"
+          aria-label="Mission progress"
         >
           <div className="h-full rounded-full" style={{ width: `${progress * 100}%`, backgroundColor: COLORS.calm }} />
         </div>
-        <Sub>Görevin %{fmt(progress * 100)}'si tamamlandı</Sub>
+        <Sub>{fmt(progress * 100)}% of mission complete</Sub>
       </Cell>
     </section>
   );
 }
 
-// Hücre kenarları: genişte 4 sütun (aralarda dikey çizgi), tablette 2×2 (ortada artı şeklinde çizgi)
+// Cell borders: 4 columns when wide (vertical lines between), 2×2 on a tablet (cross-shaped lines in the middle)
 const CELL_BORDER = ['border-r max-[1179px]:border-b', 'min-[1180px]:border-r max-[1179px]:border-b', 'border-r', ''];
 
 function Cell({ i, label, right, children }: { i: number; label: string; right?: ReactNode; children: ReactNode }) {
@@ -206,8 +206,8 @@ function Sub({ children }: { children: ReactNode }) {
   return <div className="mt-1.5 truncate text-sm text-slate-400">{children}</div>;
 }
 
-// ---------- 2a. Mürettebat tablosu ----------
-// Dar tabloda (tablet, 1280 px'de yan panelle) nabız trendi gizlenir ve ad sütunu genişler
+// ---------- 2a. Crew table ----------
+// In a narrow table (tablet, 1280 px with the side panel) the heart rate trend is hidden and the name column widens
 const COLS =
   'grid grid-cols-[minmax(0,1.95fr)_minmax(0,0.8fr)_minmax(0,0.6fr)_minmax(0,0.8fr)_minmax(0,0.95fr)] @[520px]:grid-cols-[minmax(0,1.7fr)_minmax(0,1.35fr)_minmax(0,0.6fr)_minmax(0,0.75fr)_minmax(0,1fr)] items-center gap-x-3';
 
@@ -216,13 +216,13 @@ function CrewBoard({ onOpenCrew }: { onOpenCrew: (id: CrewId) => void }) {
   return (
     <div className="@container -mx-1">
       <div className={`${COLS} px-2 pb-2 text-sm text-slate-400`}>
-        <span>Astronot</span>
-        <span>Nabız</span>
+        <span>Astronaut</span>
+        <span>Heart rate</span>
         <span>SpO₂</span>
-        <span className="truncate" title="Çekirdek vücut sıcaklığı">
-          Sıcaklık
+        <span className="truncate" title="Core body temperature">
+          Temperature
         </span>
-        <span className="text-right">Sağlık</span>
+        <span className="text-right">Health</span>
       </div>
       {TEAMS.map((team) => {
         const ids = idsOf(team.loc);
@@ -236,7 +236,7 @@ function CrewBoard({ onOpenCrew }: { onOpenCrew: (id: CrewId) => void }) {
                 <span className="ml-2 text-sm text-slate-400">{team.where}</span>
               </span>
               <span className="shrink-0 font-mono text-sm" style={{ color: l ? LEVEL_COLOR[l] : COLORS.offline }}>
-                ortalama %{fmt(avg)}
+                average {fmt(avg)}%
               </span>
             </div>
             {ids.map((id) => (
@@ -247,13 +247,13 @@ function CrewBoard({ onOpenCrew }: { onOpenCrew: (id: CrewId) => void }) {
       })}
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-space-border px-2 pt-2 text-sm text-slate-400">
         <span className="flex items-center gap-1.5">
-          Nabız <SourceBadge metric="cardio.hr_bpm" />
+          Heart rate <SourceBadge metric="cardio.hr_bpm" />
         </span>
         <span className="flex items-center gap-1.5">
           SpO₂ <SourceBadge metric="cardio.spo2_pct" />
         </span>
         <span className="flex items-center gap-1.5">
-          Sıcaklık <SourceBadge metric="resp.coreTemp_C" />
+          Temperature <SourceBadge metric="resp.coreTemp_C" />
         </span>
       </div>
     </div>
@@ -277,7 +277,7 @@ function CrewRow({ id, onOpen }: { id: CrewId; onOpen: () => void }) {
       type="button"
       onClick={onOpen}
       className={`${COLS} w-full rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/[0.04] focus-visible:outline-2 focus-visible:outline-calm`}
-      aria-label={`${member.name}: astronot ekranını aç`}
+      aria-label={`${member.name}: open astronaut view`}
     >
       <span className="flex min-w-0 items-center gap-2.5">
         <span
@@ -312,7 +312,7 @@ function CrewRow({ id, onOpen }: { id: CrewId; onOpen: () => void }) {
       </span>
       <span className="flex flex-col items-end">
         <span className="font-mono text-lg leading-tight font-semibold" style={{ color: c }}>
-          %{fmt(st?.healthScore)}
+          {fmt(st?.healthScore)}%
         </span>
         <span className="font-mono text-sm whitespace-nowrap" style={{ color: c }}>
           {st ? `${LEVEL_ICON[st.level]} ${LEVEL_LABEL[st.level]}` : '—'}
@@ -322,7 +322,7 @@ function CrewRow({ id, onOpen }: { id: CrewId; onOpen: () => void }) {
   );
 }
 
-// ---------- 2b. Yörünge ekranının alt göstergesi ----------
+// ---------- 2b. Bottom readout of the orbit display ----------
 function TeamMarker({ glyph, title, sub, level }: { glyph: string; title: string; sub: string; level: Level | undefined }) {
   const c = level ? LEVEL_COLOR[level] : COLORS.offline;
   return (
@@ -339,16 +339,16 @@ function TeamMarker({ glyph, title, sub, level }: { glyph: string; title: string
   );
 }
 
-// ---------- 3a. Yaşam ortamı: kabin ve EVA giysileri ----------
+// ---------- 3a. Habitable environment: cabin and EVA suits ----------
 const ENV_ROWS: { key: MetricKey; label: string; limit?: (v: number) => Level }[] = [
   {
     key: 'env.ppCO2_mmHg',
-    label: 'CO₂ kısmi basıncı',
+    label: 'CO₂ partial pressure',
     limit: (v) => (v > PARAMS.co2CriticalLimit.value ? 'critical' : v > PARAMS.co2CautionLimit.value ? 'caution' : 'normal'),
   },
-  { key: 'env.o2_pct', label: 'Oksijen' },
-  { key: 'env.pressure_kPa', label: 'Basınç' },
-  { key: 'env.doseRate_uSv_h', label: 'Radyasyon doz hızı' },
+  { key: 'env.o2_pct', label: 'Oxygen' },
+  { key: 'env.pressure_kPa', label: 'Pressure' },
+  { key: 'env.doseRate_uSv_h', label: 'Radiation dose rate' },
 ];
 
 function teamAverage(telemetry: Partial<Record<CrewId, Telemetry>>, ids: CrewId[], key: MetricKey): number | undefined {
@@ -381,9 +381,9 @@ function EnvironmentTable() {
   return (
     <div className="@container">
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1.25fr)] gap-x-3 pb-2 text-sm text-slate-400">
-        <span>Ölçüm</span>
-        <span>Kabin, Kokpit</span>
-        <span>Giysiler, Gezegen</span>
+        <span>Metric</span>
+        <span>Cabin, spacecraft</span>
+        <span>Suits, Surface</span>
       </div>
       {ENV_ROWS.map((row) => (
         <div
@@ -396,27 +396,27 @@ function EnvironmentTable() {
         </div>
       ))}
       <div className="mt-2 text-sm text-slate-400">
-        CO₂ sınırları: dikkat {fmtUnit(PARAMS.co2CautionLimit.value, 'mmHg', 1)}, kritik {fmtUnit(PARAMS.co2CriticalLimit.value, 'mmHg', 1)}
+        CO₂ limits: caution {fmtUnit(PARAMS.co2CautionLimit.value, 'mmHg', 1)}, warning {fmtUnit(PARAMS.co2CriticalLimit.value, 'mmHg', 1)}
       </div>
     </div>
   );
 }
 
-// ---------- 3b. Son kayıtlar ----------
+// ---------- 3b. Latest log entries ----------
 const KIND: Record<LedgerEntry['kind'], { text: string; color: string }> = {
-  INCIDENT_OPENED: { text: 'Olay', color: COLORS.caution },
-  INCIDENT_RESOLVED: { text: 'Çözüldü', color: COLORS.normal },
-  AUTO_ACTION: { text: 'Otonom adım', color: COLORS.calm },
-  ACK: { text: 'Onay', color: COLORS.calm },
-  SCENARIO: { text: 'Senaryo', color: COLORS.calm },
-  SYSTEM: { text: 'Sistem', color: COLORS.offline },
+  INCIDENT_OPENED: { text: 'Incident', color: COLORS.caution },
+  INCIDENT_RESOLVED: { text: 'Resolved', color: COLORS.normal },
+  AUTO_ACTION: { text: 'Autonomous action', color: COLORS.calm },
+  ACK: { text: 'Acknowledged', color: COLORS.calm },
+  SCENARIO: { text: 'Scenario', color: COLORS.calm },
+  SYSTEM: { text: 'System', color: COLORS.offline },
 };
 
 function RecentLog() {
   const ledger = useAstra((s) => s.ledger);
   const incidents = useAstra((s) => s.incidents);
   const rows = ledger.slice(0, 6);
-  if (!rows.length) return <p className="text-sm text-slate-400">Henüz kayıt yok. Katman 1 ilk ölçümleri topluyor.</p>;
+  if (!rows.length) return <p className="text-sm text-slate-400">No entries yet. Layer 1 is collecting the first readings.</p>;
   return (
     <ol className="space-y-1.5">
       {rows.map((e) => {
@@ -425,7 +425,7 @@ function RecentLog() {
         const color = e.kind === 'INCIDENT_OPENED' && inc ? LEVEL_COLOR[inc.level] : k.color;
         return (
           <li key={e.id} className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 border-l-2 pl-3" style={{ borderColor: color }}>
-            <span className="font-mono text-sm text-slate-400">{new Date(e.at).toLocaleTimeString('tr-TR')}</span>
+            <span className="font-mono text-sm text-slate-400">{new Date(e.at).toLocaleTimeString('en-GB')}</span>
             <span className="min-w-0">
               <span className="text-sm font-semibold" style={{ color }}>
                 {k.text}

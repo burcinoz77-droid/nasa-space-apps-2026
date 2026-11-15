@@ -1,10 +1,10 @@
 /// <reference types="node" />
-// Parça 4 · Plandaki 10 test sorusunu GERÇEK modele sorar (.env'deki ASTRA_PROVIDER: gemini | claude).
-// Normal "npm run test" bu dosyayı ATLAR; kota harcamaz. Çalıştırmak için anahtar .env'de olmalı:
+// Part 4 · Asks the plan's 10 test questions to the REAL model (ASTRA_PROVIDER in .env: gemini | claude).
+// A normal "npm run test" SKIPS this file; it uses no quota. To run it, the key must be in .env:
 //   Git Bash / macOS / Linux:  ASTRA_LIVE=1 npx vitest run src/ai/astra.live.test.ts
 //   Windows PowerShell:        $env:ASTRA_LIVE=1; npx vitest run src/ai/astra.live.test.ts
-// Sonuç docs/test-sonuclari-<saglayici>.md dosyasına yazılır; plandaki tabloya oradan geçirilir.
-// Biri bile "KALIR" ise api/astra.ts'teki SYSTEM_PROMPT düzeltilir ve test tekrar çalıştırılır.
+// The result is written to docs/test-sonuclari-<provider>.md and copied from there into the plan's table.
+// If even one result is "FAIL", fix SYSTEM_PROMPT in api/astra.ts and run the test again.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { loadEnv } from 'vite';
 import { describe, expect, it } from 'vitest';
@@ -30,7 +30,7 @@ interface Row {
 
 async function ask(mode: 'chat' | 'incident', question: string, context: Record<string, unknown>) {
   const started = Date.now();
-  // Sohbette uygulamayla aynı: kısa özet + araçların okuyacağı veri kopyası
+  // Same as the app in chat: short summary + data snapshot for the tools to read
   const toolData = mode === 'chat' ? buildToolData(useAstra.getState()) : undefined;
   const res = await handler.fetch(
     new Request('http://localhost/api/astra', {
@@ -54,9 +54,9 @@ function check(r: Awaited<ReturnType<typeof ask>>, context: unknown, question: s
   return problems;
 }
 
-describe.skipIf(!LIVE)('ASTRA canlı model testi', () => {
-  it('10 test sorusu + 1 olay açıklaması', async () => {
-    // .env'i sunucu fonksiyonunun göreceği process.env'e yükle (vite dev ile aynı kural)
+describe.skipIf(!LIVE)('ASTRA live model test', () => {
+  it('10 test questions + 1 incident explanation', async () => {
+    // Load .env into the process.env the server function sees (same rule as vite dev)
     for (const [k, v] of Object.entries(loadEnv('development', process.cwd(), ''))) {
       if (!k.startsWith('VITE_') && process.env[k] === undefined) process.env[k] = v;
     }
@@ -64,9 +64,9 @@ describe.skipIf(!LIVE)('ASTRA canlı model testi', () => {
     const model = provider === 'claude' ? process.env.CLAUDE_MODEL || 'claude-haiku-5-5' : process.env.GEMINI_MODEL || 'gemini-3.8-flash';
     const keyName = provider === 'claude' ? 'ANTHROPIC_API_KEY' : 'GEMINI_API_KEY';
     if (!process.env[keyName]) throw new Error(`${keyName} .env içinde yok; önce anahtarı ekleyin.`);
-    const pause = provider === 'gemini' ? 4500 : 500; // ücretsiz Gemini kotası dakikada sınırlı
+    const pause = provider === 'gemini' ? 4500 : 500; // the free Gemini quota is limited per minute
 
-    const s = makeDemoState(); // Kerem CO₂ ile kritik, Elif'e zorunlu dinlenme verilmiş
+    const s = makeDemoState(); // Kerem is at Warning level with CO₂, Elif has been placed on mandatory crew rest
     const hrElif = Math.round(s.telemetry.elif!.cardio.hr_bpm);
     const rows: Row[] = [];
 
@@ -80,7 +80,7 @@ describe.skipIf(!LIVE)('ASTRA canlı model testi', () => {
       await sleep(pause);
     }
 
-    // Ek: araç kullanımı ve çok turlu sohbet (mentor isteği). Gidiş sorusu get_metric_trend gerektirir.
+    // Extra: tool use and multi-turn chat (mentor request). The trend question needs get_metric_trend.
     {
       const question = "Kerem'in CO₂ değeri son ölçümlerde artıyor mu?";
       const context = buildContext(useAstra.getState(), { question, compact: true });

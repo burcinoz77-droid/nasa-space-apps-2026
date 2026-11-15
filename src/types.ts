@@ -1,85 +1,85 @@
 // ============================================================================
-// ORTAK VERİ SÖZLEŞMESİ — dört parçanın tek buluşma noktası
+// SHARED DATA CONTRACT — the single meeting point of the four parts
 // ----------------------------------------------------------------------------
-// KURAL: Alan EKLEMEK serbest. Alan SİLMEK, ADINI veya BİRİMİNİ değiştirmek
-// yasak; gerekiyorsa önce ekip grubuna yazın, herkes onaylasın.
-// Birim her zaman alan adının sonunda yazar: hr_bpm, doseRate_uSv_h ...
+// RULE: ADDING fields is allowed. DELETING a field or changing its NAME or UNIT
+// is not allowed; if needed, post in the team group first and get everyone's approval.
+// The unit is always at the end of the field name: hr_bpm, doseRate_uSv_h ...
 // ============================================================================
 
-// ---------- Mürettebat ----------
+// ---------- Crew ----------
 export type CrewId = 'elif' | 'kerem' | 'zeynep' | 'emir' | 'deniz' | 'mert';
-export type CrewLocation = 'KOKPIT' | 'GEZEGEN'; // Kokpit = yörüngedeki gemi, Gezegen = Mars yüzeyi (EVA)
+export type CrewLocation = 'KOKPIT' | 'GEZEGEN'; // KOKPIT = spacecraft in orbit (IVA), GEZEGEN = Mars surface (EVA)
 
 export interface CrewMember {
   id: CrewId;
   name: string; // "Dr. Elif Yılmaz"
-  role: string; // "Komutan", "Uçuş Mühendisi", "Görev Uzmanı · Jeolog"
+  role: string; // "Commander", "Flight Engineer", "Mission Specialist · Geologist"
   location: CrewLocation;
-  unit: string; // "IVA-01" (gemi içi) | "xEMU-01" (uzay giysisi)
-  sensitivity: string; // kartta görünen kişisel risk notu
+  unit: string; // "IVA-01" (inside the spacecraft) | "xEMU-01" (spacesuit)
+  sensitivity: string; // personal risk note shown on the card
 }
 
-// ---------- Veri grubu 1 · Kalp-damar ----------
+// ---------- Data group 1 · Cardiovascular ----------
 export interface Cardio {
-  hr_bpm: number; // nabız
-  hrv_rmssd_ms: number; // kalp hızı değişkenliği (RMSSD)
-  ecg_rhythm: 'sinus' | 'irregular'; // EKG ritmi
-  ecg_ectopic_per_min: number; // dakikadaki erken/düzensiz atım
-  bp_sys_mmHg: number; // sistolik tansiyon
-  bp_dia_mmHg: number; // diyastolik tansiyon
-  spo2_pct: number; // kandaki oksijen doygunluğu
+  hr_bpm: number; // heart rate
+  hrv_rmssd_ms: number; // heart rate variability (RMSSD)
+  ecg_rhythm: 'sinus' | 'irregular'; // ECG rhythm
+  ecg_ectopic_per_min: number; // premature/irregular beats per minute
+  bp_sys_mmHg: number; // systolic blood pressure
+  bp_dia_mmHg: number; // diastolic blood pressure
+  spo2_pct: number; // blood oxygen saturation
 }
 
-// ---------- Veri grubu 2 · Solunum ve metabolik ----------
+// ---------- Data group 2 · Respiratory and metabolic ----------
 export interface Respiratory {
-  rr_bpm: number; // solunum sayısı (nefes/dk)
-  minuteVent_L_min: number; // dakika ventilasyonu
-  etco2_mmHg: number; // soluk sonu CO2
-  coreTemp_C: number; // çekirdek vücut sıcaklığı
-  skinTemp_C: number; // deri sıcaklığı
-  gsr_uS: number; // galvanik deri tepkisi (mikrosiemens)
+  rr_bpm: number; // respiratory rate (breaths/min)
+  minuteVent_L_min: number; // minute ventilation
+  etco2_mmHg: number; // end-tidal CO2
+  coreTemp_C: number; // core body temperature
+  skinTemp_C: number; // skin temperature
+  gsr_uS: number; // galvanic skin response (microsiemens)
 }
 
-// ---------- Veri grubu 3 · Biyokimyasal ----------
+// ---------- Data group 3 · Biochemical ----------
 export interface Biochem {
-  vocOxStressIndex: number; // nefeste uçucu bileşik (VOC) oksidatif stres indeksi, 0-100 (varsayım ölçeği)
-  sweatCortisol_ng_mL: number; // terde kortizol
-  sweatLactate_mM: number; // terde laktat
-  sweatSodium_mM: number; // terde sodyum (elektrolit)
+  vocOxStressIndex: number; // breath volatile organic compound (VOC) oxidative stress index, 0-100 (assumed scale)
+  sweatCortisol_ng_mL: number; // sweat cortisol
+  sweatLactate_mM: number; // sweat lactate
+  sweatSodium_mM: number; // sweat sodium (electrolyte)
 }
 
-// ---------- Veri grubu 4 · Psikolojik ve bilişsel ----------
+// ---------- Data group 4 · Psychological and cognitive ----------
 export interface Cognitive {
-  pvtMeanRt_ms: number; // PVT-B ortalama tepki süresi
-  pvtLapses: number; // PVT-B dikkat kaybı sayısı (tepki >= 355 ms)
-  bsi18_gsi: number; // BSI-18 genel şiddet skoru, 0-72
-  panasPositive: number; // PANAS olumlu duygu, 10-50
-  panasNegative: number; // PANAS olumsuz duygu, 10-50
-  speechStrainIndex: number; // konuşma analizi zorlanma indeksi, 0-100 (varsayım ölçeği)
-  pupilDiameter_mm: number; // göz bebeği çapı
-  pupilLatency_ms: number; // ışığa göz bebeği tepki gecikmesi
+  pvtMeanRt_ms: number; // PVT-B mean reaction time
+  pvtLapses: number; // PVT-B lapse count (reaction >= 355 ms)
+  bsi18_gsi: number; // BSI-18 global severity score, 0-72
+  panasPositive: number; // PANAS positive affect, 10-50
+  panasNegative: number; // PANAS negative affect, 10-50
+  speechStrainIndex: number; // speech analysis strain index, 0-100 (assumed scale)
+  pupilDiameter_mm: number; // pupil diameter
+  pupilLatency_ms: number; // pupillary light reflex latency
 }
 
-// ---------- Veri grubu 5 · Çevre ve dış etkenler ----------
+// ---------- Data group 5 · Environmental and external factors ----------
 export interface Environment {
-  doseRate_uSv_h: number; // anlık radyasyon doz hızı
-  doseCumulative_mSv: number; // görev boyu toplam doz
-  ppCO2_mmHg: number; // kabin ya da giysi içi CO2 kısmi basıncı
-  o2_pct: number; // kabin ya da giysi içi O2 yüzdesi
-  pressure_kPa: number; // kabin ya da giysi basıncı
-  sleepLastNight_h: number; // dün gece uyku süresi
-  remPct: number; // REM uykusu oranı
-  swsPct: number; // derin (yavaş dalga) uyku oranı
-  circadianShift_h: number; // sirkadiyen ritim kayması (saat)
-  ambientTemp_C: number; // kabin ya da giysi içi ortam sıcaklığı
-  humidity_pct: number; // kabin ya da giysi içi bağıl nem
-  noise_dBA: number; // astronotun maruz kaldığı gürültü (kişisel gürültü dozimetresi)
+  doseRate_uSv_h: number; // current radiation dose rate
+  doseCumulative_mSv: number; // cumulative mission dose
+  ppCO2_mmHg: number; // CO2 partial pressure in the cabin or suit
+  o2_pct: number; // O2 percentage in the cabin or suit
+  pressure_kPa: number; // cabin or suit pressure
+  sleepLastNight_h: number; // sleep duration last night
+  remPct: number; // REM sleep percentage
+  swsPct: number; // deep (slow-wave) sleep percentage
+  circadianShift_h: number; // circadian rhythm shift (hours)
+  ambientTemp_C: number; // ambient temperature in the cabin or suit
+  humidity_pct: number; // relative humidity in the cabin or suit
+  noise_dBA: number; // noise the astronaut is exposed to (personal noise dosimeter)
 }
 
-// Bir astronotun bir andaki tüm ölçümleri (Parça 1 üretir, herkes okur)
+// All readings of one astronaut at one moment (Part 1 produces, everyone reads)
 export interface Telemetry {
   crewId: CrewId;
-  t: number; // ölçüm zamanı, ms (Date.now() ile aynı ölçek)
+  t: number; // reading time, ms (same scale as Date.now())
   missionDay: number;
   cardio: Cardio;
   resp: Respiratory;
@@ -88,7 +88,7 @@ export interface Telemetry {
   env: Environment;
 }
 
-// ---------- Gemi ve senaryo (Parça 1 üretir) ----------
+// ---------- Vehicle and scenario (Part 1 produces) ----------
 export type ScenarioId =
   | 'NORMAL'
   | 'SOLAR_STORM'
@@ -100,19 +100,19 @@ export interface ShipState {
   t: number;
   missionDay: number;
   scenario: ScenarioId;
-  commDelayOneWay_s: number; // Dünya-Mars tek yön gecikme (180-1340 s)
-  activeEvents: string[]; // örn. ['SPE_ONSET'] — ekranda bilgi olarak
+  commDelayOneWay_s: number; // Earth-Mars one-way light time (180-1340 s)
+  activeEvents: string[]; // e.g. ['SPE_ONSET'] — shown on screen as information
 }
 
 export interface Simulation {
   tick(): { ship: ShipState; telemetry: Telemetry[] };
   setScenario(id: ScenarioId): void;
-  /** Katman 1 otonom adım uyguladığında çağrılır: sığınak dozu düşürür, havalandırma CO2'yi, dinlenme yorgunluğu. */
+  /** Called when Layer 1 applies an autonomous action: the shelter lowers dose, ventilation lowers CO2, rest lowers fatigue. */
   onAutoAction(action: AutoAction): void;
   reset(): void;
 }
 
-// ---------- Katman 1 çıktısı (Parça 2 üretir) ----------
+// ---------- Layer 1 output (Part 2 produces) ----------
 export type Level = 'normal' | 'caution' | 'critical';
 export type Domain = 'cardio' | 'resp' | 'biochem' | 'cog' | 'env';
 export type MetricKey = import('./metrics').MetricKey;
@@ -120,20 +120,20 @@ export type MetricKey = import('./metrics').MetricKey;
 export interface MetricScore {
   key: MetricKey;
   value: number;
-  mean: number; // kişisel baseline ortalaması
-  sd: number; // kişisel baseline standart sapması
+  mean: number; // personal baseline mean
+  sd: number; // personal baseline standard deviation
   z: number; // (value - mean) / sd
-  streak: number; // eşiği üst üste kaç ölçümdür aşıyor
+  streak: number; // for how many consecutive readings it has exceeded the threshold
   level: Level;
 }
 
 export interface CrewStatus {
   crewId: CrewId;
   level: Level;
-  healthScore: number; // 0-100, ekrandaki "%87"
+  healthScore: number; // 0-100, the "87%" on screen
   domainScores: Record<Domain, number>; // 0-100
-  topSignals: MetricScore[]; // en çok sapan 3 ölçüm
-  restRequired: boolean; // zorunlu dinlenme verildi mi
+  topSignals: MetricScore[]; // the 3 most deviating metrics
+  restRequired: boolean; // placed on mandatory crew rest?
 }
 
 export type IncidentType =
@@ -148,12 +148,12 @@ export type IncidentType =
 
 export type AutoActionType = 'RADIATION_SHELTER' | 'INCREASE_VENTILATION' | 'MANDATORY_REST';
 
-/** Önceden onaylı güvenli adım (sadece bu üç tür). Her biri olay kaydına da yazılır. */
+/** Pre-approved safe action (only these three types). Each is also written to the incident log. */
 export interface AutoAction {
   type: AutoActionType;
   crewIds: CrewId[];
   at: number;
-  reason: string; // "Doz hızı 3 ölçümdür kritik"
+  reason: string; // "Dose rate at Warning for 3 readings"
   incidentId: string;
 }
 
@@ -163,7 +163,7 @@ export interface Incident {
   level: Exclude<Level, 'normal'>;
   crewIds: CrewId[];
   openedAt: number;
-  title: string; // "Elif: uyku + tepki süresi + ruh hali birlikte düşüyor"
+  title: string; // "Elif: sleep + reaction time + mood falling together"
   signals: MetricScore[];
   autoActions: AutoActionType[];
   status: 'open' | 'acknowledged' | 'resolved';
@@ -173,41 +173,41 @@ export interface LedgerEntry {
   id: string;
   at: number;
   kind: 'INCIDENT_OPENED' | 'INCIDENT_RESOLVED' | 'AUTO_ACTION' | 'ACK' | 'SCENARIO' | 'SYSTEM';
-  text: string; // Türkçe, ekranda aynen görünür
+  text: string; // English, shown on screen as is
   incidentId?: string;
   crewIds?: CrewId[];
 }
 
 export interface DetectorOutput {
   statuses: Record<CrewId, CrewStatus>;
-  incidents: Incident[]; // tüm olaylar (açık + kapanmış), en yeni başta
-  newLedger: LedgerEntry[]; // bu adımda oluşan kayıtlar
-  newActions: AutoAction[]; // bu adımda başlatılan otonom adımlar (loop.ts simülasyona iletir)
+  incidents: Incident[]; // all incidents (open + closed), newest first
+  newLedger: LedgerEntry[]; // log entries created in this step
+  newActions: AutoAction[]; // autonomous actions started in this step (loop.ts passes them to the simulation)
 }
 
 export interface Detector {
   process(ship: ShipState, telemetry: Telemetry[]): DetectorOutput;
-  acknowledge(incidentId: string): LedgerEntry | null; // insan onayı
+  acknowledge(incidentId: string): LedgerEntry | null; // human acknowledgement
   reset(): void;
 }
 
-// ---------- Katman 2 (Parça 4) ----------
+// ---------- Layer 2 (Part 4) ----------
 export type AstraMode = 'chat' | 'incident';
 
 export interface AstraRequest {
   mode: AstraMode;
   question: string;
-  context: Record<string, unknown>; // src/ai/context.ts hazırlar
+  context: Record<string, unknown>; // prepared by src/ai/context.ts
 }
 
 export interface AstraAnswer {
   text: string;
   source: 'claude' | 'gemini' | 'fallback' | 'cache';
-  verified: boolean; // cevaptaki tüm sayılar veride var mı (src/ai/verify.ts)
+  verified: boolean; // are all numbers in the answer present in the data (src/ai/verify.ts)
   latencyMs: number;
-  tools?: string[]; // ASTRA'nın cevap için çağırdığı araçlar, ekranda gösterilir (Parça 4 ekledi)
-  fallbackReason?: 'connection' | 'safety'; // yedek cevabın sebebi: bağlantı yok mu, güvenlik süzgeci mi (Parça 4 ekledi)
-  sources?: { ad: string; url: string }[]; // cevabın dayandığı kaynaklar, ekranda link olarak (Parça 4 ekledi)
+  tools?: string[]; // tools ASTRA called for the answer, shown on screen (added by Part 4)
+  fallbackReason?: 'connection' | 'safety'; // reason for the offline answer: no connection, or the safety filter (added by Part 4)
+  sources?: { ad: string; url: string }[]; // sources the answer is based on, shown as links (added by Part 4)
 }
 
 export interface ChatMessage {

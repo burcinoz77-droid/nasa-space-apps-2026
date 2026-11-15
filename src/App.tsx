@@ -1,7 +1,7 @@
-// Uygulama iskeleti: yan menü + üst bar + olay bandı + sayfa (Sahibi: Parça 3).
-// Sayfa sahipleri: Kokpit/Astronot Ekranı/Astronotlar = Parça 3,
-// Raporlar = Parça 2, Ayarlar = Parça 1, Görevler ve ASTRA sohbet paneli = Parça 4.
-// Seçili astronot burada tutulur: Kokpit ve Astronotlar'dan tıklanınca Astronot Ekranı o kişiyle açılır.
+// App shell: side menu + top bar + incident banner + page (Owner: Part 3).
+// Page owners: Mission Status/Astronaut View/Crew = Part 3,
+// Reports = Part 2, Settings = Part 1, Tasks and the ASTRA chat panel = Part 4.
+// The selected astronaut is kept here: clicking from Mission Status or Crew opens the Astronaut View for that person.
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { CREW, CREW_BY_ID } from './crew';
@@ -40,25 +40,25 @@ import { alpha, COLORS, fmt } from './ui/theme';
 type PageId = 'kokpit' | 'astronot' | 'astronotlar' | 'gorevler' | 'raporlar' | 'ayarlar';
 
 const PAGES: { id: PageId; label: string; icon: () => ReactNode; subtitle: string }[] = [
-  { id: 'kokpit', label: 'Kokpit', icon: IconCockpit, subtitle: 'Görevin tek bakışta özeti' },
-  { id: 'astronot', label: 'Astronot Ekranı', icon: IconAstronaut, subtitle: 'Bir astronotun 5 veri grubundaki tüm ölçümleri' },
-  { id: 'astronotlar', label: 'Astronotlar', icon: IconCrew, subtitle: 'Kokpit ve Gezegen ekipleri' },
-  { id: 'gorevler', label: 'Görevler', icon: IconTasks, subtitle: 'Günün EVA görevi ve ekipman kontrolü' },
-  { id: 'raporlar', label: 'Raporlar', icon: IconReports, subtitle: 'Olay kaydı: olaylar, otonom adımlar, onaylar' },
-  { id: 'ayarlar', label: 'Ayarlar', icon: IconSettings, subtitle: 'Senaryolar, örnekleme hızı, veri kaynakları' },
+  { id: 'kokpit', label: 'Mission Status', icon: IconCockpit, subtitle: 'Mission status at a glance' },
+  { id: 'astronot', label: 'Astronaut View', icon: IconAstronaut, subtitle: 'All readings for one astronaut across 5 data groups' },
+  { id: 'astronotlar', label: 'Crew', icon: IconCrew, subtitle: 'Orbit and surface crews' },
+  { id: 'gorevler', label: 'Tasks', icon: IconTasks, subtitle: 'Today\'s EVA task and equipment check' },
+  { id: 'raporlar', label: 'Reports', icon: IconReports, subtitle: 'Event log: incidents, autonomous actions, acknowledgements' },
+  { id: 'ayarlar', label: 'Settings', icon: IconSettings, subtitle: 'Scenarios, sampling rate, data sources' },
 ];
 
-// Üst bardaki senaryo hapları (kısa adlar); tam adlar loop.ts → SCENARIO_NAMES
-// (dar ekranda, 1024 px tablet, kısa ad gösterilir)
+// Scenario pills in the top bar (short names); full names in loop.ts → SCENARIO_NAMES
+// (on narrow screens, 1024 px tablet, the short name is shown)
 const SCENARIO_PILLS: { id: ScenarioId; label: string; short?: string }[] = [
-  { id: 'NORMAL', label: 'Normal gün', short: 'Normal' },
-  { id: 'SOLAR_STORM', label: 'Güneş fırtınası' },
-  { id: 'MARS_DAY_180', label: 'Mars 180. gün' },
-  { id: 'CO2_SCRUBBER_FAIL', label: 'CO₂ arızası' },
-  { id: 'EVA_OVEREXERTION', label: 'EVA aşırı efor', short: 'EVA efor' },
+  { id: 'NORMAL', label: 'Nominal day', short: 'Nominal' },
+  { id: 'SOLAR_STORM', label: 'Solar particle event' },
+  { id: 'MARS_DAY_180', label: 'Mars day 180' },
+  { id: 'CO2_SCRUBBER_FAIL', label: 'CO₂ failure' },
+  { id: 'EVA_OVEREXERTION', label: 'EVA overexertion', short: 'EVA' },
 ];
 
-// Konsolu kullanan kişi (profil kartı). Mürettebattan biri; gerçek bir kişi değildir.
+// The person using the console (profile card). One of the crew; not a real person.
 const CONSOLE_USER: CrewId = 'elif';
 const EMPTY: Telemetry[] = [];
 
@@ -67,7 +67,7 @@ export default function App() {
   const [crew, setCrew] = useState<CrewId>(CREW[0].id);
   const hasCritical = useAstra((s) => s.incidents.some((i) => i.level === 'critical' && i.status === 'open'));
 
-  // Parça 1: jüri demo turu sayfayı Kokpit'e alabilsin
+  // Part 1: lets the jury demo tour switch the page to Mission Status
   useEffect(() => {
     const go = (e: Event) => {
       const id = (e as CustomEvent<string>).detail;
@@ -103,7 +103,7 @@ export default function App() {
         </main>
       </div>
       <AstraChatPanel />
-      {/* Parça 1: senaryo değişince o senaryonun tam ekran sinematiği (Atla ile kapanır) */}
+      {/* Part 1: when the scenario changes, that scenario's full-screen cinematic (closed with Skip) */}
       <ScenarioCinematics />
       <DemoTour />
       <VisorHud />
@@ -111,7 +111,7 @@ export default function App() {
   );
 }
 
-// ---------- Yan menü ----------
+// ---------- Side menu ----------
 function Sidebar({ page, onPage }: { page: PageId; onPage: (p: PageId) => void }) {
   const delay = useAstra((s) => s.ship?.commDelayOneWay_s);
   const openCount = useAstra((s) => s.incidents.filter((i) => i.status !== 'resolved').length);
@@ -150,11 +150,11 @@ function Sidebar({ page, onPage }: { page: PageId; onPage: (p: PageId) => void }
       <div className="mt-auto space-y-3">
         <div className="rounded-xl border border-space-border bg-space-bg/60 p-3">
           <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: COLORS.calm }}>
-            <IconSignal /> Dünya bağlantısı
+            <IconSignal /> Comm with Earth
           </div>
-          <div className="mt-1 text-sm text-slate-400">gecikme · tek yön</div>
+          <div className="mt-1 text-sm text-slate-400">delay · one way</div>
           <div className="font-mono text-lg font-semibold whitespace-nowrap text-white">{fmtDelay(delay)}</div>
-          <div className="text-sm text-slate-400">gidiş-dönüş {delay ? fmtDelay(delay * 2) : '—'}</div>
+          <div className="text-sm text-slate-400">round trip {delay ? fmtDelay(delay * 2) : '—'}</div>
           <div className="mt-1.5">
             <SourceBadge param="commDelayDemo" />
           </div>
@@ -163,14 +163,14 @@ function Sidebar({ page, onPage }: { page: PageId; onPage: (p: PageId) => void }
           onClick={() => controls.reset()}
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-space-border px-2 py-2 text-sm whitespace-nowrap text-slate-300 hover:bg-white/5"
         >
-          <IconReset /> Simülasyonu sıfırla
+          <IconReset /> Reset simulation
         </button>
       </div>
     </aside>
   );
 }
 
-// ---------- Üst bar ----------
+// ---------- Top bar ----------
 function TopBar({ onBell }: { onBell: () => void }) {
   const { scenario, day, open, critical } = useAstra(
     useShallow((s) => {
@@ -199,8 +199,8 @@ function TopBar({ onBell }: { onBell: () => void }) {
           onClick={onBell}
           className="relative rounded-xl p-2 hover:bg-white/5"
           style={{ color: bellColor }}
-          aria-label={`${open} açık olay${critical ? ', kritik var' : ''}. Raporlar'ı aç`}
-          title="Açık olaylar"
+          aria-label={`${open} open incidents${critical ? ', warning active' : ''}. Open Reports`}
+          title="Open incidents"
         >
           <IconBell />
           {open > 0 && (
@@ -231,7 +231,7 @@ function TopBar({ onBell }: { onBell: () => void }) {
   );
 }
 
-/** Senaryo seçimi: gerçek görev konsolunda olmayacağı için küçük, sönük bir "Simülasyon ▾" menüsünde durur. */
+/** Scenario selection: sits in a small, muted "Simulation ▾" menu since it would not exist on a real mission console. */
 function ScenarioMenu({ scenario }: { scenario: ScenarioId | undefined }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -256,11 +256,11 @@ function ScenarioMenu({ scenario }: { scenario: ScenarioId | undefined }) {
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        title="Simülasyon senaryosu (demo)"
+        title="Simulation scenario (demo)"
         className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm hover:bg-white/5"
         style={{ color: active ? COLORS.caution : COLORS.textMuted }}
       >
-        <span className="hidden min-[1180px]:inline">Simülasyon:</span>
+        <span className="hidden min-[1180px]:inline">Simulation:</span>
         <span className={active ? 'font-semibold' : ''}>{current?.short ?? current?.label ?? '—'}</span>
         <span aria-hidden="true" className="text-xs">
           ▾
@@ -268,7 +268,7 @@ function ScenarioMenu({ scenario }: { scenario: ScenarioId | undefined }) {
       </button>
       {open && (
         <div role="menu" className="absolute right-0 z-50 mt-1 w-64 rounded-xl border border-space-border bg-space-panel p-1 shadow-xl">
-          <div className="px-3 pt-2 pb-1 text-xs text-slate-500">Simülasyon senaryosu (demo)</div>
+          <div className="px-3 pt-2 pb-1 text-xs text-slate-500">Simulation scenario (demo)</div>
           {SCENARIO_PILLS.map((p) => {
             const on = scenario === p.id;
             return (
@@ -294,7 +294,7 @@ function ScenarioMenu({ scenario }: { scenario: ScenarioId | undefined }) {
   );
 }
 
-/** Canlı saat ayrı bileşen: her saniye sadece bu kısım yeniden çizilir. */
+/** Live clock as a separate component: only this part re-renders every second. */
 function Clock({ day, calibration }: { day: number | undefined; calibration?: string }) {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -303,18 +303,18 @@ function Clock({ day, calibration }: { day: number | undefined; calibration?: st
   }, []);
   return (
     <div className="text-right leading-tight">
-      <div className="font-mono text-base font-semibold tabular-nums">{now.toLocaleTimeString('tr-TR')}</div>
+      <div className="font-mono text-base font-semibold tabular-nums">{now.toLocaleTimeString('en-GB')}</div>
       {calibration ? (
         <div
           className="text-sm whitespace-nowrap"
           style={{ color: COLORS.calm }}
-          title="Katman 1 kişisel baseline'ı ilk 30 ölçümde kurar; senaryoyu bundan sonra başlatın."
+          title="Layer 1 builds personal baselines over the first 30 readings; start a scenario after that."
         >
           ◌ Baseline {calibration}
         </div>
       ) : (
         <div className="text-sm whitespace-nowrap" style={{ color: COLORS.normal }}>
-          ● Canlı · Gün {fmt(day)}
+          ● Live · Day {fmt(day)}
         </div>
       )}
     </div>
