@@ -415,7 +415,7 @@ function FormHead({ kind }: { kind: TestKind }) {
     <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
       <h3 className="text-lg font-semibold">{info.ad}</h3>
       <span className="text-xs text-slate-500">
-        {info.olcer} · kaynak:{' '}
+        {info.olcer} · source:{' '}
         {info.kaynaklar.map((k, i) => (
           <span key={k.url}>
             {i > 0 && ', '}

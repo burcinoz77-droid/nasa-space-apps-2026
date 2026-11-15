@@ -131,7 +131,7 @@ function RiskTip({ hover, status, t }: { hover: HoverInfo; status: CrewStatus | 
         </span>
       </div>
       <div className="font-mono text-sm font-semibold" style={{ color: c }}>
-        {s.level ? `${LEVEL_ICON[s.level]} ${LEVEL_LABEL[s.level]} risk` : 'veri yok'}
+        {s.level ? `${LEVEL_ICON[s.level]} ${LEVEL_LABEL[s.level]} risk` : 'no data'}
       </div>
       <div className="text-sm text-slate-400">{r.detail}</div>
       {sig && t && (
@@ -195,7 +195,7 @@ function RegionDetail({
                 </span>
                 {sig && (
                   <span className="block text-sm text-slate-500">
-                    normal {fmtMetric(k, sig.mean)} · {fmtZ(sig.z)}
+                    baseline {fmtMetric(k, sig.mean)} · {fmtZ(sig.z)}
                   </span>
                 )}
               </span>
