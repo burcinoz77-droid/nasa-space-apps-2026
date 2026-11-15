@@ -12,6 +12,7 @@ import type { CrewId, ScenarioId, Telemetry } from './types';
 import { ScenarioCinematics } from './ui/cinematic';
 import { DemoTour } from './ui/cinematic/DemoTour';
 import { NAVIGATE_EVENT } from './ui/cinematic/phases';
+import { VisorHud } from './ui/cinematic/VisorHud';
 import { AstraChatPanel } from './ui/components/AstraChatPanel';
 import { IconBell, IconCockpit, IconReports, IconReset, IconSettings, IconTasks, OrbitalisMark } from './ui/components/Icons';
 import { IncidentBanner } from './ui/components/IncidentBanner';
@@ -80,6 +81,8 @@ export default function App() {
       {/* Parça 1: senaryo değişince o senaryonun tam ekran sinematiği (Atla ile kapanır) */}
       <ScenarioCinematics />
       <DemoTour />
+      {/* Parça 1: kask vizörü (HUD), seçili astronotun başlığındaki düğmeyle açılır */}
+      <VisorHud />
     </div>
   );
 }
@@ -185,13 +188,15 @@ function TopBar({ title, onBell }: { title: string; onBell: () => void }) {
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
-        <label className="flex items-center gap-2 text-sm text-slate-300">
-          <span className="hidden min-[1600px]:inline">Senaryo</span>
+        {/* Senaryo seçimi gerçek konsolda olmaz: sönük "Simülasyon" menüsü (Azra, PR #22). Senaryo aktifken sarı. */}
+        <label className="flex items-center gap-2 text-sm text-slate-300" title="Simülasyon senaryosu (demo)">
+          <span className="hidden min-[1180px]:inline">Simülasyon</span>
           <select
             value={scenario ?? 'NORMAL'}
             onChange={(e) => controls.setScenario(e.target.value as ScenarioId)}
-            className="rounded-md border border-white/25 bg-space-bg/40 px-2 py-1.5 text-sm text-white"
-            aria-label="Senaryo"
+            className="rounded-md border border-white/20 bg-transparent px-2 py-1 text-sm"
+            style={{ color: scenario && scenario !== 'NORMAL' ? COLORS.caution : COLORS.textMuted }}
+            aria-label="Simülasyon senaryosu"
           >
             {SCENARIOS.map((id) => (
               <option key={id} value={id} className="bg-space-bg">

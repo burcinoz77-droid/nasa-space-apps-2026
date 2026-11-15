@@ -13,6 +13,7 @@ import type { CrewId, CrewStatus, Telemetry } from '../../types';
 import { BodyPanel } from '../components/BodyPanel';
 import { LevelBadge } from '../components/LevelBadge';
 import { PsychTestsPanel } from '../components/PsychTests';
+import { VISOR_EVENT } from '../cinematic/phases';
 import { RangeNote } from '../components/RangeNote';
 import { worstIncidentOf } from '../earthLink';
 import { fmtMetric, LOCATION_LONG, signalLevel } from '../format';
@@ -35,6 +36,14 @@ export function CrewDetail({ crewId }: { crewId: CrewId }) {
       title={m.name}
       meta={
         <>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent(VISOR_EVENT, { detail: crewId }))}
+            className="rounded px-2 py-0.5 text-sm font-semibold text-calm ring-1 ring-calm/60 hover:bg-calm/10"
+            title="Bu astronotun kask vizöründe (HUD) ne gördüğünü aç"
+          >
+            ◉ Vizör
+          </button>
           <TestsButton crewId={crewId} onOpen={() => setTests(true)} />
           <LevelBadge level={st?.level} />
         </>

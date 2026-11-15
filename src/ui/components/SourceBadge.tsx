@@ -1,5 +1,6 @@
 // Parça 3 · Kaynak rozeti. Her sayının yanında durur: NASA-STD-3001 / OSDR / DONKI / hakemli çalışma / Varsayım.
-// Tıklayınca PARAMS'taki kaynak linki yeni sekmede açılır. Varsayımlar gri (veri yok / kaynak yok rengi).
+// Sade görünüm: küçük gri ⓘ; imleç üstüne gelince kaynak adı görünür, tıklayınca kaynak linki yeni sekmede açılır.
+// Varsayımlar küçük gri "varsayım" yazısıyla gösterilir.
 //   <SourceBadge metric="env.ppCO2_mmHg" />          ölçümün dayandığı parametre (sourceForMetric)
 //   <SourceBadge param="careerDoseLimit" />          doğrudan bir PARAMS anahtarı
 //   <SourceBadge metric="env.doseRate_uSv_h" crewId="mert" />  Gezegen ekibinde yüzey doz hızı kaynağı
@@ -52,21 +53,42 @@ export function SourceBadge({ metric, param, crewId }: { metric?: MetricKey; par
   const p = resolve(metric, param, crewId);
   if (!p) return null;
   const label = shortSource(p);
-  const color = p.assumption ? COLORS.offline : COLORS.calm;
   const title = p.assumption
     ? `Varsayım: NASA ya da hakemli bir kaynağı yok${p.url ? ` (bağlam: ${p.source})` : ''}. ${p.label}`
-    : `Kaynak: ${p.source} — ${p.label}. Tıklayınca kaynak açılır.`;
-  const cls = 'inline-flex shrink-0 items-center rounded-md px-1.5 py-px font-sans text-sm leading-5 font-medium whitespace-nowrap';
-  const style = { color, backgroundColor: alpha(color, 0.1), boxShadow: `inset 0 0 0 1px ${alpha(color, 0.35)}` };
+    : `Kaynak: ${label} · ${p.source} — ${p.label}. Tıklayınca kaynak açılır.`;
+  // Sade görünüm: kaynaklı sayıda küçük gri ⓘ, varsayımda küçük gri "varsayım" yazısı (çerçevesiz).
+  // Kaynağın adı imleç üstüne gelince görünür; tıklayınca kaynak yeni sekmede açılır.
+  if (p.assumption)
+    return (
+      <span className="shrink-0 font-sans text-xs whitespace-nowrap italic" style={{ color: alpha(COLORS.textMuted, 0.75) }} title={title}>
+        varsayım
+      </span>
+    );
+  const cls = 'inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full font-sans text-[11px] leading-none transition-colors';
+  const style = { color: alpha(COLORS.textMuted, 0.7), boxShadow: `inset 0 0 0 1px ${alpha(COLORS.textMuted, 0.35)}` };
+  const mark = (
+    <span aria-hidden="true" className="font-semibold">
+      i
+    </span>
+  );
   if (!p.url)
     return (
-      <span className={cls} style={style} title={title}>
-        {label}
+      <span className={cls} style={style} title={title} aria-label={title}>
+        {mark}
       </span>
     );
   return (
-    <a href={p.url} target="_blank" rel="noreferrer" className={`${cls} hover:brightness-125`} style={style} title={title} onClick={(e) => e.stopPropagation()}>
-      {label}
+    <a
+      href={p.url}
+      target="_blank"
+      rel="noreferrer"
+      className={`${cls} hover:!text-calm hover:!shadow-[inset_0_0_0_1px_currentColor]`}
+      style={style}
+      title={title}
+      aria-label={title}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {mark}
     </a>
   );
 }
