@@ -12,13 +12,13 @@ import { useAstra } from '../../store';
 import { AstraMeta, Thinking } from './AstraExplanation';
 
 const PRESETS = [
-  'Bugün kim dinlenmeli?',
-  'Kerem neden kritik?',
-  "Mert'te ne olabilir?",
-  'Radyasyon durumu nasıl?',
-  'CO₂ güvenli mi?',
-  'Kabin gürültüsü normal mi?',
-  'Kemik kaybı ne durumda?',
+  'Who should rest today?',
+  'Why is Kerem critical?',
+  'What could be going on with Mert?',
+  'How is the radiation situation?',
+  'Is CO₂ safe?',
+  'Is cabin noise normal?',
+  'How is bone loss?',
 ];
 
 // ---- Sürükleme: panelin sol üst köşesinin ekrandaki yeri (px). null = varsayılan sağ alt köşe.
@@ -135,14 +135,14 @@ export function AstraChatPanel() {
         onClick={() => setOpen(true)}
         className="fixed right-6 bottom-6 z-40 flex items-center gap-2 rounded-full bg-ai px-5 py-3 font-semibold text-space-bg shadow-lg shadow-ai/20 hover:brightness-110"
       >
-        <span aria-hidden>✦</span> ASTRA'ya sor
+        <span aria-hidden>✦</span> Ask ASTRA
       </button>
     );
 
   return (
     <section
       ref={panelRef}
-      aria-label="ASTRA sohbet paneli"
+      aria-label="ASTRA chat panel"
       onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
       style={pos ? { left: pos.x, top: pos.y } : undefined}
       className={`fixed z-40 flex h-[560px] max-h-[calc(100vh-3rem)] w-[400px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-ai/50 bg-space-panel shadow-2xl shadow-black/40 ${pos ? '' : 'right-6 bottom-6'}`}
@@ -153,14 +153,14 @@ export function AstraChatPanel() {
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
         onDoubleClick={resetPos}
-        title="Sürükleyerek taşıyın · çift tıklayınca sağ alt köşeye döner"
+        title="Drag to move · double-click to return to the bottom-right corner"
         className="flex cursor-move touch-none items-center justify-between border-b border-space-border px-4 py-3 select-none"
       >
         <div>
           <div className="font-semibold text-ai">
-            ✦ ASTRA <span className="ml-1 text-sm font-normal text-slate-500" aria-hidden>⠿ taşı</span>
+            ✦ ASTRA <span className="ml-1 text-sm font-normal text-slate-500" aria-hidden>⠿ move</span>
           </div>
-          <div className="text-sm text-slate-400">Katman 2 · karar desteği</div>
+          <div className="text-sm text-slate-400">Layer 2 · decision support</div>
         </div>
         <button onClick={() => setOpen(false)} className="rounded-lg px-2 py-1 text-slate-400 hover:bg-white/5" aria-label="Paneli kapat">
           ✕
@@ -170,7 +170,7 @@ export function AstraChatPanel() {
       <div className="flex-1 space-y-3 overflow-auto p-4 text-sm">
         {chat.length === 0 && (
           <div className="rounded-xl border border-ai/30 bg-ai/10 p-3 leading-relaxed text-slate-200">
-            Merhaba, ben ASTRA. Mürettebatın canlı verisine dayanarak cevap veririm; değişen değerlere bakarak olası durumları ihtimal olarak belirtebilirim. Uyarıları Katman 1 açar; kararı siz verirsiniz.
+            Hello, I'm ASTRA. I answer from the crew's live data and can point out possible conditions, as probabilities, based on changing values. Layer 1 raises the alerts; you make the decisions.
           </div>
         )}
         {chat.map((m) =>
@@ -185,7 +185,7 @@ export function AstraChatPanel() {
             </div>
           ),
         )}
-        {busy && <Thinking label={waited < 5 ? 'ASTRA düşünüyor' : `ASTRA veriyi inceliyor · ${waited} sn`} />}
+        {busy && <Thinking label={waited < 5 ? 'ASTRA is thinking' : `ASTRA is reviewing the data · ${waited} s`} />}
         <div ref={endRef} />
       </div>
 
@@ -213,26 +213,26 @@ export function AstraChatPanel() {
           value={question}
           maxLength={600}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder="Örn: Elif'in nabzı kaç?"
-          aria-label="ASTRA'ya soru"
+          placeholder="e.g. What is Elif's heart rate?"
+          aria-label="Question for ASTRA"
           className="min-w-0 flex-1 rounded-lg bg-white/5 px-3 py-2 text-sm outline-none ring-ai/50 focus:ring-1"
         />
         <button type="submit" disabled={busy || !question.trim()} className="rounded-lg bg-ai px-4 text-sm font-semibold text-space-bg disabled:opacity-50">
-          Sor
+          Ask
         </button>
       </form>
       <div className="flex items-start justify-between gap-3 px-4 pb-3">
         <p className="text-sm leading-snug text-slate-400">
-          ASTRA öneri verir, karar mürettebatındır. Kesin teşhis koymaz, ilaç önermez, uyarı açamaz.
+          ASTRA advises; the crew decides. It never gives a definitive diagnosis, never recommends medication, and cannot raise alerts.
         </p>
         <button
           type="button"
           onClick={resetChat}
           disabled={busy || chat.length === 0}
           className="shrink-0 rounded-lg border border-space-border px-2.5 py-1 text-sm text-slate-300 hover:bg-white/5 disabled:opacity-40"
-          title="Sohbeti temizler; ASTRA önceki mesajları unutur."
+          title="Clears the chat; ASTRA forgets previous messages."
         >
-          ↺ Sohbeti sıfırla
+          ↺ Reset chat
         </button>
       </div>
     </section>

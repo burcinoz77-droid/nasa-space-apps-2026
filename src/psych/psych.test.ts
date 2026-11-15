@@ -30,7 +30,7 @@ describe('psych/instruments · resmi maddeler', () => {
     expect(SP_LEVELS[6].en).toBe('Completely exhausted, unable to function effectively');
     expect(TLX_ITEMS).toHaveLength(6);
     expect(TLX_ITEMS[0].soruEn).toBe('How mentally demanding was the task?');
-    expect(TLX_ITEMS.find((i) => i.key === 'performans')!.alt).toBe('Mükemmel');
+    expect(TLX_ITEMS.find((i) => i.key === 'performans')!.alt).toBe('Perfect');
   });
 
   it('PVT-B parametreleri Basner vd. 2011 ile aynı', () => {
@@ -95,7 +95,7 @@ describe('psych/store · PVT-B sonucu Katman 1\'e gider', () => {
     const st = useAstra.getState().statuses.elif!;
     const sig = st.topSignals.find((s) => s.key === 'cog.pvtMeanRt_ms' || s.key === 'cog.pvtLapses');
     expect(sig?.level).not.toBe('normal');
-    expect(psychState('elif').etkenler.find((f) => f.ad.startsWith('Tepki'))!.seviye).not.toBe('normal');
+    expect(psychState('elif').etkenler.find((f) => f.ad.startsWith('Reaction'))!.seviye).not.toBe('normal');
   });
 });
 
@@ -107,7 +107,7 @@ describe('psych/analysis · ASTRA test planı ve psikolojik durum', () => {
     useTests.getState().add({ kind: 'SP', puan: 3 }, id);
     expect(dueTests(id).map((d) => d.kind)).not.toContain('SP');
     advance(ROUTINE_TICKS);
-    expect(dueTests(id).find((d) => d.kind === 'SP')?.neden).toMatch(/4 görev günü/);
+    expect(dueTests(id).find((d) => d.kind === 'SP')?.neden).toMatch(/4 mission days/);
   });
 
   it('kısa uykuda yorgunluk ve PVT-B öncelikli (Jones vd. 2022)', () => {
@@ -115,7 +115,7 @@ describe('psych/analysis · ASTRA test planı ve psikolojik durum', () => {
     useAstra.setState({ telemetry: { ...s.telemetry, elif: { ...s.telemetry.elif!, env: { ...s.telemetry.elif!.env, sleepLastNight_h: 5.2 } } } });
     const due = dueTests('elif');
     expect(due.filter((d) => d.oncelik === 'öncelikli').map((d) => d.kind).sort()).toEqual(['PVT', 'SP']);
-    expect(due[0].neden).toMatch(/5,2 sa/);
+    expect(due[0].neden).toMatch(/5.2 h/);
     expect(due[0].kaynak?.url).toContain('PMC8919197');
   });
 
@@ -127,13 +127,13 @@ describe('psych/analysis · ASTRA test planı ve psikolojik durum', () => {
     const ps = psychState('deniz');
     expect(ps.guncelTest).toBe(true);
     expect(ps.seviye).toBe('caution');
-    const sp = ps.etkenler.find((f) => f.ad.startsWith('Yorgunluk'))!;
+    const sp = ps.etkenler.find((f) => f.ad.startsWith('Fatigue'))!;
     expect(sp).toMatchObject({ seviye: 'caution', varsayim: true });
     expect(sp.deger).toContain('6/7');
-    expect(ps.etkenler.find((f) => f.ad.startsWith('İş yükü'))!.seviye).toBe('normal');
+    expect(ps.etkenler.find((f) => f.ad.startsWith('Workload'))!.seviye).toBe('normal');
     useTests.getState().add({ kind: 'SP', puan: 7 }, 'deniz');
     expect(psychState('deniz').seviye).toBe('critical');
-    expect(psychState('deniz').etkenler[0].not).toMatch(/1 basamak daha yorgun/);
+    expect(psychState('deniz').etkenler[0].not).toMatch(/1 step\(s\) more tired/);
   });
 });
 
@@ -153,21 +153,21 @@ describe('ASTRA · test araçları ve yedek mod', () => {
     expect(r.sonuclar.yorgunluk_SamnPerelli[0].puan).toBe(5);
     expect(r.sonuclar.isYuku_NasaTlx[0].toplam).toBe(48.3);
     expect(r.sonuclar.tepki_PvtB[0].ortalama_ms).toBe(312);
-    expect(r.katman1eGidenPvt).toMatch(/^evet/);
+    expect(r.katman1eGidenPvt).toMatch(/^yes/);
     const only = runTool('get_test_results', { ad: 'Elif', test: 'iş yükü' }, data) as { sonuclar: Record<string, unknown> };
     expect(Object.keys(only.sonuclar)).toEqual(['isYuku_NasaTlx']);
     const none = runTool('get_test_results', { ad: 'Mert' }, data) as { not: string };
-    expect(none.not).toMatch(/henüz test sonucu yok/);
+    expect(none.not).toMatch(/No test results for this person yet/);
   });
 
   it('get_psych_state, get_test_schedule ve compare_crew_tests', () => {
     const data = seed();
     const ps = runTool('get_psych_state', { ad: 'Elif' }, data) as { seviye: string; etkenler: { esik?: string }[] };
-    expect(ps.seviye).toBe('dikkat');
-    expect(ps.etkenler.some((e) => e.esik === 'varsayım')).toBe(true);
+    expect(ps.seviye).toBe('caution');
+    expect(ps.etkenler.some((e) => e.esik === 'assumption')).toBe(true);
     const plan = runTool('get_test_schedule', {}, data) as { plan: { astronot: string; bekleyenTestler: unknown[] }[]; kurallar: Record<string, string> };
     expect(plan.plan).toHaveLength(6);
-    expect(plan.kurallar.rutin).toMatch(/4 görev gününde bir/);
+    expect(plan.kurallar.rutin).toMatch(/every 4 mission days/);
     const cmp = runTool('compare_crew_tests', { test: 'yorgunluk' }, data) as { enYorgundanBaslayarak: { ad: string; puan: number }[]; sonDortGundeTestYapmayanlar: string[] };
     expect(cmp.enYorgundanBaslayarak).toEqual([
       { ad: 'Elif', puan: 5 },
@@ -178,32 +178,32 @@ describe('ASTRA · test araçları ve yedek mod', () => {
 
   it('yedek mod: sonuçları, planı ve karşılaştırmayı en fazla 4 cümleyle anlatır', () => {
     seed();
-    const elif = ask("Elif'in test sonuçları nasıl?");
+    const elif = ask("How are Elif's test results?");
     expect(elif).toMatch(/5\/7/);
-    expect(elif).toMatch(/48,3\/100/);
+    expect(elif).toMatch(/48.3\/100/);
     expect(elif).toMatch(/312 ms/);
-    const plan = ask('Kim test yapmalı?');
-    expect(plan).toMatch(/Testler sekmesi/);
-    const cmp = ask('Ekipte en yorgun kim? Testleri karşılaştır.');
-    expect(cmp).toMatch(/En yüksek yorgunluk: Elif \(5\/7\)/);
+    const plan = ask('Who should take a test?');
+    expect(plan).toMatch(/Tests tab/);
+    const cmp = ask('Who is the most tired on the crew? Compare the tests.');
+    expect(cmp).toMatch(/Highest fatigue: Elif \(5\/7\)/);
     for (const t of [elif, plan, cmp]) expect(countSentences(t)).toBeLessThanOrEqual(4);
   });
 
   it('hiç test yokken uydurmaz', () => {
     makeDemoState();
-    expect(ask('Psikolojik test sonuçları ne durumda?')).toMatch(/Henüz kimse psikolojik test yapmadı/);
+    expect(ask('How are the psychological test results?')).toMatch(/Nobody has taken a psychological test yet/);
   });
 
   it('PANAS ve BSI-18 simüle; ASTRA bunu belirtir (lisanslı ölçek)', () => {
     makeDemoState();
-    const mood = ask("Elif'in ruh hali nasıl?");
+    const mood = ask("How is Elif's mood?");
     expect(mood).toContain(LICENSED_NOTE);
     expect(countSentences(mood)).toBeLessThanOrEqual(4);
     const data = buildToolData(useAstra.getState());
     const panas = data.murettebat.elif.olcumler.find((m) => m.anahtar === 'cog.panasPositive')!;
     expect(panas).toMatchObject({ not: LICENSED_NOTE });
     expect(data.murettebat.elif.olcumler.find((m) => m.anahtar === 'cardio.hr_bpm')).not.toHaveProperty('not');
-    expect(JSON.stringify(buildContext(useAstra.getState()))).toContain('lisanslı ölçek');
+    expect(JSON.stringify(buildContext(useAstra.getState()))).toContain('licensed scales');
   });
 
   it('cevap altında test kaynakları gösterilir', () => {

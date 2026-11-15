@@ -18,7 +18,7 @@ import { alpha, COLORS, LEVEL_COLOR, LEVEL_ICON, LEVEL_LABEL } from '../theme';
 import { AstraSlot } from './AstraSlot';
 import { SourceBadge } from './SourceBadge';
 
-const time = (ms: number) => new Date(ms).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const time = (ms: number) => new Date(ms).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
 export function IncidentBanner({ onOpenCrew }: { onOpenCrew?: (id: CrewId) => void }) {
   const active = useAstra(useShallow((s) => s.incidents.filter((i) => i.status !== 'resolved')));
@@ -56,9 +56,9 @@ export function IncidentBanner({ onOpenCrew }: { onOpenCrew?: (id: CrewId) => vo
         {cautionOpen.slice(0, 3).map((i) => (
           <CautionNotice key={i.id} inc={i} open={expanded === i.id} onToggle={() => setExpanded((e) => (e === i.id ? null : i.id))} />
         ))}
-        {cautionOpen.length > 3 && <div className="text-sm text-slate-400">+{cautionOpen.length - 3} dikkat bildirimi daha · Raporlar sayfasında</div>}
+        {cautionOpen.length > 3 && <div className="text-sm text-slate-400">+{cautionOpen.length - 3} more caution notice(s) · see Reports</div>}
         {critAck.slice(0, 2).map((i) => (
-          <Strip key={i.id} inc={i} note="Onaylandı · sinyaller normale dönene kadar izleniyor" />
+          <Strip key={i.id} inc={i} note="Acknowledged · monitored until signals return to normal" />
         ))}
         {main && (
           <CriticalHeader
@@ -88,7 +88,7 @@ function EventLine({ events }: { events: string[] }) {
       title={events.join('\n')}
     >
       <span aria-hidden>◆</span>
-      <span className="font-semibold whitespace-nowrap">Gemi olayı</span>
+      <span className="font-semibold whitespace-nowrap">Ship event</span>
       <span className="min-w-0 flex-1 truncate text-slate-200">{last}</span>
       {events.length > 1 && <span className="whitespace-nowrap text-slate-400">+{events.length - 1}</span>}
     </div>
@@ -105,7 +105,7 @@ function CrewChips({ ids, color, onOpenCrew }: { ids: CrewId[]; color: string; o
           onClick={() => onOpenCrew?.(id)}
           className="rounded-full px-2.5 py-0.5 text-sm font-semibold hover:brightness-125"
           style={{ color, backgroundColor: alpha(color, 0.14), boxShadow: `inset 0 0 0 1px ${alpha(color, 0.4)}` }}
-          title="Astronot ekranını aç"
+          title="Open astronaut view"
         >
           {firstName(id)}
         </button>
@@ -115,12 +115,12 @@ function CrewChips({ ids, color, onOpenCrew }: { ids: CrewId[]; color: string; o
 }
 
 function AutoActions({ inc }: { inc: Incident }) {
-  if (!inc.autoActions.length) return <span className="text-sm text-slate-300">Otonom adım yok · karar mürettebatta</span>;
+  if (!inc.autoActions.length) return <span className="text-sm text-slate-300">No autonomous action · decision is the crew's</span>;
   return (
     <span className="flex flex-wrap gap-2">
       {inc.autoActions.map((a) => (
         <span key={a} className="rounded-lg px-2.5 py-0.5 text-sm font-semibold" style={{ color: COLORS.calm, backgroundColor: alpha(COLORS.calm, 0.12) }}>
-          ✓ {ACTION_LABELS[a]} · otomatik
+          ✓ {ACTION_LABELS[a]} · automatic
         </span>
       ))}
     </span>
@@ -184,13 +184,13 @@ function CriticalHeader({
               {INCIDENT_LABELS[inc.type]}
             </span>
             <span className="font-mono text-slate-300">{time(inc.openedAt)}</span>
-            <span className="text-slate-400">Katman 1 açtı</span>
+            <span className="text-slate-400">Raised by Layer 1</span>
           </div>
           <h2 className="mt-1 text-xl leading-snug font-bold text-white">{inc.title}</h2>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <button type="button" onClick={onToggle} className="rounded-lg px-2.5 py-2 text-sm text-slate-200 hover:bg-white/10" aria-expanded={!compact}>
-            {compact ? 'Ayrıntı ▾' : 'Küçült ▴'}
+            {compact ? 'Details ▾' : 'Collapse ▴'}
           </button>
           <button
             type="button"
@@ -198,25 +198,25 @@ function CriticalHeader({
             className="rounded-xl px-5 py-2.5 text-base font-bold text-space-bg hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             style={{ backgroundColor: c, boxShadow: `0 6px 20px ${alpha(c, 0.35)}` }}
           >
-            Onayla
+            Acknowledge
           </button>
         </div>
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 px-4 pb-3 text-sm">
         <span className="flex items-center gap-2">
-          <span className="text-slate-400">Etkilenen</span>
+          <span className="text-slate-400">Affected</span>
           <CrewChips ids={inc.crewIds} color={c} onOpenCrew={onOpenCrew} />
         </span>
         <span className="flex items-center gap-2">
-          <span className="text-slate-400">Uygulanan adım</span>
+          <span className="text-slate-400">Action applied</span>
           <AutoActions inc={inc} />
         </span>
       </div>
 
       {others.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 border-t px-4 py-2 text-sm" style={{ borderColor: alpha(c, 0.4) }}>
-          <span className="text-slate-300">+{others.length} kritik olay daha:</span>
+          <span className="text-slate-300">+{others.length} more critical incident(s):</span>
           {others.map((o) => (
             <button
               key={o.id}
@@ -242,7 +242,7 @@ function Details({ inc, onOpenCrew, withPeople = false }: { inc: Incident; onOpe
     <section
       className="mt-1 space-y-3 rounded-2xl border p-3"
       style={{ borderColor: alpha(c, 0.45), backgroundColor: alpha(c, 0.05) }}
-      aria-label="Olay ayrıntısı"
+      aria-label="Incident details"
     >
       {withPeople && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
@@ -250,11 +250,11 @@ function Details({ inc, onOpenCrew, withPeople = false }: { inc: Incident; onOpe
             {LEVEL_ICON[inc.level]} {inc.title}
           </span>
           <span className="flex items-center gap-2">
-            <span className="text-slate-400">Etkilenen</span>
+            <span className="text-slate-400">Affected</span>
             <CrewChips ids={inc.crewIds} color={c} onOpenCrew={onOpenCrew} />
           </span>
           <span className="flex items-center gap-2">
-            <span className="text-slate-400">Uygulanan adım</span>
+            <span className="text-slate-400">Action applied</span>
             <AutoActions inc={inc} />
           </span>
         </div>
@@ -281,7 +281,7 @@ function Strip({ inc, note }: { inc: Incident; note: string }) {
       <span className="min-w-0 flex-1 truncate">{inc.title}</span>
       <span className="hidden whitespace-nowrap text-slate-400 min-[1180px]:inline">{note}</span>
       <span className="whitespace-nowrap" style={{ color: COLORS.calm }}>
-        ✓ Onaylandı
+        ✓ Acknowledged
       </span>
     </div>
   );
@@ -301,11 +301,11 @@ function CautionNotice({ inc, open, onToggle }: { inc: Incident; open: boolean; 
       <span className="min-w-0 flex-1 truncate">{inc.title}</span>
       {inc.autoActions.length > 0 && (
         <span className="hidden whitespace-nowrap min-[1180px]:inline" style={{ color: COLORS.calm }}>
-          ✓ {ACTION_LABELS[inc.autoActions[0]]} · otomatik
+          ✓ {ACTION_LABELS[inc.autoActions[0]]} · automatic
         </span>
       )}
       <button type="button" onClick={onToggle} className="whitespace-nowrap text-slate-300 hover:text-white" aria-expanded={open}>
-        {open ? 'Gizle' : 'Ayrıntı'}
+        {open ? 'Hide' : 'Details'}
       </button>
       <button
         type="button"
@@ -313,7 +313,7 @@ function CautionNotice({ inc, open, onToggle }: { inc: Incident; open: boolean; 
         className="rounded-lg px-3 py-0.5 font-semibold whitespace-nowrap hover:bg-white/5"
         style={{ color: c, boxShadow: `inset 0 0 0 1px ${c}` }}
       >
-        Onayla
+        Acknowledge
       </button>
     </div>
   );

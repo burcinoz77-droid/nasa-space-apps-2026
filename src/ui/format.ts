@@ -7,7 +7,7 @@ import { fmt, scoreLevel, worstLevel } from './theme';
 /** Değer + birim, Türkçe: "36,8 °C", "%97", "4/72", "12 dk". */
 export function fmtUnit(value: number | undefined, unit: string, decimals = 0): string {
   const v = fmt(value, decimals);
-  if (unit === '%') return `%${v}`;
+  if (unit === '%') return `${v}%`;
   if (unit.startsWith('/')) return `${v}${unit}`;
   return `${v} ${unit}`;
 }
@@ -23,7 +23,7 @@ export function fmtDelay(seconds: number | undefined): string {
   if (seconds === undefined) return '—';
   const m = Math.floor(seconds / 60);
   const s = Math.round(seconds % 60);
-  return s ? `${m} dk ${s} sn` : `${m} dk`;
+  return s ? `${m} min ${s} s` : `${m} min`;
 }
 
 /** z-skoru: 2.37 -> "+2,4σ" */
@@ -44,11 +44,11 @@ export function initials(id: CrewId): string {
     .map((p) => p.charAt(0))
     .join('')
     .slice(0, 2)
-    .toLocaleUpperCase('tr-TR');
+    .toUpperCase();
 }
 
-export const LOCATION_TEXT = { KOKPIT: 'Kokpit', GEZEGEN: 'Gezegen' } as const;
-export const LOCATION_LONG = { KOKPIT: 'Mars yörüngesi · gemi içi', GEZEGEN: 'Mars yüzeyi · EVA' } as const;
+export const LOCATION_TEXT = { KOKPIT: 'Cockpit', GEZEGEN: 'Surface' } as const;
+export const LOCATION_LONG = { KOKPIT: 'Mars orbit · inside ship', GEZEGEN: 'Mars surface · EVA' } as const;
 
 const domainOf = (key: MetricKey) => key.split('.')[0] as Domain;
 

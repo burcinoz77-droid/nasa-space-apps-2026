@@ -9,7 +9,7 @@ export interface AnswerSource {
 }
 
 const LETTER = 'a-zçğıöşüâîû';
-const lower = (s: string) => s.toLocaleLowerCase('tr-TR');
+const lower = (s: string) => s.toLowerCase();
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** Anahtar kelime metinde bir kelimenin başında geçiyor mu? ("nem" -> "nemli" evet, "önemli" hayır) */
@@ -20,7 +20,7 @@ function hasWord(text: string, keyword: string): boolean {
 export function answerSources(question: string, answer: string, usedTopics: string[] = [], max = 3): AnswerSource[] {
   const q = lower(question);
   // "uçuş doktoruna danışın" gibi her cevapta geçen kalıplar konu sayılmaz
-  const a = lower(answer).replace(/uçuş doktor[a-zçğıöşü]*/g, ' ');
+  const a = lower(answer).replace(/uçuş doktor[a-zçğıöşü]*|flight surgeon/g, ' ');
   const used = usedTopics.map(lower).filter(Boolean);
   const scored = REFERENCES.map((t) => {
     const isUsed = used.some((u) => u === lower(t.konu) || t.anahtarKelimeler.some((k) => u.includes(lower(k))));
@@ -46,7 +46,7 @@ export function answerSources(question: string, answer: string, usedTopics: stri
     const facts = [...t.bilgiler].sort((f1, f2) => weight(f2.bilgi) - weight(f1.bilgi));
     let fromTopic = 0;
     for (const f of facts) {
-      if (!f.url || seen.has(f.url) || /^varsayım/i.test(f.kaynak)) continue;
+      if (!f.url || seen.has(f.url) || /^(varsayım|assumption)/i.test(f.kaynak)) continue;
       seen.add(f.url);
       out.push({ ad: f.kaynak, url: f.url });
       if (out.length >= max) return out;

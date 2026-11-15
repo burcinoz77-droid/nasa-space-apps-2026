@@ -72,7 +72,7 @@ export function incidentSummary(i: Incident) {
     tur: INCIDENT_TR[i.type] ?? i.type,
     baslik: i.title,
     seviye: LEVEL_TR[i.level],
-    durum: i.status === 'acknowledged' ? 'mürettebat onayladı' : i.status === 'resolved' ? 'çözüldü' : 'açık',
+    durum: i.status === 'acknowledged' ? 'acknowledged by crew' : i.status === 'resolved' ? 'resolved' : 'open',
     kisiler: i.crewIds.map(shortName),
     sinyaller: i.signals.slice(0, 4).map(signalSummary),
     otonomAdimlar: i.autoActions.map((a) => ACTION_TR[a] ?? a),
@@ -87,16 +87,16 @@ function crewSummary(s: AstraState, id: CrewId, detailed: boolean, keysOnly: boo
   const olcumler: Record<string, number | string> = {};
   if (t) {
     for (const key of keys) olcumler[metricLabel(key)] = round(readMetric(t, key), METRIC_BY_KEY[key].decimals);
-    if (detailed) olcumler['EKG ritmi'] = t.cardio.ecg_rhythm === 'sinus' ? 'sinüs (normal)' : 'düzensiz';
+    if (detailed) olcumler['ECG rhythm'] = t.cardio.ecg_rhythm === 'sinus' ? 'sinus (normal)' : 'irregular';
   }
   const careerLimit = param('careerDoseLimit', 600);
   return {
     ad: shortName(id),
     tamAd: m.name,
     rol: m.role,
-    konum: m.location === 'KOKPIT' ? 'Kokpit (yörüngedeki gemi)' : 'Gezegen yüzeyi (EVA giysisi)',
+    konum: m.location === 'KOKPIT' ? 'Cockpit (ship in orbit)' : 'Mars surface (EVA suit)',
     kisiselHassasiyet: m.sensitivity,
-    durum: st ? LEVEL_TR[st.level] : 'veri yok',
+    durum: st ? LEVEL_TR[st.level] : 'no data',
     saglikSkoru_pct: st ? Math.round(st.healthScore) : undefined,
     bilisselSkor_pct: st ? Math.round(st.domainScores.cog) : undefined,
     zorunluDinlenme: st?.restRequired ?? false,
@@ -116,7 +116,7 @@ export function buildContext(s: AstraState, opts: ContextOptions = {}): Record<s
   const openIncidents = s.incidents.filter((i) => i.status !== 'resolved').slice(0, 5);
 
   const make = (keysOnly: boolean) => ({
-    gorev: 'ARES-1 Mars görevi',
+    gorev: 'ARES-1 Mars mission',
     gorevGunu: s.ship?.missionDay,
     senaryo: s.ship ? SCENARIO_TR[s.ship.scenario] : undefined,
     aktifOlaylarGemi: s.ship?.activeEvents.length ? s.ship.activeEvents : undefined,
@@ -127,7 +127,7 @@ export function buildContext(s: AstraState, opts: ContextOptions = {}): Record<s
             tekYon_dk: round(delay / 60, 1),
             gidisDonus_dk: round((delay * 2) / 60, 1),
             // NASA Mars Relay Network: tek yön 3-22,4 dk, gidiş-dönüş 6-44 dk
-            olasiAralik: `tek yön ${round(delayMin, 0)}-${round(delayMax, 1)} dk, gidiş-dönüş ${Math.round(delayMin * 2)}-${Math.floor(delayMax * 2)} dk`,
+            olasiAralik: `one way ${round(delayMin, 0)}-${round(delayMax, 1)} min, round trip ${Math.round(delayMin * 2)}-${Math.floor(delayMax * 2)} min`,
           }
         : undefined,
     sabitler: {
@@ -135,11 +135,11 @@ export function buildContext(s: AstraState, opts: ContextOptions = {}): Record<s
       co2DikkatSiniri_mmHg: param('co2CautionLimit', 2.3), // OCHMO-TB-004
       co2KritikSiniri_mmHg: param('co2CriticalLimit', 3.0), // OCHMO-TB-004
       issCo2Medyani_mmHg: param('cabinCO2Median', 1.9), // OSDR EDA
-      ortamPerformansAraligi: '20–25 °C, nem %30–60', // OCHMO-TB-002
+      ortamPerformansAraligi: '20–25 °C, humidity 30–60%', // OCHMO-TB-002
       gurultuSiniri_dBA: { calisma16sa: param('noiseWorkLimit', 72), uyku8sa: param('noiseSleepLimit', 62) }, // ISS
       // Kemik sistemde ölçülmez; NASA HRP ortalamasından genel tahmin
       lisansNotu: LICENSED_NOTE_LONG, // PANAS ve BSI-18 simüle
-      tahminiKemikKaybi: `${boneLossEstimate(s.ship?.missionDay ?? 180)} (NASA: ayda %1–1,5; ölçüm değil, tahmin)`,
+      tahminiKemikKaybi: `${boneLossEstimate(s.ship?.missionDay ?? 180)} (NASA: 1–1.5% per month; an estimate, not a measurement)`,
     },
     murettebat: CREW.map((m) => crewSummary(s, m.id, isDetailed(m.id), keysOnly)),
     // Psikolojik testler (Samn-Perelli, NASA-TLX, PVT-B): kısa özet; ayrıntı get_test_results aracında

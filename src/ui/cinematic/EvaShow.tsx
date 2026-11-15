@@ -67,8 +67,8 @@ export function EvaShow({ onClose }: { onClose: () => void }) {
     <Stage
       fading={phase === 'outro'}
       onClose={onClose}
-      label="EVA aşırı efor sinematiği"
-      credit="Veri: ARES-1 simülasyonu (canlı, demo için hızlandırıldı) · Isı: Stahn vd. 2017, Sci Rep · Eşik varsayım"
+      label="EVA overexertion cinematic"
+      credit="Data: ARES-1 simulation (live, accelerated for the demo) · Heat: Stahn et al. 2017, Sci Rep · Threshold assumed"
     >
       {/* Mars yüzeyi */}
       <div className="absolute inset-x-0 bottom-0" style={{ height: '38vh', background: 'linear-gradient(to bottom, #9a3b22 0%, #6b2414 45%, #2a0c06 100%)' }} />
@@ -83,7 +83,7 @@ export function EvaShow({ onClose }: { onClose: () => void }) {
           <rect x="0" y="120" width="220" height="8" rx="3" fill="#475569" />
         </svg>
         <div className="font-mono text-sm" style={{ color: walking ? COLORS.normal : COLORS.textMuted }}>
-          HABİTAT · serinletme
+          HABITAT · cooling
         </div>
       </div>
 
@@ -123,46 +123,46 @@ export function EvaShow({ onClose }: { onClose: () => void }) {
         <div className="flex flex-col justify-end gap-5 font-mono">
           <div className="flex items-center gap-3">
             <Heart hr={hr} />
-            <Big label="Nabız" value={fmt(hr, 0)} unit="bpm" color={hr > 140 ? COLORS.critical : hr > 110 ? COLORS.caution : COLORS.text} />
+            <Big label="Heart rate" value={fmt(hr, 0)} unit="bpm" color={hr > 140 ? COLORS.critical : hr > 110 ? COLORS.caution : COLORS.text} />
           </div>
-          <Big label="Solunum" value={fmt(rr, 0)} unit="/dk" color={rr > 26 ? COLORS.caution : COLORS.text} />
-          <Big label="Ter laktatı" value={fmt(lactate, 0)} unit="mM" color={lactate > 15 ? COLORS.caution : COLORS.text} />
+          <Big label="Breathing" value={fmt(rr, 0)} unit="/min" color={rr > 26 ? COLORS.caution : COLORS.text} />
+          <Big label="Sweat lactate" value={fmt(lactate, 0)} unit="mM" color={lactate > 15 ? COLORS.caution : COLORS.text} />
         </div>
       </div>
 
       <Caption show={phase === 'work'} pos="top">
         <div className="font-mono text-xs tracking-[0.3em]" style={{ color: COLORS.calm }}>
-          MARS YÜZEYİ · EVA · GÖREVİN 180. GÜNÜ
+          MARS SURFACE · EVA · MISSION DAY 180
         </div>
-        <div className="mt-2 text-2xl font-bold md:text-3xl">Mert habitatın güneş panelini taşıyor</div>
+        <div className="mt-2 text-2xl font-bold md:text-3xl">Mert is carrying the habitat's solar panel</div>
         <div className="mt-2 text-base" style={{ color: COLORS.textMuted }}>
-          Gerçek: uzayda egzersizde çekirdek sıcaklık <b style={{ color: COLORS.text }}>40 °C'yi aşabiliyor</b> (Stahn vd. 2017)
+          Fact: during exercise in space core temperature <b style={{ color: COLORS.text }}>can exceed 40 °C</b> (Stahn et al. 2017)
         </div>
       </Caption>
 
       <Caption show={phase === 'heat'} pos="top">
         <div className="font-mono text-xs tracking-[0.3em]" style={{ color: COLORS.critical }}>
-          ISI YÜKÜ · GİYSİ İÇİ
+          HEAT LOAD · INSIDE THE SUIT
         </div>
-        <div className="mt-2 text-2xl font-bold md:text-3xl">Giysi ısıyı dışarı atamıyor</div>
+        <div className="mt-2 text-2xl font-bold md:text-3xl">The suit can't shed the heat</div>
         <div className="mt-2 text-base" style={{ color: COLORS.textMuted }}>
-          Uzayda ter buharlaşıp serinletmez. Mert işine odaklı, ısınmayı ilk o fark etmeyebilir.
+          In the suit, sweat can't cool him down. Mert is focused on the task and may be the last to notice.
         </div>
       </Caption>
 
       <Caption show={phase === 'response'} pos="top">
         <div className="rounded-xl border px-5 py-3" style={{ borderColor: alpha(COLORS.critical, 0.6), background: alpha('#02040b', 0.8) }}>
           <div className="font-mono text-xs tracking-[0.25em]" style={{ color: COLORS.critical }}>
-            ASTRA · KATMAN 1 · ISI YÜKÜ {peak === 'critical' ? 'KRİTİK' : 'DİKKAT'}
+            ASTRA · LAYER 1 · HEAT LOAD {peak === 'critical' ? 'CRITICAL' : 'CAUTION'}
           </div>
           <div className="mt-2 flex items-center justify-center gap-2 text-lg" style={{ color: resting ? COLORS.normal : COLORS.textMuted }}>
             <span>{resting ? '✓' : '…'}</span>
             <span>
-              Otonom adım: <b>zorunlu dinlenme</b>
+              Autonomous action: <b>mandatory rest</b>
             </span>
           </div>
           <div className="mt-1 text-sm" style={{ color: COLORS.textMuted }}>
-            Önceden onaylı güvenli adım. Görevin ne zaman süreceği mürettebatın kararı.
+            A pre-approved safe action. When to resume the task is the crew's decision.
           </div>
         </div>
       </Caption>
@@ -217,9 +217,9 @@ function Thermo({ temp, level }: { temp: number; level: string }) {
       </div>
       <div className="relative w-44">
         {[
-          [CRITICAL, COLORS.critical, 'kritik'],
-          [CAUTION, COLORS.caution, 'dikkat'],
-          [REST, COLORS.normal, 'dinlenme'],
+          [CRITICAL, COLORS.critical, 'critical'],
+          [CAUTION, COLORS.caution, 'caution'],
+          [REST, COLORS.normal, 'rest'],
         ].map(([v, c, t]) => (
           <div key={String(v)} className="absolute font-mono text-sm whitespace-nowrap" style={{ top: pct(v as number), transform: 'translateY(-50%)', color: c as string }}>
             ◀ {fmt(v as number, 1)} °C {t}
@@ -227,13 +227,13 @@ function Thermo({ temp, level }: { temp: number; level: string }) {
         ))}
         <div className="absolute bottom-0 left-0">
           <div className="font-mono text-xs tracking-[0.25em]" style={{ color: COLORS.textMuted }}>
-            ÇEKİRDEK
+            CORE
           </div>
           <div className="font-mono text-5xl font-bold tabular-nums" style={{ color: level, transition: 'color .5s' }}>
             {fmt(temp, 1)}
           </div>
           <div className="font-mono text-base" style={{ color: COLORS.text }}>
-            °C · canlı
+            °C · live
           </div>
         </div>
       </div>

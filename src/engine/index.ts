@@ -196,13 +196,13 @@ export function createDetector(): Detector {
           const joined = memberIds.filter((id) => !inc.crewIds.includes(id));
           if (joined.length) {
             inc.crewIds = CREW_IDS.filter((id) => inc.crewIds.includes(id) || joined.includes(id));
-            ledger.push(entry(at, 'SYSTEM', `Olaya eklendi (${names(joined)}): ${inc.title}`, { incidentId: inc.id, crewIds: joined }));
+            ledger.push(entry(at, 'SYSTEM', `Added to incident (${names(joined)}): ${inc.title}`, { incidentId: inc.id, crewIds: joined }));
           }
           if (LEVEL_RANK[level] > LEVEL_RANK[inc.level]) {
             inc.level = level;
             inc.title = rule.title(inc.crewIds, worst.hit, g.location);
             inc.status = 'open'; // onaylanmış olay kritikleşirse yeniden onay ister
-            ledger.push(entry(at, 'SYSTEM', `Olay kritik seviyeye yükseldi: ${inc.title}`, { incidentId: inc.id, crewIds: [...inc.crewIds] }));
+            ledger.push(entry(at, 'SYSTEM', `Incident escalated to critical: ${inc.title}`, { incidentId: inc.id, crewIds: [...inc.crewIds] }));
           }
           inc.signals = worst.hit.signals; // olay açıkken sinyaller canlı güncellenir
         }
@@ -217,7 +217,7 @@ export function createDetector(): Detector {
           const action: AutoAction = { type: rule.action, crewIds, at, reason: rule.reason(memberIds, w.hit, g.location), incidentId: inc.id };
           inc.autoActions = [...inc.autoActions, rule.action];
           actions.push(action);
-          ledger.push(entry(at, 'AUTO_ACTION', `${ACTION_LABELS[rule.action]} · otomatik — ${action.reason}`, { incidentId: inc.id, crewIds }));
+          ledger.push(entry(at, 'AUTO_ACTION', `${ACTION_LABELS[rule.action]} · automatic — ${action.reason}`, { incidentId: inc.id, crewIds }));
           if (rule.action === 'MANDATORY_REST') for (const id of crewIds) restBy.set(id, inc.id);
         }
       }
@@ -234,7 +234,7 @@ export function createDetector(): Detector {
         o.inc.status = 'resolved';
         open.delete(key);
         ledger.push(
-          entry(at, 'INCIDENT_RESOLVED', `Çözüldü: ${o.inc.title} — sinyaller ${RESOLVE_AFTER} ölçümdür normal`, {
+          entry(at, 'INCIDENT_RESOLVED', `Resolved: ${o.inc.title} — signals normal for ${RESOLVE_AFTER} readings`, {
             incidentId: o.inc.id,
             crewIds: [...o.inc.crewIds],
           }),
@@ -284,7 +284,7 @@ export function createDetector(): Detector {
           entry(
             at,
             'SYSTEM',
-            `Katman 1 devrede: kişisel baseline için ilk ${BASELINE_WINDOW} ölçüm toplanıyor. Bu sürede sadece mutlak eşikler (CO₂, SpO₂, sıcaklık, toplam doz) izleniyor.`,
+            `Layer 1 active: collecting the first ${BASELINE_WINDOW} readings for personal baselines. Until then only absolute limits (CO₂, SpO₂, temperature, cumulative dose) are monitored.`,
           ),
         );
       }
@@ -296,7 +296,7 @@ export function createDetector(): Detector {
         for (const id of early) freezeTrack(tracks[id]);
         if (early.length) {
           ledger.push(
-            entry(at, 'SYSTEM', `Senaryo kalibrasyon bitmeden başladı: ${early.length === CREW_IDS.length ? 'tüm mürettebatın' : `${names(early)} için`} baseline'ı ${tracks[early[0]].n} ölçümle erken donduruldu.`, {
+            entry(at, 'SYSTEM', `Scenario started before calibration finished: ${early.length === CREW_IDS.length ? 'all crew' : names(early)} baseline frozen early with ${tracks[early[0]].n} readings.`, {
               crewIds: early,
             }),
           );
@@ -311,7 +311,7 @@ export function createDetector(): Detector {
       if (!baselineAnnounced && CREW_IDS.every((id) => tracks[id].frozen)) {
         baselineAnnounced = true;
         ledger.push(
-          entry(at, 'SYSTEM', `Kişisel baseline'lar kuruldu ve donduruldu: ${CREW_IDS.length} astronot × ${Z_KEYS.length} ölçüm. Z-skoru ve erken uyarı devrede.`),
+          entry(at, 'SYSTEM', `Personal baselines built and frozen: ${CREW_IDS.length} astronauts × ${Z_KEYS.length} metrics. Z-scores and early warning active.`),
         );
       }
 
@@ -332,7 +332,7 @@ export function createDetector(): Detector {
       const inc = incidents.find((i) => i.id === incidentId);
       if (!inc || inc.status !== 'open') return null;
       inc.status = 'acknowledged';
-      return entry(Date.now(), 'ACK', `Mürettebat onayladı: ${inc.title}`, { incidentId, crewIds: [...inc.crewIds] });
+      return entry(Date.now(), 'ACK', `Crew acknowledged: ${inc.title}`, { incidentId, crewIds: [...inc.crewIds] });
     },
 
     reset() {

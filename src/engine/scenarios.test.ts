@@ -91,7 +91,7 @@ describe.skipIf(!SCENARIOS_READY)('Uçtan uca · senaryolar (Parça 1 simülasyo
     expect(co2).toMatchObject({ level: 'critical', crewIds: ids('KOKPIT'), autoActions: ['INCREASE_VENTILATION'] });
     // Havalandırma senaryo sürerken CO₂'yi düşürür: olay senaryo bitmeden çözülmüş olmalı
     expect(co2.status).toBe('resolved');
-    expect(w.ledger.some((e) => e.kind === 'AUTO_ACTION' && e.text.startsWith('Havalandırma artırıldı'))).toBe(true);
+    expect(w.ledger.some((e) => e.kind === 'AUTO_ACTION' && e.text.startsWith('Ventilation increased'))).toBe(true);
     expect(allResolved(after)).toBe(true);
   });
 
@@ -119,7 +119,7 @@ describe.skipIf(!SCENARIOS_READY)('Uçtan uca · senaryolar (Parça 1 simülasyo
     w.run(12);
     w.sim.setScenario('SOLAR_STORM');
     const out = w.run(40);
-    expect(w.ledger.some((e) => e.text.includes('erken donduruldu'))).toBe(true);
+    expect(w.ledger.some((e) => e.text.includes('frozen early'))).toBe(true);
     expect(out.incidents.some((i) => i.type === 'RADIATION' && i.level === 'critical')).toBe(true);
   });
 });

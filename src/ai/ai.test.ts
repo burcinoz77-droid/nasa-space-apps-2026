@@ -37,9 +37,9 @@ describe('context.ts · veri özeti', () => {
     const json = JSON.stringify(ctx);
     expect(json).toContain('"kariyerDozLimiti_mSv":600');
     expect(json).toContain('"co2KritikSiniri_mmHg":3');
-    expect(json).toContain('12 dk 30 sn');
+    expect(json).toContain('12 min 30 s');
     expect(json).toContain('"gurultuSiniri_dBA":{"calisma16sa":72,"uyku8sa":62}');
-    expect(json).toContain('%6–9 (NASA: ayda %1–1,5; ölçüm değil, tahmin)');
+    expect(json).toContain('6–9% (NASA: 1–1.5% per month; an estimate, not a measurement)');
   });
 
   it(`herkes kritik olsa bile ${MAX_CONTEXT_TOKENS} token altında kalır`, () => {
@@ -135,7 +135,7 @@ describe('fallback.ts · yedek mod, 10 test sorusu', () => {
   });
 
   it('kim dinlenmeli: zorunlu dinlenme verilen Elif önce gelir', () => {
-    expect(fallbackAnswer({ mode: 'chat', question: QUESTIONS[0], context: {} }).text).toMatch(/zorunlu dinlenme verdi: Elif/);
+    expect(fallbackAnswer({ mode: 'chat', question: QUESTIONS[0], context: {} }).text).toMatch(/Layer 1 has applied mandatory rest: Elif/);
   });
 
   it('Elif\'in nabzı ekrandakiyle aynı sayı', () => {
@@ -145,23 +145,23 @@ describe('fallback.ts · yedek mod, 10 test sorusu', () => {
 
   it('Kerem neden kritik: gerçek CO₂ değeri ve otonom adım', () => {
     const t = fallbackAnswer({ mode: 'chat', question: QUESTIONS[1], context: {} }).text;
-    expect(t).toContain('3,4 mmHg');
-    expect(t).toMatch(/havalandırma/i);
+    expect(t).toContain('3.4 mmHg');
+    expect(t).toMatch(/ventilation/i);
   });
 
   it('selama veri saymadan, resmî bir tanıtımla karşılık verir', () => {
-    const t = fallbackAnswer({ mode: 'chat', question: 'Merhaba', context: {} }).text;
-    expect(t).toMatch(/^Merhaba, ben ASTRA/);
+    const t = fallbackAnswer({ mode: 'chat', question: 'Hello', context: {} }).text;
+    expect(t).toMatch(/^Hello, I am ASTRA/);
     expect(t).not.toMatch(/\d+ (bpm|mmHg|°C)/);
   });
 
   it('"Peki Kerem?" sorusunu Kerem\'in durumu olarak anlar', () => {
-    expect(fallbackAnswer({ mode: 'chat', question: 'Peki Kerem?', context: {} }).text).toMatch(/^Kerem'in durumu kritik/);
+    expect(fallbackAnswer({ mode: 'chat', question: 'And Kerem?', context: {} }).text).toMatch(/^Kerem's status is critical/);
   });
 
   it('telemetri yokken de cevap verir', () => {
     useAstra.getState().clearAll();
-    expect(fallbackAnswer({ mode: 'chat', question: 'Elif nasıl?', context: {} }).text).toMatch(/telemetri/);
+    expect(fallbackAnswer({ mode: 'chat', question: 'How is Elif?', context: {} }).text).toMatch(/telemetry/);
   });
 });
 
@@ -178,7 +178,7 @@ describe('fallback.ts · olay açıklama şablonları', () => {
   });
 
   it('olay bulunamazsa genel güvenli metin döner', () => {
-    expect(fallbackAnswer({ mode: 'incident', question: 'x', context: { olayId: 'yok' } }).text).toMatch(/Katman 1/);
+    expect(fallbackAnswer({ mode: 'incident', question: 'x', context: { olayId: 'yok' } }).text).toMatch(/Layer 1/);
   });
 });
 
@@ -264,7 +264,7 @@ describe('client.ts · askAstra', () => {
       }),
     );
     const a = await askAstra({ mode: 'chat', question: 'Radyasyon limiti ne?', context: {} });
-    expect(a.tools).toEqual(['Kaynak bilgisi · radyasyon']);
+    expect(a.tools).toEqual(['Reference lookup · radyasyon']);
     expect(a.verified).toBe(true);
     expect(a.sources?.[0]).toMatchObject({ ad: expect.stringMatching(/NASA-STD-3001/), url: expect.stringMatching(/^https:\/\//) });
   });
@@ -313,7 +313,7 @@ describe('explain.ts · olay açıklaması', () => {
 
   it('olay sorusu sinyalleri değer ve kişisel normalle verir', () => {
     const s = makeDemoState();
-    expect(incidentQuestion(s.incidents[0])).toContain('3,4 mmHg (kişisel normal 1,9 mmHg)');
+    expect(incidentQuestion(s.incidents[0])).toContain('3.4 mmHg (personal normal 1.9 mmHg)');
   });
 });
 
@@ -345,7 +345,7 @@ describe('Araçlar (tool calling) · salt-okur araçlar', () => {
     expect(r.ad).toBe('Kerem');
     expect(r.olcumler.length).toBe(METRICS.length);
     expect(r.acikOlaylar.length).toBe(1);
-    expect(runTool('get_crew_member', { ad: 'Kenji' }, data())).toMatchObject({ hata: expect.stringMatching(/astronot yok/) });
+    expect(runTool('get_crew_member', { ad: 'Kenji' }, data())).toMatchObject({ hata: expect.stringMatching(/No astronaut/) });
   });
 
   it('get_metric_trend: Türkçe ölçüm adından doğru ölçümü bulur', () => {
@@ -357,18 +357,18 @@ describe('Araçlar (tool calling) · salt-okur araçlar', () => {
       yakinDonem: { degerler: number[]; yon: string };
       uzunDonem: { degerler: number[]; kapsam_saat: number };
     };
-    expect(r.olcum).toBe('Kalp atış hızı');
+    expect(r.olcum).toBe('Heart rate');
     expect(r.kisiselNormal).toBeGreaterThan(40);
     expect(r.yakinDonem.degerler.length).toBeGreaterThan(2);
-    expect(['artıyor', 'azalıyor', 'sabit']).toContain(r.yakinDonem.yon);
+    expect(['rising', 'falling', 'stable']).toContain(r.yakinDonem.yon);
     expect(r.uzunDonem.degerler.length).toBeGreaterThan(2);
     expect(r.uzunDonem.kapsam_saat).toBeGreaterThan(0);
-    expect((runTool('get_metric_trend', { ad: 'Elif', olcum: 'toplam doz' }, td) as { olcum: string }).olcum).toBe('Toplam radyasyon dozu');
-    expect((runTool('get_metric_trend', { ad: 'Elif', olcum: 'CO₂' }, td) as { olcum: string }).olcum).toBe('CO₂ kısmi basıncı');
+    expect((runTool('get_metric_trend', { ad: 'Elif', olcum: 'toplam doz' }, td) as { olcum: string }).olcum).toBe('Cumulative radiation dose');
+    expect((runTool('get_metric_trend', { ad: 'Elif', olcum: 'CO₂' }, td) as { olcum: string }).olcum).toBe('CO₂ partial pressure');
   });
 
   it('get_metric_trend: veride olmayan ölçümde "veride yok" der', () => {
-    expect(runTool('get_metric_trend', { ad: 'Deniz', olcum: 'kemik yoğunluğu' }, data())).toMatchObject({ hata: 'Bu ölçüm veride yok.' });
+    expect(runTool('get_metric_trend', { ad: 'Deniz', olcum: 'kemik yoğunluğu' }, data())).toMatchObject({ hata: 'This metric is not in the data.' });
   });
 
   it('list_incidents, get_event_log, lookup_reference', () => {
@@ -385,10 +385,10 @@ describe('Araçlar (tool calling) · salt-okur araçlar', () => {
 describe('Kaynak linkleri (sources.ts)', () => {
   it('sorudaki konuya göre doğru kaynakları seçer, ilgisizleri eklemez', () => {
     const noise = answerSources('Kabin gürültüsü normal mi?', 'Ortam gürültüsü: Elif 55 dBA. Tüm değerler resmi normal aralıkta (en fazla 72 dBA).');
-    expect(noise.map((x) => x.ad).join(' ')).toMatch(/Akustik/);
+    expect(noise.map((x) => x.ad).join(' ')).toMatch(/Acoustics/);
     expect(noise.map((x) => x.ad).join(' ')).not.toMatch(/NIH|Pulse/);
     expect(answerSources('Kemik kaybı ne durumda?', 'Kemik yoğunluğu ölçülmüyor. Bu konuda uçuş doktoruna danışmayı öneririm.').map((x) => x.ad)).toEqual([
-      'NASA HRP, kemik değişimi riski',
+      'NASA HRP, risk of bone changes',
     ]);
     // "önemli" kelimesindeki "nem" ortam konusunu tetiklemez
     expect(answerSources('Bu önemli mi?', 'Merhaba.')).toEqual([]);
@@ -411,33 +411,33 @@ describe('Yeni ölçümler (ortam) ve sistemde ölçülmeyen konular', () => {
   it('araçlar Türkçe adla yeni ölçümleri bulur', () => {
     runSimulation(40);
     const td = JSON.parse(JSON.stringify(buildToolData(useAstra.getState())));
-    expect((runTool('get_metric_trend', { ad: 'Elif', olcum: 'gürültü' }, td) as { olcum: string }).olcum).toBe('Ortam gürültüsü');
-    expect((runTool('get_metric_trend', { ad: 'Elif', olcum: 'kabin sıcaklığı' }, td) as { olcum: string }).olcum).toBe('Ortam sıcaklığı');
-    expect((runTool('get_metric_trend', { ad: 'Elif', olcum: 'vücut ısısı' }, td) as { olcum: string }).olcum).toBe('Çekirdek sıcaklık');
+    expect((runTool('get_metric_trend', { ad: 'Elif', olcum: 'gürültü' }, td) as { olcum: string }).olcum).toBe('Ambient noise');
+    expect((runTool('get_metric_trend', { ad: 'Elif', olcum: 'kabin sıcaklığı' }, td) as { olcum: string }).olcum).toBe('Ambient temperature');
+    expect((runTool('get_metric_trend', { ad: 'Elif', olcum: 'vücut ısısı' }, td) as { olcum: string }).olcum).toBe('Core temperature');
     expect((runTool('lookup_reference', { konu: 'kemik' }, td) as { konu: string }).konu).toBe('kemik');
     expect((runTool('lookup_reference', { konu: 'gürültü' }, td) as { konu: string }).konu).toBe('ortam');
     expect((runTool('lookup_reference', { konu: 'SANS' }, td) as { konu: string }).konu).toBe('goz');
   });
 
   it('kemik kaybı tahmini görev gününe göre hesaplanır', () => {
-    expect(boneLossEstimate(180)).toBe('%6–9');
-    expect(boneLossEstimate(30)).toBe('%1');
+    expect(boneLossEstimate(180)).toBe('6–9%');
+    expect(boneLossEstimate(30)).toBe('1%');
   });
 
   it('yedek mod: ölçülmeyen konularda uydurmaz, ölçülmediğini ve NASA bilgisini söyler', () => {
     makeDemoState();
     const ask = (q: string) => fallbackAnswer({ mode: 'chat', question: q, context: {} }).text;
-    const bone = ask("Kerem'in kemik kaybı ne durumda?");
-    expect(bone).toMatch(/ölçülmüyor/);
-    expect(bone).toContain('%1–1,5');
-    expect(bone).toContain('%6–9');
-    expect(ask('Bağışıklık sistemi nasıl?')).toMatch(/ölçülmüyor/);
-    expect(ask('Ekip uyumu nasıl?')).toMatch(/ölçülmüyor/);
-    expect(ask('SANS riski var mı?')).toMatch(/ölçülmüyor/);
-    expect(ask("Mert'in elektrolit dengesi nasıl?")).not.toMatch(/vestibüler/);
-    expect(ask('Kokpitte gürültü kaç?')).toMatch(/dBA/);
-    expect(ask('Kabin gürültüsü normal mi?')).toMatch(/resmi normal aralıkta \(en fazla 72 dBA\)/);
-    for (const q of ["Kerem'in kemik kaybı ne durumda?", 'SANS riski var mı?', 'Kokpitte gürültü kaç?']) {
+    const bone = ask("How is Kerem's bone loss?");
+    expect(bone).toMatch(/not measured/);
+    expect(bone).toContain('1–1.5%');
+    expect(bone).toContain('6–9%');
+    expect(ask('How is the immune system?')).toMatch(/not measured/);
+    expect(ask('How is team cohesion?')).toMatch(/not measured/);
+    expect(ask('Is there a SANS risk?')).toMatch(/not measured/);
+    expect(ask("How is Mert's electrolyte balance?")).not.toMatch(/vestibular/);
+    expect(ask('What is the noise in the cockpit?')).toMatch(/dBA/);
+    expect(ask('Is cabin noise normal?')).toMatch(/within the official normal range \(up to 72 dBA\)/);
+    for (const q of ["How is Kerem's bone loss?", 'Is there a SANS risk?', 'What is the noise in the cockpit?']) {
       expect(checkAnswer(ask(q))).toEqual({ safe: true });
     }
   });
@@ -451,29 +451,29 @@ describe('conditions.ts · olası durumlar (kesin teşhis değil)', () => {
 
   it('CO₂ arızasında Kerem için hiperkapni, EVA aşırı eforda Mert için ısı stresi olasılığı', () => {
     let s = runSimulation(40, 'CO2_SCRUBBER_FAIL', 30);
-    expect(possibleConditions(s, 'kerem')[0].durum).toMatch(/hiperkapni/);
+    expect(possibleConditions(s, 'kerem')[0].durum).toMatch(/hypercapni/);
     s = runSimulation(40, 'EVA_OVEREXERTION', 30);
     const mert = possibleConditions(s, 'mert');
-    expect(mert[0].durum).toMatch(/Isı stresi/);
-    expect(mert[0].dayanak.join(' ')).toMatch(/Çekirdek sıcaklık .* \(kişisel normal/);
-    expect(['düşük', 'orta']).toContain(mert[0].olasilik);
+    expect(mert[0].durum).toMatch(/Heat stress/);
+    expect(mert[0].dayanak.join(' ')).toMatch(/Core temperature .* \(personal normal/);
+    expect(['low', 'medium']).toContain(mert[0].olasilik);
   });
 
   it('assess_possible_conditions aracı olası durumları ve "kesin değil" uyarısını verir', () => {
     runSimulation(40, 'EVA_OVEREXERTION', 30);
     const td = JSON.parse(JSON.stringify(buildToolData(useAstra.getState())));
     const r = runTool('assess_possible_conditions', { ad: 'Mert' }, td) as { olasiDurumlar: { durum: string }[]; uyari: string };
-    expect(r.olasiDurumlar[0].durum).toMatch(/Isı stresi/);
-    expect(r.uyari).toMatch(/kesin değildir/);
-    expect(toolLabel({ ad: 'assess_possible_conditions', girdi: { ad: 'Mert' } })).toBe('Olası durumlar · Mert');
+    expect(r.olasiDurumlar[0].durum).toMatch(/Heat stress/);
+    expect(r.uyari).toMatch(/not certain/);
+    expect(toolLabel({ ad: 'assess_possible_conditions', girdi: { ad: 'Mert' } })).toBe('Possible conditions · Mert');
   });
 
   it('yedek modda hastalık sorusuna değişen değerler + ihtimal diliyle cevap verir', () => {
     runSimulation(40, 'EVA_OVEREXERTION', 30);
     const t = fallbackAnswer({ mode: 'chat', question: "Mert'te ne olabilir?", context: {} }).text;
-    expect(t).toMatch(/^Kesin bir teşhis koyamam; ancak Mert için çekirdek sıcaklık/);
-    expect(t).toMatch(/ısı stresi ve aşırı efor ile uyumlu olabilir/);
-    expect(t).toMatch(/kesin değildir/);
+    expect(t).toMatch(/^I cannot give a definitive diagnosis; however, for Mert the readings are core temperature/);
+    expect(t).toMatch(/may be consistent with heat stress and overexertion/);
+    expect(t).toMatch(/not a certainty/);
     expect(checkAnswer(t).safe).toBe(true);
     expect(countSentences(t)).toBeLessThanOrEqual(4);
   });
@@ -695,4 +695,17 @@ describe('api/astra.ts · sunucu fonksiyonu', () => {
     expect(f).toHaveBeenCalledTimes(2);
     expect(JSON.parse(String(f.mock.calls[1][1].body)).thinking).toBeUndefined();
   });
+});
+
+describe('safety.ts · English answers', () => {
+  const BLOCK = ['Give Kerem 400 mg ibuprofen.', 'Mert should take a painkiller and rest.', 'Start antibiotics for Kerem.', 'Mert is definitely having a heart attack.', 'Do not worry, this is not a heart attack.', 'Mert has dehydration.'];
+  const PASS = [
+    'I cannot recommend medication; that decision belongs to the flight surgeon.',
+    'These changes may be consistent with heat stress and overexertion. This is a possibility, not a certainty.',
+    'I cannot confirm a life-threatening condition from this data; if there are symptoms, report them to the flight surgeon immediately.',
+    'Increasing ventilation is recommended; re-check the value after a few readings.',
+    'Layer 1 has applied mandatory rest: Elif (cognitive score 61%, sleep 6.6 h, PVT 260 ms).',
+  ];
+  it.each(BLOCK)('blocks: %s', (text) => expect(checkAnswer(text).safe).toBe(false));
+  it.each(PASS)('passes: %s', (text) => expect(checkAnswer(text)).toEqual({ safe: true }));
 });

@@ -98,7 +98,7 @@ function Visor({ crewId, onClose }: { crewId: CrewId; onClose: () => void }) {
     <div
       className="fixed inset-0 z-[105] overflow-hidden select-none"
       role="dialog"
-      aria-label={`${member.name} · vizör görünümü`}
+      aria-label={`${member.name} · visor view`}
       style={{ fontFamily: 'Inter, sans-serif', background: surface ? MARS_BG : CABIN_BG, animation: 'visor-in .6s ease' }}
     >
       {surface ? <MarsHorizon /> : <CabinLines />}
@@ -123,23 +123,23 @@ function Visor({ crewId, onClose }: { crewId: CrewId; onClose: () => void }) {
         <div style={{ width: 420, height: 2, background: HUD, opacity: 0.6 }} />
         {surface ? (
           <div className="text-base font-bold" style={alert ? { color: COLORS.normal, textShadow: '0 0 10px rgba(52,211,153,0.7)' } : undefined}>
-            ▲ HABİTAT · 340 m{alert ? ' · yürüyüş 4 dk' : ' · 78°'}
+            ▲ HABITAT · 340 m{alert ? ' · 4 min walk' : ' · 78°'}
           </div>
         ) : (
-          <div className="text-base">ARES-1 · {alert?.type === 'RADIATION' ? 'radyasyon sığınağı ▲ 12 m' : 'Kokpit modülü'}</div>
+          <div className="text-base">ARES-1 · {alert?.type === 'RADIATION' ? 'radiation shelter ▲ 12 m' : 'Cockpit module'}</div>
         )}
       </div>
 
       {/* Sol üst: kimlik ve gün */}
-      <Corner side="left" top="13vh" label={surface ? `KASK VİZÖRÜ · ${member.unit}` : `AR GÖZLÜK · ${member.unit}`}>
+      <Corner side="left" top="13vh" label={surface ? `HELMET VISOR · ${member.unit}` : `AR GLASSES · ${member.unit}`}>
         <span className="text-2xl font-bold">{member.name.replace('Dr. ', '')}</span>
-        <span className="text-sm opacity-85">Görev günü {ship?.missionDay ?? '—'}</span>
+        <span className="text-sm opacity-85">Mission day {ship?.missionDay ?? '—'}</span>
       </Corner>
 
       {/* Sağ üst: Dünya ve ASTRA */}
-      <Corner side="right" top="13vh" label="DÜNYA BAĞLANTISI">
+      <Corner side="right" top="13vh" label="EARTH LINK">
         <span className="text-lg font-bold">
-          gecikme {Math.floor(delay / 60)} dk {Math.round(delay % 60)} sn
+          delay {Math.floor(delay / 60)} min {Math.round(delay % 60)} s
         </span>
         <span className="text-sm" style={{ color: '#C4B5FD', textShadow: GLOW }}>
           ● ASTRA Katman 1 · gemide, aktif
@@ -148,18 +148,18 @@ function Visor({ crewId, onClose }: { crewId: CrewId; onClose: () => void }) {
 
       {/* Sol: beden */}
       <div className="absolute flex flex-col gap-5" style={{ left: '7.5vw', top: '36vh' }}>
-        <Reading label="NABIZ" value={fmt(t?.cardio.hr_bpm ?? 0, 0)} unit="bpm" level={levelOf('cardio.hr_bpm')} />
-        <Reading label="ÇEKİRDEK" value={fmt(t?.resp.coreTemp_C ?? 0, 1)} unit="°C" level={levelOf('resp.coreTemp_C')} />
-        <Reading label="SpO₂" value={`%${fmt(t?.cardio.spo2_pct ?? 0, 0)}`} unit="" level={levelOf('cardio.spo2_pct')} />
-        <Reading label="SOLUNUM" value={fmt(t?.resp.rr_bpm ?? 0, 0)} unit="/dk" level={levelOf('resp.rr_bpm')} />
+        <Reading label="HEART RATE" value={fmt(t?.cardio.hr_bpm ?? 0, 0)} unit="bpm" level={levelOf('cardio.hr_bpm')} />
+        <Reading label="CORE TEMP" value={fmt(t?.resp.coreTemp_C ?? 0, 1)} unit="°C" level={levelOf('resp.coreTemp_C')} />
+        <Reading label="SpO₂" value={`${fmt(t?.cardio.spo2_pct ?? 0, 0)}%`} unit="" level={levelOf('cardio.spo2_pct')} />
+        <Reading label="BREATHING" value={fmt(t?.resp.rr_bpm ?? 0, 0)} unit="/min" level={levelOf('resp.rr_bpm')} />
       </div>
 
       {/* Sağ: ortam */}
       <div className="absolute flex flex-col items-end gap-5" style={{ right: '7.5vw', top: '36vh' }}>
-        <Reading right small label="RADYASYON" value={fmt(t?.env.doseRate_uSv_h ?? 0, 1)} unit="µSv/sa" level={levelOf('env.doseRate_uSv_h')} />
-        <Reading right small label={surface ? 'GİYSİ BASINCI' : 'KABİN BASINCI'} value={fmt(t?.env.pressure_kPa ?? 0, 1)} unit="kPa" level={levelOf('env.pressure_kPa')} />
-        <Reading right small label={surface ? 'GİYSİ CO₂' : 'KABİN CO₂'} value={fmt(t?.env.ppCO2_mmHg ?? 0, 1)} unit="mmHg" level={levelOf('env.ppCO2_mmHg')} />
-        <Reading right small label={surface ? 'GİYSİ O₂' : 'KABİN O₂'} value={`%${fmt(t?.env.o2_pct ?? 0, 0)}`} unit="" level={levelOf('env.o2_pct')} />
+        <Reading right small label="RADIATION" value={fmt(t?.env.doseRate_uSv_h ?? 0, 1)} unit="µSv/h" level={levelOf('env.doseRate_uSv_h')} />
+        <Reading right small label={surface ? 'SUIT PRESSURE' : 'CABIN PRESSURE'} value={fmt(t?.env.pressure_kPa ?? 0, 1)} unit="kPa" level={levelOf('env.pressure_kPa')} />
+        <Reading right small label={surface ? 'SUIT CO₂' : 'CABIN CO₂'} value={fmt(t?.env.ppCO2_mmHg ?? 0, 1)} unit="mmHg" level={levelOf('env.ppCO2_mmHg')} />
+        <Reading right small label={surface ? 'SUIT O₂' : 'CABIN O₂'} value={`${fmt(t?.env.o2_pct ?? 0, 0)}%`} unit="" level={levelOf('env.o2_pct')} />
       </div>
 
       {alert ? <Alert incident={alert} onSnooze={() => setSnoozed(alert.id)} /> : <Reticle />}
@@ -169,10 +169,10 @@ function Visor({ crewId, onClose }: { crewId: CrewId; onClose: () => void }) {
         className="absolute top-4 right-4 z-20 rounded-full border px-4 py-1.5 text-sm backdrop-blur hover:bg-white/10"
         style={{ borderColor: alpha(COLORS.text, 0.3), color: COLORS.text }}
       >
-        Vizörü kapat ✕
+        Close visor ✕
       </button>
       <div className="absolute right-4 bottom-3 font-mono text-[11px]" style={{ color: alpha(COLORS.text, 0.5) }}>
-        Prototip · veriler ARES-1 simülasyonundan canlı
+        Prototype · live data from the ARES-1 simulation
       </div>
       <style>{`
         @keyframes visor-in { from { transform: scale(1.04); } to { transform: none; } }
@@ -205,8 +205,8 @@ function Alert({ incident, onSnooze }: { incident: Incident; onSnooze: () => voi
         }}
       >
         <div className="flex justify-between text-[13px] tracking-[0.2em]" style={{ fontFamily: MONO, color }}>
-          <span>ASTRA · KATMAN 1 · {INCIDENT_LABELS[incident.type].toLocaleUpperCase('tr')}</span>
-          <span>{incident.level === 'critical' ? 'KRİTİK' : 'DİKKAT'}</span>
+          <span>ASTRA · LAYER 1 · {INCIDENT_LABELS[incident.type].toUpperCase()}</span>
+          <span>{incident.level === 'critical' ? 'CRITICAL' : 'CAUTION'}</span>
         </div>
         <div className="text-2xl leading-snug font-bold">{incident.title}</div>
         <div className="flex flex-wrap gap-x-5 gap-y-1 text-[15px]" style={{ fontFamily: MONO, color: '#E2E8F0' }}>
@@ -223,14 +223,14 @@ function Alert({ incident, onSnooze }: { incident: Incident; onSnooze: () => voi
         </div>
         {incident.autoActions.map((a) => (
           <div key={a} className="text-sm" style={{ fontFamily: MONO, color: COLORS.normal }}>
-            ✓ {ACTION_LABELS[a]} · otomatik
+            ✓ {ACTION_LABELS[a]} · automatic
           </div>
         ))}
       </div>
 
       <div className="absolute flex flex-col items-center gap-2.5" style={{ left: '50%', bottom: '10vh', transform: 'translateX(-50%)', fontFamily: MONO, color: '#F8FAFC' }}>
         <span className="text-[13px] tracking-[0.2em]" style={{ color: COLORS.ai }}>
-          {acked ? 'MÜRETTEBAT ONAYLADI · KAYDA GEÇTİ' : 'SESLİ KARAR · MÜRETTEBATTA'}
+          {acked ? 'CREW ACKNOWLEDGED · LOGGED' : 'VOICE DECISION · CREW'}
         </span>
         {!acked && (
           <div className="flex gap-3.5">
@@ -239,10 +239,10 @@ function Alert({ incident, onSnooze }: { incident: Incident; onSnooze: () => voi
               className="rounded-xl px-5 py-2.5 text-[17px] hover:brightness-125"
               style={{ border: `2px solid ${COLORS.normal}`, background: alpha(COLORS.normal, 0.15) }}
             >
-              "ASTRA, onayla"
+              "ASTRA, acknowledge"
             </button>
             <button onClick={onSnooze} className="rounded-xl px-5 py-2.5 text-[17px] hover:brightness-125" style={{ border: '2px solid #94A3B8', background: 'rgba(148,163,184,0.12)' }}>
-              "10 dk ertele"
+              "Snooze 10 min"
             </button>
           </div>
         )}

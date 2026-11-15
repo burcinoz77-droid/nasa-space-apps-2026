@@ -198,7 +198,7 @@ export function OrbitalDisplay({ markers, height }: { markers: OrbitalMarkers; h
       const site = sphere(SITE.lat, SITE.lon, rot);
       const [sx, sy] = P(site);
       drawMarker(ctx, sx, sy, surface, t, still, 'square');
-      label(ctx, font, sx, sy, 'Gezegen ekibi · EVA', surface, w, 'below');
+      label(ctx, font, sx, sy, 'Surface team · EVA', surface, w, 'below');
 
       // --- Yörüngenin ön yarısı, gemi ve iz
       ctx.setLineDash([3, 5]);
@@ -265,7 +265,7 @@ export function OrbitalDisplay({ markers, height }: { markers: OrbitalMarkers; h
         ref={canvasRef}
         className="absolute inset-0 font-sans"
         role="img"
-        aria-label={`Mars yörünge ekranı. ARES-1 gemisi: ${markers.ship ?? 'veri yok'}. Gezegen ekibi EVA bölgesi: ${markers.surface ?? 'veri yok'}.`}
+        aria-label={`Mars orbit display. ARES-1 ship: ${markers.ship ?? 'no data'}. Surface team EVA zone: ${markers.surface ?? 'no data'}.`}
       />
     </div>
   );

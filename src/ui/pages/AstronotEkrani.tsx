@@ -23,10 +23,10 @@ import { alpha, COLORS, fmt, LEVEL_COLOR, LEVEL_ICON, LEVEL_LABEL, worstLevel } 
 const EMPTY: Telemetry[] = [];
 
 const TABS: { id: TabId; label: string; groups: MetricInfo['group'][] }[] = [
-  { id: 'genel', label: 'Genel bakış', groups: [] },
-  { id: 'saglik', label: 'Sağlık', groups: [1, 2, 3] },
-  { id: 'performans', label: 'Performans', groups: [4] },
-  { id: 'cevre', label: 'Çevre', groups: [5] },
+  { id: 'genel', label: 'Overview', groups: [] },
+  { id: 'saglik', label: 'Health', groups: [1, 2, 3] },
+  { id: 'performans', label: 'Performance', groups: [4] },
+  { id: 'cevre', label: 'Environment', groups: [5] },
 ];
 
 const levelColor = (l: Level | undefined) => (l ? LEVEL_COLOR[l] : COLORS.text);
@@ -64,7 +64,7 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
   return (
     <div className="space-y-4">
       {/* Astronot hap düğmeleri */}
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Astronot seç">
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Select astronaut">
         {CREW.map((m) => {
           const l = statuses[m.id]?.level;
           const on = m.id === crewId;
@@ -76,14 +76,14 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
               onClick={() => onSelect(m.id)}
               className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm ${on ? 'bg-calm/20 font-semibold text-calm ring-1 ring-calm' : 'bg-white/5 text-slate-200 hover:bg-white/10'}`}
             >
-              <span style={{ color: l ? LEVEL_COLOR[l] : COLORS.offline }} aria-label={l ? LEVEL_LABEL[l] : 'veri yok'}>
+              <span style={{ color: l ? LEVEL_COLOR[l] : COLORS.offline }} aria-label={l ? LEVEL_LABEL[l] : 'no data'}>
                 {l ? LEVEL_ICON[l] : '●'}
               </span>
               <span className="flex flex-col items-start leading-tight">
                 {m.name.replace(/^Dr\.\s*/, '')}
                 {m.location === 'GEZEGEN' && (
                   <span className="text-[11px] font-semibold" style={{ color: COLORS.critical }}>
-                    Uzay yürüyüşünde
+                    On spacewalk
                   </span>
                 )}
               </span>
@@ -109,7 +109,7 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
           <div className="text-xl font-bold">{member.name}</div>
           {eva && (
             <div className="text-sm font-semibold" style={{ color: COLORS.critical }}>
-              ● Uzay yürüyüşünde
+              ● On spacewalk
             </div>
           )}
           <div className="text-sm text-slate-400">
@@ -122,18 +122,18 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
             onClick={() => window.dispatchEvent(new CustomEvent(VISOR_EVENT, { detail: crewId }))}
             className="flex items-center gap-2 rounded-xl px-4 py-2 text-base font-semibold hover:brightness-125"
             style={{ color: COLORS.calm, backgroundColor: alpha(COLORS.calm, 0.14), boxShadow: `inset 0 0 0 1.5px ${alpha(COLORS.calm, 0.6)}` }}
-            title="Bu astronotun kask vizöründe (HUD) ne gördüğünü aç"
+            title="Open what this astronaut sees in the helmet visor (HUD)"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
               <path d="M4 13a8 8 0 0 1 16 0v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
               <path d="M7 12.5a5 5 0 0 1 10 0v1.5H7z" fill="currentColor" fillOpacity="0.25" />
             </svg>
-            Vizör görünümü
+            Visor view
           </button>
         )}
         {st?.restRequired && (
           <span className="rounded-full px-3 py-1 text-sm font-semibold" style={{ color: COLORS.calm, backgroundColor: alpha(COLORS.calm, 0.12) }}>
-            ✓ Zorunlu dinlenme · otomatik
+            ✓ Mandatory rest · automatic
           </span>
         )}
         {due.length > 0 && (
@@ -145,9 +145,9 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
                 ? { color: COLORS.caution, backgroundColor: alpha(COLORS.caution, 0.12) }
                 : { color: COLORS.ai, backgroundColor: alpha(COLORS.ai, 0.12) }
             }
-            title="ASTRA'nın test önerilerini aç"
+            title="Open ASTRA's test recommendations"
           >
-            {urgentTests ? `▲ ${urgentTests} öncelikli test` : `${due.length} test önerisi`}
+            {urgentTests ? `▲ ${urgentTests} priority test(s)` : `${due.length} test suggestion(s)`}
           </button>
         )}
         <LevelBadge level={st?.level} pill />
@@ -162,14 +162,14 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
               style={{ color: LEVEL_COLOR[i.level], backgroundColor: alpha(LEVEL_COLOR[i.level], 0.1) }}
             >
               {LEVEL_ICON[i.level]} {i.title}
-              {i.status === 'acknowledged' ? ' · onaylandı' : ''}
+              {i.status === 'acknowledged' ? ' · acknowledged' : ''}
             </span>
           ))}
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-4 min-[1180px]:grid-cols-[minmax(0,0.95fr)_minmax(0,1.25fr)]">
-        <Card title="Vücut haritası" right={<span className="text-sm text-slate-400">3B · canlı</span>}>
+        <Card title="Body map" right={<span className="text-sm text-slate-400">3D · live</span>}>
           <BodyPanel key={crewId} crewId={crewId} status={st} t={t} onOpenTab={openTab} />
         </Card>
 
@@ -187,7 +187,7 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
       {/* Sekmeler (vücut panelindeki "sekmede aç" buraya kaydırır; yapışkan olay bandının altında kalsın diye pay bırakılır) */}
       <div ref={tabsRef} className="scroll-mt-48">
         <Card>
-          <div className="mb-3 flex flex-wrap gap-1 rounded-xl bg-white/5 p-1" role="tablist" aria-label="Ölçüm grupları">
+          <div className="mb-3 flex flex-wrap gap-1 rounded-xl bg-white/5 p-1" role="tablist" aria-label="Metric groups">
             {TABS.map((x) => {
               const l = tabLevel(x.id);
               const on = tab === x.id;
@@ -214,7 +214,7 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
               onClick={() => setTab('testler')}
               className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm ${tab === 'testler' ? 'bg-calm/20 font-semibold text-calm ring-1 ring-calm/50' : 'text-slate-300 hover:bg-white/5'}`}
             >
-              Testler
+              Tests
               {psychLevel !== 'normal' ? (
                 <span style={{ color: LEVEL_COLOR[psychLevel] }} aria-label={LEVEL_LABEL[psychLevel]}>
                   {LEVEL_ICON[psychLevel]}
@@ -272,8 +272,8 @@ function RangeNote({ crewId, k, value, block }: { crewId: CrewId; k: MetricKey; 
       style={{ color: inside ? COLORS.normal : COLORS.caution }}
       title={
         inside
-          ? 'Resmi kaynağın normal aralığında: bu değer için uyarı verilmez (kaynak rozetine bakın).'
-          : 'Resmi normal aralığın dışında: kişisel normalden sapma değerlendirilir.'
+          ? 'Within the official normal range: no alert for this value (see the source badge).'
+          : 'Outside the official normal range: deviation from personal normal is evaluated.'
       }
     >
       normal {text} {inside ? '✓' : '!'}
@@ -286,26 +286,26 @@ function HealthCard({ crewId, t, st }: { crewId: CrewId; t: Telemetry | undefine
   const hrMean = useMemo(() => (hist.length ? hist.reduce((a, x) => a + x.cardio.hr_bpm, 0) / hist.length : undefined), [hist]);
   const c = levelColor(st?.level);
   return (
-    <Card title="Sağlık" right={<LevelBadge level={st?.level} />}>
+    <Card title="Health" right={<LevelBadge level={st?.level} />}>
       <div className="@container">
         <div className="grid grid-cols-1 items-end gap-3 @[480px]:grid-cols-[auto_minmax(0,1fr)] @[480px]:gap-x-6">
           <div>
-            <div className="text-sm text-slate-400">Sağlık skoru</div>
+            <div className="text-sm text-slate-400">Health score</div>
             <div className="font-mono text-4xl leading-none font-bold tabular-nums" style={{ color: c }}>
-              %{fmt(st?.healthScore)}
+              {fmt(st?.healthScore)}%
             </div>
           </div>
           <div className="grid min-w-0 grid-cols-3 gap-2">
-            <Vital crewId={crewId} t={t} st={st} k="cardio.hr_bpm" label="Nabız" />
-            <Vital crewId={crewId} t={t} st={st} k="resp.coreTemp_C" label="Sıcaklık" />
+            <Vital crewId={crewId} t={t} st={st} k="cardio.hr_bpm" label="Heart rate" />
+            <Vital crewId={crewId} t={t} st={st} k="resp.coreTemp_C" label="Temperature" />
             <Vital crewId={crewId} t={t} st={st} k="cardio.spo2_pct" label="SpO₂" />
           </div>
         </div>
       </div>
       <div className="mt-3">
         <div className="flex justify-between text-sm text-slate-400">
-          <span>Nabız · son {hist.length} ölçüm</span>
-          <span>kesikli çizgi: ortalama {fmtUnit(hrMean, 'bpm')}</span>
+          <span>Heart rate · last {hist.length} readings</span>
+          <span>dashed line: mean {fmtUnit(hrMean, 'bpm')}</span>
         </div>
         <Sparkline crewId={crewId} metric="cardio.hr_bpm" height={56} reference={hrMean} color={st?.level === 'critical' ? COLORS.critical : COLORS.calm} />
       </div>
@@ -370,16 +370,16 @@ function RadiationCard({ crewId, t, st }: { crewId: CrewId; t: Telemetry | undef
   const rateLevel = signalLevel(st, 'env.doseRate_uSv_h');
   const level = worstLevel(rateLevel, cumLevel);
   return (
-    <FactorCard title="Radyasyon" level={level}>
+    <FactorCard title="Radiation" level={level}>
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-        <span className="text-sm text-slate-400">Doz hızı</span>
+        <span className="text-sm text-slate-400">Dose rate</span>
         <SourceBadge metric="env.doseRate_uSv_h" crewId={crewId} />
       </div>
       <div className="font-mono text-xl font-bold tabular-nums" style={{ color: rateLevel && rateLevel !== 'normal' ? LEVEL_COLOR[rateLevel] : COLORS.text }}>
         {t ? fmtMetric('env.doseRate_uSv_h', t.env.doseRate_uSv_h) : '—'}
       </div>
       <div className="mt-1 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-        <span className="text-sm text-slate-400">Toplam doz</span>
+        <span className="text-sm text-slate-400">Cumulative dose</span>
         <SourceBadge param="careerDoseLimit" />
       </div>
       <div className="font-mono text-sm tabular-nums">
@@ -403,7 +403,7 @@ function Co2Card({ crewId, t }: { crewId: CrewId; t: Telemetry | undefined }) {
   const cau = PARAMS.co2CautionLimit.value;
   const crit = PARAMS.co2CriticalLimit.value;
   const level: Level | undefined = v === undefined ? undefined : v > crit ? 'critical' : v > cau ? 'caution' : 'normal';
-  const where = CREW_BY_ID[crewId].location === 'KOKPIT' ? 'Kabin' : 'Giysi içi';
+  const where = CREW_BY_ID[crewId].location === 'KOKPIT' ? 'Cabin' : 'In-suit';
   return (
     <FactorCard title={`${where} CO₂`} level={level}>
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
@@ -441,9 +441,9 @@ function SleepCard({ crewId, t, st }: { crewId: CrewId; t: Telemetry | undefined
   );
   const sl = signalLevel(st, 'env.sleepLastNight_h');
   return (
-    <FactorCard title="Uyku" level={l}>
+    <FactorCard title="Sleep" level={l}>
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-        <span className="text-sm text-slate-400">Dün gece</span>
+        <span className="text-sm text-slate-400">Last night</span>
         <SourceBadge metric="env.sleepLastNight_h" crewId={crewId} />
       </div>
       <div className="font-mono text-xl font-bold tabular-nums" style={{ color: sl && sl !== 'normal' ? LEVEL_COLOR[sl] : COLORS.text }}>
@@ -452,10 +452,10 @@ function SleepCard({ crewId, t, st }: { crewId: CrewId; t: Telemetry | undefined
       <div className="mt-1 grid grid-cols-2 gap-x-2 text-sm">
         <span className="text-slate-400">REM</span>
         <span className="text-right font-mono">{fmtMetric('env.remPct', t?.env.remPct)}</span>
-        <span className="text-slate-400">Derin uyku</span>
+        <span className="text-slate-400">Deep sleep</span>
         <span className="text-right font-mono">{fmtMetric('env.swsPct', t?.env.swsPct)}</span>
       </div>
-      <div className="mt-1 text-sm text-slate-400">uzay ort. {fmtUnit(PARAMS.sleepInSpaceMean.value, 'sa', 1)}</div>
+      <div className="mt-1 text-sm text-slate-400">space avg. {fmtUnit(PARAMS.sleepInSpaceMean.value, 'h', 1)}</div>
     </FactorCard>
   );
 }
@@ -464,22 +464,22 @@ function PvtCard({ crewId, t, st }: { crewId: CrewId; t: Telemetry | undefined; 
   const l = worstLevel(signalLevel(st, 'cog.pvtMeanRt_ms'), signalLevel(st, 'cog.pvtLapses'));
   const rl = signalLevel(st, 'cog.pvtMeanRt_ms');
   return (
-    <FactorCard title="Tepki testi (PVT)" level={l}>
+    <FactorCard title="Reaction test (PVT)" level={l}>
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-        <span className="text-sm text-slate-400">Ort. tepki</span>
+        <span className="text-sm text-slate-400">Mean reaction</span>
         <SourceBadge metric="cog.pvtMeanRt_ms" crewId={crewId} />
       </div>
       <div className="font-mono text-xl font-bold tabular-nums" style={{ color: rl && rl !== 'normal' ? LEVEL_COLOR[rl] : COLORS.text }}>
         {fmtMetric('cog.pvtMeanRt_ms', t?.cog.pvtMeanRt_ms)}
       </div>
       <div className="mt-1 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-sm">
-        <span className="text-slate-400">Dikkat kaybı</span>
+        <span className="text-slate-400">Lapses</span>
         <span className="font-mono whitespace-nowrap">{fmtMetric('cog.pvtLapses', t?.cog.pvtLapses)}</span>
       </div>
       <div className="mt-1">
         <SourceBadge metric="cog.pvtLapses" />
       </div>
-      <div className="mt-1 text-sm text-slate-400">dinlenmiş ~{fmtUnit(PARAMS.pvtMeanRtRested.value, 'ms')}</div>
+      <div className="mt-1 text-sm text-slate-400">rested ~{fmtUnit(PARAMS.pvtMeanRtRested.value, 'ms')}</div>
       <PvtSourceNote crewId={crewId} />
     </FactorCard>
   );
@@ -491,7 +491,7 @@ function PvtSourceNote({ crewId }: { crewId: CrewId }) {
   const pvt = useTests(() => activePvt(crewId));
   return (
     <div className="mt-1 text-xs" style={{ color: pvt ? COLORS.calm : COLORS.textMuted }}>
-      {pvt ? `PVT-B testi · ${missionAgo(pvt.tick, tick)}` : 'simüle · test yok'}
+      {pvt ? `PVT-B test · ${missionAgo(pvt.tick, tick)}` : 'simulated · no test'}
     </div>
   );
 }
@@ -499,14 +499,14 @@ function PvtSourceNote({ crewId }: { crewId: CrewId }) {
 // ---------- Sekmeler ----------
 function Overview({ crewId, st }: { crewId: CrewId; st: CrewStatus | undefined }) {
   const hist = useAstra((s) => s.history[crewId] ?? EMPTY);
-  if (!st || !st.topSignals.length) return <p className="text-sm text-slate-400">Kişisel baseline kuruluyor; en çok sapan ölçümler birazdan görünür.</p>;
+  if (!st || !st.topSignals.length) return <p className="text-sm text-slate-400">Building personal baseline; the most deviating metrics will appear shortly.</p>;
   const allNormal = st.topSignals.every((s) => s.level === 'normal');
   return (
     <div>
       <p className="mb-3 text-sm text-slate-400">
         {allNormal
-          ? 'Tüm ölçümler kişisel normal aralığında. Aşağıda kişisel normalden en çok uzaklaşan 3 ölçüm var.'
-          : 'Katman 1, kişisel normaline göre en çok sapan 3 ölçümü gösteriyor. Uyarıyı sadece Katman 1 açar.'}
+          ? 'All metrics are within personal normal range. Below are the 3 metrics furthest from personal normal.'
+          : 'Layer 1 shows the 3 metrics deviating most from personal normal. Only Layer 1 can raise alerts.'}
       </p>
       <div className="grid grid-cols-1 gap-3 min-[900px]:grid-cols-3">
         {st.topSignals.map((s) => (
@@ -533,8 +533,8 @@ function SignalCard({ s, crewId, series }: { s: MetricScore; crewId: CrewId; ser
         <SourceBadge metric={s.key} crewId={crewId} />
       </div>
       <div className="mt-1 text-sm text-slate-400">
-        kişisel normal {fmtMetric(s.key, s.mean)}
-        {s.key !== 'env.doseCumulative_mSv' && <> · sapma {fmtZ(s.z)}</>}
+        personal normal {fmtMetric(s.key, s.mean)}
+        {s.key !== 'env.doseCumulative_mSv' && <> · deviation {fmtZ(s.z)}</>}
       </div>
       <div className="mt-2">
         <TrendLine values={series} color={s.level === 'normal' ? COLORS.calm : c} width={220} height={32} />
@@ -555,8 +555,8 @@ function GroupTables({ crewId, t, st, groups }: { crewId: CrewId; t: Telemetry |
           <div className="grid grid-cols-1 gap-x-6 min-[1400px]:grid-cols-2">
             {g === 1 && t && (
               <Row
-                label="EKG ritmi"
-                value={t.cardio.ecg_rhythm === 'sinus' ? 'Sinüs ritmi' : 'Düzensiz'}
+                label="ECG rhythm"
+                value={t.cardio.ecg_rhythm === 'sinus' ? 'Sinus rhythm' : 'Irregular'}
                 level={t.cardio.ecg_rhythm === 'irregular' ? 'caution' : undefined}
                 badge={<SourceBadge param="ecgIrregularThreshold" />}
               />
@@ -612,7 +612,7 @@ function Row({
     <div className="flex min-w-0 items-center gap-3 border-b border-space-border/70 py-1.5">
       <span className="min-w-0 flex-1 truncate text-sm text-slate-300" title={label}>
         {label}
-        {daily && <span className="ml-1.5 text-slate-500">· günlük</span>}
+        {daily && <span className="ml-1.5 text-slate-500">· daily</span>}
         {note}
       </span>
       <span className="hidden min-[1000px]:block">{trend}</span>

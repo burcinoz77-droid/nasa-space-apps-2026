@@ -60,12 +60,12 @@ async function askAstraInner(req: AstraRequest): Promise<AstraAnswer> {
       toolOutput?: string;
     };
     const text = (data.text ?? '').trim();
-    if (!text) throw new Error('boş cevap');
+    if (!text) throw new Error('empty answer');
 
     // Güvenlik süzgeci: teşhis, ilaç ya da doz içeren cevap gösterilmez.
     const safety = checkAnswer(text);
     if (!safety.safe) {
-      console.warn(`[ASTRA] Güvenlik süzgeci cevabı engelledi (${safety.reason}); yedek cevap gösteriliyor.\n${text}`);
+      console.warn(`[ASTRA] Safety filter blocked the answer (${safety.reason}); showing the fallback answer.\n${text}`);
       return { ...fallbackAnswer(req), latencyMs: elapsed(), fallbackReason: 'safety' };
     }
 
@@ -86,7 +86,7 @@ async function askAstraInner(req: AstraRequest): Promise<AstraAnswer> {
     cache.set(key, { at: Date.now(), answer });
     return answer;
   } catch (err) {
-    console.warn('[ASTRA] Dil modeline ulaşılamadı, yedek moda geçildi:', err instanceof Error ? err.message : err);
+    console.warn('[ASTRA] Language model unreachable, switched to fallback mode:', err instanceof Error ? err.message : err);
     return { ...fallbackAnswer(req), latencyMs: elapsed(), fallbackReason: 'connection' };
   }
 }

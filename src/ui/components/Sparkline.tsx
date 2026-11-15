@@ -35,7 +35,7 @@ export function Sparkline({
   if (data.length < 2)
     return (
       <div style={{ height }} className="flex items-center text-sm text-slate-500">
-        Veri toplanıyor…
+        Collecting data…
       </div>
     );
   return (

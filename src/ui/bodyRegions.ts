@@ -25,10 +25,10 @@ export interface RegionDef {
 const keysOf = (prefix: string) => METRICS.filter((m) => m.key.startsWith(prefix)).map((m) => m.key);
 
 export const REGIONS: RegionDef[] = [
-  { id: 'head', name: 'Baş', detail: 'bilişsel durum ve göz', groups: 'grup 4', tab: 'performans', metrics: keysOf('cog.') },
-  { id: 'chest', name: 'Göğüs', detail: 'kalp ve solunum', groups: 'grup 1–2', tab: 'saglik', metrics: [...keysOf('cardio.'), ...BREATH_KEYS] },
-  { id: 'lower', name: 'Alt gövde', detail: 'metabolizma, ter ve ısı', groups: 'grup 2–3', tab: 'saglik', metrics: [...keysOf('biochem.'), ...HEAT_KEYS] },
-  { id: 'env', name: 'Çevre', detail: 'radyasyon, CO₂, uyku', groups: 'grup 5', tab: 'cevre', metrics: keysOf('env.') },
+  { id: 'head', name: 'Head', detail: 'cognitive state and eyes', groups: 'group 4', tab: 'performans', metrics: keysOf('cog.') },
+  { id: 'chest', name: 'Chest', detail: 'heart and breathing', groups: 'groups 1–2', tab: 'saglik', metrics: [...keysOf('cardio.'), ...BREATH_KEYS] },
+  { id: 'lower', name: 'Lower body', detail: 'metabolism, sweat and heat', groups: 'groups 2–3', tab: 'saglik', metrics: [...keysOf('biochem.'), ...HEAT_KEYS] },
+  { id: 'env', name: 'Environment', detail: 'radiation, CO₂, sleep', groups: 'group 5', tab: 'cevre', metrics: keysOf('env.') },
 ];
 
 export const REGION_BY_ID = Object.fromEntries(REGIONS.map((r) => [r.id, r])) as Record<RegionId, RegionDef>;

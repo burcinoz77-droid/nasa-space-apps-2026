@@ -68,12 +68,12 @@ export function BodyPanel({
         )}
         {hover && <RiskTip hover={hover} status={status} t={t} />}
         <div className="pointer-events-none absolute bottom-2 left-3 text-sm text-slate-400">
-          {use3D ? 'Sürükleyerek döndürün, bölgeye tıklayın' : 'Bölgeye tıklayın'}
+          {use3D ? 'Drag to rotate, click a region' : 'Click a region'}
         </div>
       </div>
 
       {/* Bölge seçici: klavyeyle ve 3B olmadan da çalışır */}
-      <div className="grid grid-cols-4 gap-1.5" role="tablist" aria-label="Vücut bölgesi">
+      <div className="grid grid-cols-4 gap-1.5" role="tablist" aria-label="Body region">
         {REGIONS.map((r) => {
           const s = regionState(status, r.id);
           const c = s.level ? LEVEL_COLOR[s.level] : COLORS.offline;
@@ -90,7 +90,7 @@ export function BodyPanel({
             >
               <span className="block truncate text-sm font-semibold text-slate-100">{r.name}</span>
               <span className="block font-mono text-sm whitespace-nowrap" style={{ color: c }}>
-                {s.level ? LEVEL_ICON[s.level] : '—'} %{fmt(s.score)}
+                {s.level ? LEVEL_ICON[s.level] : '—'} {fmt(s.score)}%
               </span>
             </button>
           );
@@ -127,7 +127,7 @@ function RiskTip({ hover, status, t }: { hover: HoverInfo; status: CrewStatus | 
       <div className="flex items-baseline justify-between gap-2">
         <span className="font-semibold text-slate-100">{r.name}</span>
         <span className="font-mono font-semibold" style={{ color: c }}>
-          %{fmt(s.score)}
+          {fmt(s.score)}%
         </span>
       </div>
       <div className="font-mono text-sm font-semibold" style={{ color: c }}>
@@ -143,7 +143,7 @@ function RiskTip({ hover, status, t }: { hover: HoverInfo; status: CrewStatus | 
           <span className="text-slate-400"> (normal {fmtMetric(sig.key, sig.mean)})</span>
         </div>
       )}
-      <div className="mt-1 text-sm text-slate-500">Ayrıntı için tıklayın</div>
+      <div className="mt-1 text-sm text-slate-500">Click for details</div>
     </div>
   );
 }
@@ -172,11 +172,11 @@ function RegionDetail({
           <div className="font-semibold text-slate-100">
             {r.name} <span className="font-normal text-slate-400">· {r.detail}</span>
           </div>
-          <div className="text-sm text-slate-400">Veri {r.groups}</div>
+          <div className="text-sm text-slate-400">Data {r.groups}</div>
         </div>
         <div className="flex shrink-0 flex-col items-end">
           <span className="font-mono text-lg leading-tight font-semibold" style={{ color: s.level ? LEVEL_COLOR[s.level] : COLORS.offline }}>
-            %{fmt(s.score)}
+            {fmt(s.score)}%
           </span>
           <LevelBadge level={s.level} />
         </div>
@@ -213,7 +213,7 @@ function RegionDetail({
       </ul>
       <div className="border-t border-space-border px-3 py-1.5">
         <button type="button" onClick={() => onOpenTab(r.tab)} className="rounded-md px-1.5 py-0.5 text-sm text-calm hover:bg-calm/10">
-          Grafiklerle aşağıdaki sekmede aç
+          Open with charts in the tab below
         </button>
       </div>
     </div>

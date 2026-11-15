@@ -64,8 +64,8 @@ export function Co2Show({ onClose }: { onClose: () => void }) {
     <Stage
       fading={phase === 'outro'}
       onClose={onClose}
-      label="CO₂ temizleyici arızası sinematiği"
-      credit="Veri: ARES-1 simülasyonu (canlı, demo için hızlandırıldı) · Eşikler: NASA OCHMO-TB-004 · ISS CO₂: NASA OSDR EDA"
+      label="CO₂ scrubber failure cinematic"
+      credit="Data: ARES-1 simulation (live, accelerated for the demo) · Limits: NASA OCHMO-TB-004 · ISS CO₂: NASA OSDR EDA"
     >
       {/* Kabin kesiti */}
       <div className="absolute" style={{ left: '4vw', top: '18vh', width: '56vw', height: '60vh' }}>
@@ -79,39 +79,39 @@ export function Co2Show({ onClose }: { onClose: () => void }) {
 
       <Caption show={phase === 'cabin'} pos="top">
         <div className="font-mono text-xs tracking-[0.3em]" style={{ color: COLORS.calm }}>
-          ARES-1 · KOKPİT KABİNİ · GÖREVİN 180. GÜNÜ
+          ARES-1 · COCKPIT CABIN · MISSION DAY 180
         </div>
-        <div className="mt-2 text-2xl font-bold md:text-3xl">CO₂ temizleyici çalışıyor</div>
+        <div className="mt-2 text-2xl font-bold md:text-3xl">CO₂ scrubber running</div>
         <div className="mt-2 text-base" style={{ color: COLORS.textMuted }}>
-          Gerçek: ISS'te ölçülen en yüksek kabin CO₂'si ≈ <b style={{ color: COLORS.text }}>{fmt(PARAMS.cabinCO2FailurePeak.value, 1)} mmHg</b> (NASA OSDR EDA)
+          Fact: the highest cabin CO₂ measured on the ISS ≈ <b style={{ color: COLORS.text }}>{fmt(PARAMS.cabinCO2FailurePeak.value, 1)} mmHg</b> (NASA OSDR EDA)
         </div>
       </Caption>
 
       <Caption show={phase === 'failure'} pos="top">
         <div className="font-mono text-xs tracking-[0.3em]" style={{ color: COLORS.critical }}>
-          ARIZA · CO₂ TEMİZLEYİCİ DURDU
+          FAILURE · CO₂ SCRUBBER STOPPED
         </div>
-        <div className="mt-2 text-2xl font-bold md:text-3xl">CO₂ renksiz ve kokusuz</div>
+        <div className="mt-2 text-2xl font-bold md:text-3xl">CO₂ is colorless and odorless</div>
         <div className="mt-2 text-base" style={{ color: COLORS.textMuted }}>
-          Mürettebat fark etmez. İlk işaretler baş ağrısı, nefesin sıklaşması ve dikkatin dağılması.
+          The crew won't notice. First signs are headache, faster breathing and loss of focus.
         </div>
       </Caption>
 
       <Caption show={phase === 'body'} pos="top">
         <div className="font-mono text-xs tracking-[0.3em]" style={{ color: COLORS.caution }}>
-          KEREM · CANLI ÖLÇÜM
+          KEREM · LIVE READING
         </div>
-        <div className="mt-2 text-2xl font-bold md:text-3xl">Beden tepki veriyor</div>
+        <div className="mt-2 text-2xl font-bold md:text-3xl">The body responds</div>
         <div className="mt-2 text-base" style={{ color: COLORS.textMuted }}>
-          Kerem CO₂'ye iki kat hassas (kişisel özellik). Göğsü gerçek solunum hızıyla hareket ediyor.
+          Kerem is twice as sensitive to CO₂ (personal trait). His chest moves at his real breathing rate.
         </div>
       </Caption>
 
       {/* Kerem'in canlı değerleri */}
       <Caption show={phase === 'body' || phase === 'response'} pos="bottom-left">
         <div className="flex gap-6 font-mono">
-          <Vital label="Solunum" value={fmt(rr, 0)} unit="/dk" color={rr > 20 ? COLORS.caution : COLORS.text} />
-          <Vital label="Nabız" value={fmt(hr, 0)} unit="bpm" color={hr > 90 ? COLORS.caution : COLORS.text} />
+          <Vital label="Breathing" value={fmt(rr, 0)} unit="/min" color={rr > 20 ? COLORS.caution : COLORS.text} />
+          <Vital label="Heart rate" value={fmt(hr, 0)} unit="bpm" color={hr > 90 ? COLORS.caution : COLORS.text} />
           <Vital label="EtCO₂" value={fmt(etco2, 0)} unit="mmHg" color={etco2 > 45 ? COLORS.caution : COLORS.text} />
         </div>
       </Caption>
@@ -119,16 +119,16 @@ export function Co2Show({ onClose }: { onClose: () => void }) {
       <Caption show={phase === 'response'} pos="top">
         <div className="rounded-xl border px-5 py-3" style={{ borderColor: alpha(COLORS.critical, 0.6), background: alpha('#02040b', 0.8) }}>
           <div className="font-mono text-xs tracking-[0.25em]" style={{ color: COLORS.critical }}>
-            ASTRA · KATMAN 1 · CO₂ {incident?.level === 'critical' ? 'KRİTİK' : 'DİKKAT'}
+            ASTRA · LAYER 1 · CO₂ {incident?.level === 'critical' ? 'CRITICAL' : 'CAUTION'}
           </div>
           <div className="mt-2 flex items-center justify-center gap-2 text-lg" style={{ color: vented ? COLORS.normal : COLORS.textMuted }}>
             <span>{vented ? '✓' : '…'}</span>
             <span>
-              Otonom adım: <b>havalandırma artırıldı</b>
+              Autonomous action: <b>ventilation increased</b>
             </span>
           </div>
           <div className="mt-1 text-sm" style={{ color: COLORS.textMuted }}>
-            Önceden onaylı güvenli adım. Temizleyicinin onarımı mürettebatın kararı.
+            A pre-approved safe action. Repairing the scrubber is the crew's decision.
           </div>
         </div>
       </Caption>
@@ -172,23 +172,23 @@ function Gauge({ ppco2, level }: { ppco2: number; level: string }) {
       </div>
       <div className="relative flex-1">
         <div className="absolute" style={{ top: pct(CRITICAL), transform: 'translateY(-50%)' }}>
-          <Tick color={COLORS.critical} text={`${fmt(CRITICAL, 1)} kritik`} />
+          <Tick color={COLORS.critical} text={`${fmt(CRITICAL, 1)} critical`} />
         </div>
         <div className="absolute" style={{ top: pct(CAUTION), transform: 'translateY(-50%)' }}>
-          <Tick color={COLORS.caution} text={`${fmt(CAUTION, 1)} dikkat`} />
+          <Tick color={COLORS.caution} text={`${fmt(CAUTION, 1)} caution`} />
         </div>
         <div className="absolute" style={{ top: pct(MEDIAN), transform: 'translateY(-50%)' }}>
-          <Tick color={COLORS.normal} text={`${fmt(MEDIAN, 1)} ISS medyanı`} />
+          <Tick color={COLORS.normal} text={`${fmt(MEDIAN, 1)} ISS median`} />
         </div>
         <div className="absolute bottom-0 left-0">
           <div className="font-mono text-xs tracking-[0.25em]" style={{ color: COLORS.textMuted }}>
-            KABİN ppCO₂
+            CABIN ppCO₂
           </div>
           <div className="font-mono text-6xl font-bold tabular-nums" style={{ color: level, transition: 'color .5s' }}>
             {fmt(ppco2, 1)}
           </div>
           <div className="font-mono text-base" style={{ color: COLORS.text }}>
-            mmHg · canlı
+            mmHg · live
           </div>
         </div>
       </div>
@@ -226,9 +226,9 @@ function Cabin({ ppco2, fan, rr, level, showKerem }: { ppco2: number; fan: 'run'
           <circle r="6" fill={fanColor} />
         </svg>
         <div className="mt-1 text-center text-sm font-semibold" style={{ color: fanColor }}>
-          CO₂ temizleyici
+          CO₂ scrubber
           <br />
-          <span className="font-normal">{fan === 'stop' ? 'DURDU' : fan === 'boost' ? 'havalandırma ↑' : 'çalışıyor'}</span>
+          <span className="font-normal">{fan === 'stop' ? 'STOPPED' : fan === 'boost' ? 'ventilation ↑' : 'running'}</span>
         </div>
       </div>
 
