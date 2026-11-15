@@ -9,7 +9,7 @@ export function Astronaut({ stripe, glow, breath = 4.3, fog = 0, height = 150 }:
   const id = useId().replace(/:/g, '');
   const suit = `url(#suit-${id})`;
   return (
-    <svg height={height} viewBox="-50 -66 100 166" style={{ overflow: 'visible', filter: glow ? `drop-shadow(0 0 10px ${glow})` : undefined, transition: 'filter .6s' }}>
+    <svg height={height} width={(height * 100) / 166} viewBox="-50 -66 100 166" style={{ overflow: 'visible', filter: glow ? `drop-shadow(0 0 10px ${glow})` : undefined, transition: 'filter .6s' }}>
       <defs>
         <linearGradient id={`suit-${id}`} x1="0" x2="1">
           <stop offset="0" stopColor="#dfe5ec" />
