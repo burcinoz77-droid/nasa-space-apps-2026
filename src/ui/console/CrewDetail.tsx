@@ -21,9 +21,9 @@ import { alpha, COLORS, fmt, LEVEL_COLOR, LEVEL_ICON, LEVEL_LABEL, scoreLevel } 
 import { Tile } from './Tile';
 
 const VITALS: { k: MetricKey; label: string }[] = [
-  { k: 'cardio.hr_bpm', label: 'Nabız' },
+  { k: 'cardio.hr_bpm', label: 'Heart rate' },
   { k: 'cardio.spo2_pct', label: 'SpO₂' },
-  { k: 'resp.coreTemp_C', label: 'Vücut ısısı' },
+  { k: 'resp.coreTemp_C', label: 'Core temp' },
 ];
 
 export function CrewDetail({ crewId }: { crewId: CrewId }) {
@@ -40,9 +40,9 @@ export function CrewDetail({ crewId }: { crewId: CrewId }) {
             type="button"
             onClick={() => window.dispatchEvent(new CustomEvent(VISOR_EVENT, { detail: crewId }))}
             className="rounded px-2 py-0.5 text-sm font-semibold text-calm ring-1 ring-calm/60 hover:bg-calm/10"
-            title="Bu astronotun kask vizöründe (HUD) ne gördüğünü aç"
+            title="Show what this astronaut sees on the helmet HUD"
           >
-            ◉ Vizör
+            ◉ HUD
           </button>
           <TestsButton crewId={crewId} onOpen={() => setTests(true)} />
           <LevelBadge level={st?.level} />
@@ -56,9 +56,9 @@ export function CrewDetail({ crewId }: { crewId: CrewId }) {
       </p>
       <div className="mb-3 grid grid-cols-2 gap-px overflow-hidden rounded-md bg-space-border">
         <div className="flex items-baseline justify-between gap-2 bg-space-bg/70 px-2.5 py-1.5">
-          <div className="text-sm text-slate-400">Sağlık skoru</div>
+          <div className="text-sm text-slate-400">Health score</div>
           <div className="font-mono text-lg leading-tight" style={{ color: st ? LEVEL_COLOR[scoreLevel(st.healthScore) ?? 'normal'] : COLORS.offline }}>
-            %{fmt(st?.healthScore)}
+            {fmt(st?.healthScore)}%
           </div>
         </div>
         {VITALS.map((v) => (
@@ -97,20 +97,20 @@ function KeyStatus({ crewId, st }: { crewId: CrewId; st: CrewStatus | undefined 
     return (
       <div className="rounded-md px-3 py-2 text-sm" style={{ backgroundColor: alpha(COLORS.normal, 0.08), boxShadow: `inset 3px 0 0 ${COLORS.normal}` }}>
         <span className="font-semibold" style={{ color: COLORS.normal }}>
-          ● Önemli durum yok
+          ● No significant findings
         </span>
-        <span className="text-slate-300"> · değerler kişisel normalinde</span>
+        <span className="text-slate-300"> · values within personal baseline</span>
       </div>
     );
   const c = LEVEL_COLOR[inc.level];
   return (
     <div className="rounded-md px-3 py-2 text-sm" style={{ backgroundColor: alpha(c, 0.1), boxShadow: `inset 3px 0 0 ${c}` }}>
       <div className="flex flex-wrap items-center gap-x-2">
-        <span className="font-semibold text-slate-200">Önemli durum</span>
+        <span className="font-semibold text-slate-200">Key finding</span>
         <span className="font-mono font-medium" style={{ color: c }}>
           {LEVEL_ICON[inc.level]} {LEVEL_LABEL[inc.level]} · {INCIDENT_LABELS[inc.type]}
         </span>
-        {st?.restRequired && <span className="ml-auto text-slate-300">revirde · zorunlu dinlenme</span>}
+        {st?.restRequired && <span className="ml-auto text-slate-300">medical bay · mandatory crew rest</span>}
       </div>
       <p className="mt-0.5 text-white">{inc.title}</p>
     </div>
@@ -131,10 +131,10 @@ function TestsButton({ crewId, onOpen }: { crewId: CrewId; onOpen: () => void })
       onClick={onOpen}
       className="flex items-center gap-1.5 rounded px-2 py-0.5 text-sm font-semibold hover:bg-white/5"
       style={{ color: c, boxShadow: `inset 0 0 0 1px ${alpha(c, 0.6)}` }}
-      title={due.length ? `ASTRA ${due.length} test öneriyor${urgent ? `, ${urgent} öncelikli` : ''}` : 'Psikolojik testler'}
+      title={due.length ? `ASTRA recommends ${due.length} test${due.length === 1 ? '' : 's'}${urgent ? `, ${urgent} priority` : ''}` : 'Psychological tests'}
     >
       {level !== 'normal' && <span aria-label={LEVEL_LABEL[level]}>{LEVEL_ICON[level]}</span>}
-      Testler
+      Tests
       {due.length > 0 && <span className="font-mono">{urgent ? `▲${urgent}` : due.length}</span>}
     </button>
   );
@@ -154,14 +154,14 @@ function TestsDialog({ crewId, onClose }: { crewId: CrewId; onClose: () => void 
       <section
         role="dialog"
         aria-modal="true"
-        aria-label={`Psikolojik testler: ${CREW_BY_ID[crewId].name}`}
+        aria-label={`Psychological tests: ${CREW_BY_ID[crewId].name}`}
         onClick={(e) => e.stopPropagation()}
         className="flex max-h-full w-full max-w-[1080px] flex-col overflow-hidden rounded-md border border-space-border bg-space-panel shadow-2xl"
       >
         <header className="flex items-center justify-between gap-3 border-b border-space-border bg-chrome px-4 py-2.5">
-          <h2 className="text-lg font-bold text-white">Psikolojik testler · {CREW_BY_ID[crewId].name}</h2>
+          <h2 className="text-lg font-bold text-white">Psychological tests · {CREW_BY_ID[crewId].name}</h2>
           <button ref={closeRef} type="button" onClick={onClose} className="rounded-md px-3 py-1 text-sm text-white ring-1 ring-white/40 hover:bg-white/10">
-            Kapat
+            Close
           </button>
         </header>
         <div className="min-h-0 flex-1 overflow-auto p-4">

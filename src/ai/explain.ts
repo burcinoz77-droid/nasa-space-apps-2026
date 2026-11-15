@@ -14,15 +14,15 @@ const inflight = new Set<string>();
 export function incidentQuestion(inc: Incident): string {
   const signals = inc.signals
     .slice(0, 3)
-    .map((x) => `${METRIC_BY_KEY[x.key]?.label ?? x.key} ${valueText(x.key, x.value)} (kişisel normal ${valueText(x.key, x.mean)})`)
+    .map((x) => `${METRIC_BY_KEY[x.key]?.label ?? x.key} ${valueText(x.key, x.value)} (personal baseline ${valueText(x.key, x.mean)})`)
     .join(', ');
   const actions = inc.autoActions.map((a) => ACTION_TR[a]).join(', ');
   return [
-    `Olay: ${inc.title}.`,
-    `Seviye: ${LEVEL_TR[inc.level]}.`,
-    `Etkilenen: ${inc.crewIds.map(shortName).join(', ')}.`,
-    signals && `Sinyaller: ${signals}.`,
-    `Otonom adım: ${actions || 'yok'}.`,
+    `Event: ${inc.title}.`,
+    `Level: ${LEVEL_TR[inc.level]}.`,
+    `Affected: ${inc.crewIds.map(shortName).join(', ')}.`,
+    signals && `Signals: ${signals}.`,
+    `Automatic action: ${actions || 'none'}.`,
   ]
     .filter(Boolean)
     .join(' ')

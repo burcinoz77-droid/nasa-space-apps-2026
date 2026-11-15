@@ -21,7 +21,7 @@ import { alpha, COLORS, LEVEL_COLOR, LEVEL_ICON, LEVEL_LABEL } from '../theme';
 import { AstraSlot } from './AstraSlot';
 import { SourceBadge } from './SourceBadge';
 
-const time = (ms: number) => new Date(ms).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const time = (ms: number) => new Date(ms).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
 export function IncidentBanner({ onOpenCrew, dense = false }: { onOpenCrew?: (id: CrewId) => void; dense?: boolean }) {
   const active = useAstra(useShallow((s) => s.incidents.filter((i) => i.status !== 'resolved')));
@@ -61,11 +61,9 @@ export function IncidentBanner({ onOpenCrew, dense = false }: { onOpenCrew?: (id
           : cautionOpen
               .slice(0, 3)
               .map((i) => <CautionNotice key={i.id} inc={i} open={expanded === i.id} onToggle={() => setExpanded((e) => (e === i.id ? null : i.id))} />)}
-        {!dense && cautionOpen.length > 3 && (
-          <div className="text-sm text-slate-400">+{cautionOpen.length - 3} dikkat bildirimi daha · Raporlar sayfasında</div>
-        )}
+        {!dense && cautionOpen.length > 3 && <div className="text-sm text-slate-400">+{cautionOpen.length - 3} more caution notices · see Reports</div>}
         {critAck.slice(0, dense ? 1 : 2).map((i) => (
-          <Strip key={i.id} inc={i} note="Onaylandı · sinyaller normale dönene kadar izleniyor" />
+          <Strip key={i.id} inc={i} note="Acknowledged · monitored until signals return to nominal" />
         ))}
         {main && (
           <CriticalHeader
@@ -95,7 +93,7 @@ function EventLine({ events }: { events: string[] }) {
       title={events.join('\n')}
     >
       <span aria-hidden>◆</span>
-      <span className="font-semibold whitespace-nowrap">Gemi olayı</span>
+      <span className="font-semibold whitespace-nowrap">Vehicle event</span>
       <span className="min-w-0 flex-1 truncate text-slate-200">{last}</span>
       {events.length > 1 && <span className="whitespace-nowrap text-slate-400">+{events.length - 1}</span>}
     </div>
@@ -112,7 +110,7 @@ function CrewChips({ ids, color, onOpenCrew }: { ids: CrewId[]; color: string; o
           onClick={() => onOpenCrew?.(id)}
           className="rounded-full px-2.5 py-0.5 text-sm font-semibold hover:brightness-125"
           style={{ color, backgroundColor: alpha(color, 0.14), boxShadow: `inset 0 0 0 1px ${alpha(color, 0.4)}` }}
-          title="Konsolda bu kişiyi seç"
+          title="Select this crew member in the console"
         >
           {firstName(id)}
         </button>
@@ -125,14 +123,14 @@ function AutoActions({ inc, color = COLORS.calm }: { inc: Incident; color?: stri
   if (!inc.autoActions.length)
     return (
       <span className="text-sm" style={{ color: color === COLORS.calm ? COLORS.textMuted : color }}>
-        Otonom adım yok · karar mürettebatta
+        No automatic action · crew decision
       </span>
     );
   return (
     <span className="flex flex-wrap gap-2">
       {inc.autoActions.map((a) => (
         <span key={a} className="rounded px-2 py-0.5 text-sm font-semibold" style={{ color, backgroundColor: alpha(color, 0.14) }}>
-          ✓ {ACTION_LABELS[a]} · otomatik
+          ✓ {ACTION_LABELS[a]} · automatic
         </span>
       ))}
     </span>
@@ -155,7 +153,7 @@ function SignalChip({ s, crewId }: { s: MetricScore; crewId?: CrewId }) {
           {fmtMetric(s.key, s.value)}
         </span>
         <span className="text-sm text-slate-400">
-          normal {fmtMetric(s.key, s.mean)}
+          baseline {fmtMetric(s.key, s.mean)}
           {Number.isFinite(s.z) && s.key !== 'env.doseCumulative_mSv' ? ` · ${fmtZ(s.z)}` : ''}
         </span>
       </div>
@@ -192,7 +190,7 @@ function CriticalHeader({
             <span className="font-semibold">{INCIDENT_LABELS[inc.type]}</span>
             <span className="font-mono">{time(inc.openedAt)}</span>
             <span className="flex items-center gap-1.5">
-              Etkilenen <CrewChips ids={inc.crewIds} color={w} onOpenCrew={onOpenCrew} />
+              Affected <CrewChips ids={inc.crewIds} color={w} onOpenCrew={onOpenCrew} />
             </span>
             <span className="flex items-center gap-1.5">
               <AutoActions inc={inc} color={w} />
@@ -202,7 +200,7 @@ function CriticalHeader({
         <div className="flex shrink-0 items-center gap-2">
           {onToggle && (
             <button type="button" onClick={onToggle} className="rounded-md px-2.5 py-2 text-sm hover:bg-white/15" aria-expanded={!compact}>
-              {compact ? 'Ayrıntı ▾' : 'Küçült ▴'}
+              {compact ? 'Details ▾' : 'Collapse ▴'}
             </button>
           )}
           <button
@@ -211,14 +209,14 @@ function CriticalHeader({
             className="rounded-md px-5 py-2 text-base font-bold hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             style={{ backgroundColor: w, color: COLORS.alarm }}
           >
-            Onayla
+            Acknowledge
           </button>
         </div>
       </div>
 
       {others.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 border-t border-white/30 px-4 py-1.5 text-sm">
-          <span>+{others.length} kritik olay daha:</span>
+          <span>+{others.length} more warning events:</span>
           {others.map((o) => (
             <button
               key={o.id}
@@ -243,7 +241,7 @@ function Details({ inc, onOpenCrew, withPeople = false }: { inc: Incident; onOpe
     <section
       className="mt-1 space-y-3 rounded-md border p-3"
       style={{ borderColor: alpha(c, 0.45), backgroundColor: alpha(c, 0.05) }}
-      aria-label="Olay ayrıntısı"
+      aria-label="Event details"
     >
       {withPeople && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
@@ -251,11 +249,11 @@ function Details({ inc, onOpenCrew, withPeople = false }: { inc: Incident; onOpe
             {LEVEL_ICON[inc.level]} {inc.title}
           </span>
           <span className="flex items-center gap-2">
-            <span className="text-slate-400">Etkilenen</span>
+            <span className="text-slate-400">Affected</span>
             <CrewChips ids={inc.crewIds} color={c} onOpenCrew={onOpenCrew} />
           </span>
           <span className="flex items-center gap-2">
-            <span className="text-slate-400">Uygulanan adım</span>
+            <span className="text-slate-400">Action taken</span>
             <AutoActions inc={inc} />
           </span>
         </div>
@@ -282,7 +280,7 @@ function Strip({ inc, note }: { inc: Incident; note: string }) {
       <span className="min-w-0 flex-1 truncate">{inc.title}</span>
       <span className="hidden whitespace-nowrap text-slate-400 min-[1180px]:inline">{note}</span>
       <span className="whitespace-nowrap" style={{ color: COLORS.calm }}>
-        ✓ Onaylandı
+        ✓ Acknowledged
       </span>
     </div>
   );
@@ -309,7 +307,7 @@ function CautionSummary({ list }: { list: Incident[] }) {
         className="rounded px-3 py-0.5 font-semibold whitespace-nowrap hover:bg-white/5"
         style={{ color: c, boxShadow: `inset 0 0 0 1px ${c}` }}
       >
-        Onayla
+        Acknowledge
       </button>
     </div>
   );
@@ -329,11 +327,11 @@ function CautionNotice({ inc, open, onToggle }: { inc: Incident; open: boolean; 
       <span className="min-w-0 flex-1 truncate">{inc.title}</span>
       {inc.autoActions.length > 0 && (
         <span className="hidden whitespace-nowrap min-[1180px]:inline" style={{ color: COLORS.calm }}>
-          ✓ {ACTION_LABELS[inc.autoActions[0]]} · otomatik
+          ✓ {ACTION_LABELS[inc.autoActions[0]]} · automatic
         </span>
       )}
       <button type="button" onClick={onToggle} className="whitespace-nowrap text-slate-300 hover:text-white" aria-expanded={open}>
-        {open ? 'Gizle' : 'Ayrıntı'}
+        {open ? 'Hide' : 'Details'}
       </button>
       <button
         type="button"
@@ -341,7 +339,7 @@ function CautionNotice({ inc, open, onToggle }: { inc: Incident; open: boolean; 
         className="rounded-lg px-3 py-0.5 font-semibold whitespace-nowrap hover:bg-white/5"
         style={{ color: c, boxShadow: `inset 0 0 0 1px ${c}` }}
       >
-        Onayla
+        Acknowledge
       </button>
     </div>
   );

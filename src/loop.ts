@@ -7,11 +7,11 @@ import { useAstra } from './store';
 import type { ScenarioId } from './types';
 
 const SCENARIO_NAMES: Record<ScenarioId, string> = {
-  NORMAL: 'Normal gün',
-  SOLAR_STORM: 'Güneş fırtınası',
-  MARS_DAY_180: 'Mars 180. gün yükü',
-  CO2_SCRUBBER_FAIL: 'CO₂ temizleyici arızası',
-  EVA_OVEREXERTION: 'EVA aşırı efor',
+  NORMAL: 'Nominal day',
+  SOLAR_STORM: 'Solar particle event (SPE)',
+  MARS_DAY_180: 'Mars Day 180 workload',
+  CO2_SCRUBBER_FAIL: 'CO₂ scrubber failure (CDRA)',
+  EVA_OVEREXERTION: 'EVA overexertion',
 };
 
 const sim = createSimulation();
@@ -42,7 +42,7 @@ export const controls = {
   },
   setScenario(id: ScenarioId) {
     sim.setScenario(id);
-    log(`Senaryo değişti: ${SCENARIO_NAMES[id]}`);
+    log(`Scenario changed: ${SCENARIO_NAMES[id]}`);
   },
   setSpeed(ms: number) {
     useAstra.getState().setTickMs(ms);
@@ -57,7 +57,7 @@ export const controls = {
     detector.reset();
     useAstra.getState().clearAll();
     useTests.getState().clear();
-    log('Simülasyon sıfırlandı');
+    log('Simulation reset');
     controls.start();
   },
 };

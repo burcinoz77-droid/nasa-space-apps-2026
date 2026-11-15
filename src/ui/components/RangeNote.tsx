@@ -19,11 +19,11 @@ export function RangeNote({ crewId, k, value, block }: { crewId: CrewId; k: Metr
       style={{ color: inside ? COLORS.normal : COLORS.caution }}
       title={
         inside
-          ? 'Resmi kaynağın normal aralığında: bu değer için uyarı verilmez (kaynak rozetine bakın).'
-          : 'Resmi normal aralığın dışında: kişisel normalden sapma değerlendirilir.'
+          ? 'Within the official reference range: no alert for this value (see the source badge).'
+          : 'Outside the official reference range: deviation from the personal baseline is assessed.'
       }
     >
-      normal {text} {inside ? '✓' : '!'}
+      ref {text} {inside ? '✓' : '!'}
     </span>
   );
 }

@@ -65,7 +65,7 @@ const fullStock = () => Object.fromEntries(MED_KIT.map((m) => [m.id, m.stock])) 
 const welcome = (): GroundMessage => ({
   kind: 'ground',
   id: 'hosgeldin',
-  text: `İletişim penceresi açık. ${GROUND.role} ${GROUND.name} nöbette; mesajlar Dünya'ya gecikmeyle ulaşır. (Yer ekibi yanıtları senaryo için üretilir.)`,
+  text: `Comm window open. ${GROUND.role} ${GROUND.name} on console; messages reach Earth after the light-time delay. (Ground replies are generated for the scenario.)`,
   at: Date.now(),
 });
 
@@ -117,7 +117,7 @@ export const useEarth = create<EarthState>()((set, get) => ({
       const reply: GroundMessage = {
         kind: 'ground',
         id: crypto.randomUUID(),
-        text: who && topic !== 'NONE' ? `${who} için: ${r.order}` : r.order,
+        text: who && topic !== 'NONE' ? `For ${who}: ${r.order}` : r.order,
         at: Date.now(),
         crewId,
         topic,

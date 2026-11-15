@@ -12,7 +12,7 @@ import { UI_PARAMS } from '../params';
 import { COLORS, fmt, LEVEL_COLOR, LEVEL_ICON, scoreLevel, worstLevel } from '../theme';
 import { Row, Tile } from './Tile';
 
-const LEVEL_WORD = { normal: 'Normal', caution: 'Dikkat', critical: 'Kritik' } as const;
+const LEVEL_WORD = { normal: 'Nominal', caution: 'Caution', critical: 'Warning' } as const;
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : undefined);
 
 export function MissionTile() {
@@ -33,18 +33,18 @@ export function MissionTile() {
   return (
     <Tile
       area="mis"
-      title="Kokpit"
+      title="Mission status"
       meta={
         <span>
-          ort. sağlık{' '}
+          mean health{' '}
           <span className="font-mono" style={{ color: score === undefined ? COLORS.offline : LEVEL_COLOR[scoreL ?? 'normal'] }}>
-            %{fmt(score)}
+            {fmt(score)}%
           </span>
         </span>
       }
       bodyClass="px-3 py-0.5"
     >
-      <Row label="Görev durumu" sub={ship ? SCENARIO_NAMES[ship.scenario] : 'bağlantı bekleniyor'}>
+      <Row label="Status" sub={ship ? SCENARIO_NAMES[ship.scenario] : 'awaiting telemetry'}>
         <span className="font-semibold" style={{ color: level ? LEVEL_COLOR[level] : COLORS.offline }}>
           {level ? `${LEVEL_ICON[level]} ${LEVEL_WORD[level]}` : '—'}
         </span>
@@ -52,7 +52,7 @@ export function MissionTile() {
 
       <Row
         mono
-        label="Görev günü"
+        label="Mission Day"
         sub={
           <span className="flex items-center justify-end gap-2">
             <span className="h-1.5 w-20 overflow-hidden rounded-full bg-white/10" aria-hidden>
@@ -65,11 +65,11 @@ export function MissionTile() {
         {fmt(day)} <span className="text-slate-400">/ {fmt(total)}</span>
       </Row>
 
-      <Row label="Ekip konumu">
-        {onShip.length} gemide · {CREW.length - onShip.length} EVA'da
+      <Row label="Crew">
+        {onShip.length} IVA · {CREW.length - onShip.length} EVA
       </Row>
 
-      <Row mono label="Revir" sub={inBay.length ? `${inBay.map((m) => firstName(m.id)).join(', ')} · zorunlu dinlenme` : undefined}>
+      <Row mono label="Medical bay" sub={inBay.length ? `${inBay.map((m) => firstName(m.id)).join(', ')} · mandatory crew rest` : undefined}>
         <span className="inline-flex items-center gap-2">
           <span className="inline-flex gap-0.5" aria-hidden>
             {Array.from({ length: INFIRMARY_BEDS }, (_, i) => (
@@ -80,10 +80,10 @@ export function MissionTile() {
         </span>
       </Row>
 
-      <Row mono label="Kabin CO₂" sub={<SourceBadge metric="env.ppCO2_mmHg" crewId={onShip[0]?.id} />}>
+      <Row mono label="Cabin ppCO₂" sub={<SourceBadge metric="env.ppCO2_mmHg" crewId={onShip[0]?.id} />}>
         {fmtMetric('env.ppCO2_mmHg', co2)}
       </Row>
-      <Row mono label="Kabin O₂">
+      <Row mono label="Cabin O₂">
         {fmtMetric('env.o2_pct', o2)}
       </Row>
     </Tile>

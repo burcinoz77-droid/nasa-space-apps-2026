@@ -380,7 +380,7 @@ export default function Astronaut3D({ levels, selected, onHover, onSelect, onErr
     <div ref={wrapRef} className="absolute inset-0">
       {state === 'loading' && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-slate-400" role="status">
-          3B model yükleniyor…
+          Loading 3D model…
         </div>
       )}
     </div>

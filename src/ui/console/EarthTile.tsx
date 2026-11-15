@@ -19,18 +19,18 @@ import { alpha, COLORS, fmt } from '../theme';
 import { Tile } from './Tile';
 
 type View = 'earth' | 'astra';
-const time = (ms: number) => new Date(ms).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+const time = (ms: number) => new Date(ms).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
 export function EarthTile({ crewId }: { crewId: CrewId }) {
   const [view, setView] = useState<View>('earth');
   const delay = useAstra((s) => s.ship?.commDelayOneWay_s);
   return (
-    <Tile area="earth" title="Ana istasyon (Dünya)" meta={<span className="font-mono">{fmtDelay(delay)}</span>} bodyClass="flex flex-col p-0">
+    <Tile area="earth" title="Ground · MCC-Houston" meta={<span className="font-mono">{fmtDelay(delay)}</span>} bodyClass="flex flex-col p-0">
       <div className="flex shrink-0 items-center gap-2 border-b border-space-border/60 px-2 py-1.5">
-        <span className="flex rounded-md p-0.5 ring-1 ring-space-border" role="tablist" aria-label="Görünüm">
+        <span className="flex rounded-md p-0.5 ring-1 ring-space-border" role="tablist" aria-label="View">
           {(
             [
-              ['earth', 'Uçuş cerrahı'],
+              ['earth', 'Flight Surgeon'],
               ['astra', '✦ ASTRA'],
             ] as const
           ).map(([id, label]) => (
@@ -46,7 +46,7 @@ export function EarthTile({ crewId }: { crewId: CrewId }) {
             </button>
           ))}
         </span>
-        <span className="ml-auto truncate text-sm text-slate-400">{view === 'earth' ? `${GROUND.station}` : 'Katman 2 · karar desteği'}</span>
+        <span className="ml-auto truncate text-sm text-slate-400">{view === 'earth' ? GROUND.name : 'Layer 2 · decision support'}</span>
       </div>
       {view === 'earth' ? <EarthThread crewId={crewId} /> : <AstraChat />}
     </Tile>
@@ -68,21 +68,21 @@ function useNow(active: boolean, ms = 250): number {
   return now;
 }
 
-/** Seçili astronotun durum özeti: "Hocam, Kerem: ... (göğüs bölgesi). SpO₂ %91 (kişisel normal %97)." */
+/** Seçili astronotun durum özeti: "Flight, CMO: Kerem: ... (chest). SpO₂ 91% (personal baseline 97%)." */
 function composeReport(crewId: CrewId): string {
   const s = useAstra.getState();
   const name = firstName(crewId);
   const t = s.telemetry[crewId];
   const st = s.statuses[crewId];
-  if (!t) return `Hocam, ${name} için veri henüz gelmedi.`;
+  if (!t) return `Surgeon, no data for ${name} yet.`;
   const inc = worstIncidentOf(s.incidents, crewId);
   const sigs = (inc?.signals.length ? inc.signals : (st?.topSignals ?? [])).slice(0, 2);
-  const values = sigs.map((g) => `${METRIC_BY_KEY[g.key].label} ${fmtMetric(g.key, g.value)} (kişisel normal ${fmtMetric(g.key, g.mean)})`).join(', ');
+  const values = sigs.map((g) => `${METRIC_BY_KEY[g.key].label} ${fmtMetric(g.key, g.value)} (personal baseline ${fmtMetric(g.key, g.mean)})`).join(', ');
   if (inc) {
     const region = REGIONS.find((r) => r.id !== 'env' && r.metrics.includes(sigs[0]?.key));
-    return `Hocam, ${inc.title}${region ? ` (${region.name.toLocaleLowerCase('tr-TR')} bölgesi)` : ''}. ${values}.`;
+    return `Surgeon, ${inc.title}${region ? ` (${region.name.toLocaleLowerCase('en-US')} region)` : ''}. ${values}.`;
   }
-  return `Hocam, ${name} için rutin bildirim: sağlık skoru %${fmt(st?.healthScore)}, nabız ${fmtMetric('cardio.hr_bpm', t.cardio.hr_bpm)}, SpO₂ ${fmtMetric('cardio.spo2_pct', t.cardio.spo2_pct)}.`;
+  return `Surgeon, routine report for ${name}: health score ${fmt(st?.healthScore)}%, heart rate ${fmtMetric('cardio.hr_bpm', t.cardio.hr_bpm)}, SpO₂ ${fmtMetric('cardio.spo2_pct', t.cardio.spo2_pct)}.`;
 }
 
 function EarthThread({ crewId }: { crewId: CrewId }) {
@@ -130,9 +130,9 @@ function EarthThread({ crewId }: { crewId: CrewId }) {
           }}
           rows={2}
           maxLength={600}
-          title="Yer ekibi yanıtları senaryo için üretilir (simülasyon)"
-          placeholder="Uçuş cerrahına mesaj (Enter gönderir)"
-          aria-label="Uçuş cerrahına mesaj"
+          title="Ground replies are generated for the scenario (simulation)"
+          placeholder="Message to the Flight Surgeon (Enter sends)"
+          aria-label="Message to the Flight Surgeon"
           className="w-full resize-none rounded-md bg-space-bg/60 px-2.5 py-1.5 text-sm text-white ring-1 ring-space-border outline-none placeholder:text-slate-500 focus:ring-calm"
         />
         <div className="mt-1.5 flex items-center gap-2">
@@ -140,12 +140,12 @@ function EarthThread({ crewId }: { crewId: CrewId }) {
             type="button"
             onClick={() => setText(composeReport(crewId))}
             className="min-w-0 truncate rounded-md px-2.5 py-1 text-sm text-slate-200 ring-1 ring-space-border hover:bg-white/5"
-            title="Seçili astronotun durumunu mesaja yazar"
+            title="Writes the selected astronaut's status into the message"
           >
-            + {firstName(crewId)} durumunu ekle
+            + Add {firstName(crewId)}'s status
           </button>
           <button type="submit" disabled={!text.trim()} className="ml-auto rounded-md bg-select px-4 py-1 text-sm font-semibold text-white disabled:opacity-40">
-            Gönder
+            Send
           </button>
         </div>
       </form>
@@ -168,8 +168,7 @@ function Message({ m, now, answered }: { m: EarthMessage; now: number; answered:
   return (
     <div className="mr-6">
       <div className="mb-0.5 text-sm text-slate-400">
-        <span className="font-semibold text-slate-200">{m.id === 'hosgeldin' ? GROUND.station : GROUND.name}</span> · {GROUND.role.toLocaleLowerCase('tr-TR')} ·{' '}
-        {time(m.at)}
+        <span className="font-semibold text-slate-200">{m.id === 'hosgeldin' ? GROUND.station : GROUND.name}</span> · {GROUND.role} · {time(m.at)}
       </div>
       <div
         className="rounded-md rounded-tl-sm px-2.5 py-1.5 text-sm text-slate-100"
@@ -178,7 +177,7 @@ function Message({ m, now, answered }: { m: EarthMessage; now: number; answered:
         {m.text}
         {med && (
           <div className="mt-1" style={{ color: COLORS.calm }}>
-            Kit: {med.name} · {m.applied ? 'uygulandı ✓' : 'Revir › Tedavi sekmesinde işaretleyin'}
+            Kit: {med.name} · {m.applied ? 'done ✓' : 'mark it in Medical bay › Treatment'}
           </div>
         )}
       </div>
@@ -187,13 +186,13 @@ function Message({ m, now, answered }: { m: EarthMessage; now: number; answered:
 }
 
 function Transit({ m, now, answered }: { m: CrewMessage; now: number; answered: boolean }) {
-  if (answered) return <span style={{ color: COLORS.normal }}>yanıtlandı</span>;
-  if (now < m.arriveAt) return <span style={{ color: COLORS.calm }}>Dünya'ya gidiyor · {fmtDelay(Math.ceil(realToMissionS(m.arriveAt - now)))}</span>;
-  return <span style={{ color: COLORS.calm }}>ulaştı · yanıt bekleniyor</span>;
+  if (answered) return <span style={{ color: COLORS.normal }}>answered</span>;
+  if (now < m.arriveAt) return <span style={{ color: COLORS.calm }}>to Earth · {fmtDelay(Math.ceil(realToMissionS(m.arriveAt - now)))}</span>;
+  return <span style={{ color: COLORS.calm }}>received · awaiting reply</span>;
 }
 
 // ---------- ASTRA (Parça 4'ün sohbetiyle aynı geçmiş) ----------
-const PRESETS = ['Bugün kim dinlenmeli?', 'Radyasyon durumu nasıl?', 'CO₂ güvenli mi?'];
+const PRESETS = ['Who should rest today?', 'What is the radiation status?', 'Is CO₂ safe?'];
 
 function AstraChat() {
   const chat = useAstra((s) => s.chat);
@@ -223,9 +222,7 @@ function AstraChat() {
   return (
     <>
       <div className="min-h-0 flex-1 space-y-2 overflow-auto px-3 py-2.5 text-sm">
-        {chat.length === 0 && (
-          <p className="text-slate-300">ASTRA mürettebatın canlı verisine dayanarak cevap verir. Uyarıları Katman 1 açar; kararı siz verirsiniz.</p>
-        )}
+        {chat.length === 0 && <p className="text-slate-300">ASTRA answers from the crew's live data. Layer 1 opens alerts; you make the decision.</p>}
         {chat.map((m) =>
           m.role === 'user' ? (
             <div key={m.id} className="ml-6 flex justify-end">
@@ -240,7 +237,7 @@ function AstraChat() {
             </div>
           ),
         )}
-        {busy && <Thinking label="ASTRA düşünüyor" />}
+        {busy && <Thinking label="ASTRA is thinking" />}
         <div ref={endRef} />
       </div>
       <div className="flex flex-wrap gap-1.5 border-t border-space-border px-2 pt-2">
@@ -267,15 +264,15 @@ function AstraChat() {
           value={question}
           maxLength={600}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder="ASTRA'ya sorun"
-          aria-label="ASTRA'ya soru"
+          placeholder="Ask ASTRA"
+          aria-label="Question for ASTRA"
           className="min-w-0 flex-1 rounded-md bg-space-bg/60 px-2.5 py-1.5 text-sm ring-1 ring-space-border outline-none focus:ring-ai"
         />
         <button type="submit" disabled={busy || !question.trim()} className="rounded-md bg-ai px-3 text-sm font-semibold text-space-bg disabled:opacity-40">
-          Sor
+          Ask
         </button>
       </form>
-      <p className="px-2 pb-2 text-sm text-slate-500">ASTRA öneri verir; teşhis koymaz, ilaç önermez.</p>
+      <p className="px-2 pb-2 text-sm text-slate-500">ASTRA gives recommendations; it does not diagnose or recommend medication.</p>
     </>
   );
 }

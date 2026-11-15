@@ -10,20 +10,20 @@ import { alpha, COLORS, fmt, LEVEL_COLOR, LEVEL_ICON, LEVEL_LABEL } from '../the
 import { Tile } from './Tile';
 
 const GROUPS: { loc: CrewLocation; title: string; where: string }[] = [
-  { loc: 'KOKPIT', title: 'Gemide', where: 'Mars yörüngesi · ARES-1' },
-  { loc: 'GEZEGEN', title: 'Uzay yürüyüşünde', where: 'Mars yüzeyi · EVA giysisi' },
+  { loc: 'KOKPIT', title: 'Orbit crew (IVA)', where: 'Mars orbit · ARES-1' },
+  { loc: 'GEZEGEN', title: 'Surface crew (EVA)', where: 'Mars surface · xEMU suits' },
 ];
 
 export function CrewGrid({ selected, onSelect }: { selected: CrewId; onSelect: (id: CrewId) => void }) {
   return (
-    <Tile area="crew" title="Astronotlar" meta={<span>kişiye tıklayın</span>} bodyClass="flex flex-col gap-2 px-3 py-2">
+    <Tile area="crew" title="Crew" meta={<span>select a crew member</span>} bodyClass="flex flex-col gap-2 px-3 py-2">
       {GROUPS.map((g) => (
         <div key={g.loc} className="min-w-0">
           <div className="mb-1 flex items-baseline gap-2 text-sm">
             <span className="font-semibold text-slate-200">{g.title}</span>
             <span className="text-slate-400">{g.where}</span>
           </div>
-          <div className="grid grid-cols-3 gap-2" role="tablist" aria-label={`${g.title} astronotlar`}>
+          <div className="grid grid-cols-3 gap-2" role="tablist" aria-label={g.title}>
             {CREW.filter((m) => m.location === g.loc).map((m) => (
               <Person key={m.id} id={m.id} on={m.id === selected} onSelect={onSelect} />
             ))}
@@ -50,7 +50,7 @@ function Person({ id, on, onSelect }: { id: CrewId; on: boolean; onSelect: (id: 
     >
       {st?.restRequired && (
         <span className="absolute top-1 right-1 rounded px-1.5 text-sm" style={{ color: COLORS.caution, backgroundColor: alpha(COLORS.caution, 0.14) }}>
-          revirde
+          med bay
         </span>
       )}
       <span
@@ -65,11 +65,11 @@ function Person({ id, on, onSelect }: { id: CrewId; on: boolean; onSelect: (id: 
       </span>
       <span className="mt-1.5 block w-full truncate text-sm font-semibold text-white">{member.name.replace(/^Dr\.\s*/, '')}</span>
       <span className="flex items-center gap-1.5 font-mono text-sm whitespace-nowrap">
-        <span style={{ color: c }} aria-label={l ? LEVEL_LABEL[l] : 'veri yok'}>
-          {l ? LEVEL_ICON[l] : '○'} %{fmt(st?.healthScore)}
+        <span style={{ color: c }} aria-label={l ? LEVEL_LABEL[l] : 'no data'}>
+          {l ? LEVEL_ICON[l] : '○'} {fmt(st?.healthScore)}%
         </span>
         <span className="text-slate-400">·</span>
-        <span className="text-slate-200" title="Nabız">
+        <span className="text-slate-200" title="Heart rate">
           ♥ {fmt(t?.cardio.hr_bpm)}
         </span>
       </span>

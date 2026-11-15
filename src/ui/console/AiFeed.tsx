@@ -12,7 +12,7 @@ import { firstName, fmtMetric } from '../format';
 import { alpha, COLORS, LEVEL_COLOR, LEVEL_ICON, LEVEL_LABEL } from '../theme';
 import { Tile } from './Tile';
 
-const time = (ms: number) => new Date(ms).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const time = (ms: number) => new Date(ms).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 const RANK = { critical: 2, caution: 1 } as const;
 
 const KIND: Record<LedgerEntry['kind'], { icon: string; color: string }> = {
@@ -33,10 +33,10 @@ export function AiFeed({ onSelect }: { onSelect: (id: CrewId) => void }) {
   return (
     <Tile
       area="ai"
-      title="ASTRA iletileri"
+      title="ASTRA messages"
       meta={
         <span className="font-mono" style={{ color: list.length ? COLORS.text : COLORS.textMuted }}>
-          {list.length} açık olay
+          {list.length} open event{list.length === 1 ? '' : 's'}
         </span>
       }
       bodyClass="p-0"
@@ -44,7 +44,7 @@ export function AiFeed({ onSelect }: { onSelect: (id: CrewId) => void }) {
       {list.length === 0 ? (
         <p className="px-3 py-3 text-sm text-slate-300">
           <span style={{ color: COLORS.normal }}>● </span>
-          Tüm değerler kişisel normalinde. Yeni bir sapma olursa burada görünür.
+          All values within personal baselines. New deviations will appear here.
         </p>
       ) : (
         <ul>
@@ -60,9 +60,9 @@ export function AiFeed({ onSelect }: { onSelect: (id: CrewId) => void }) {
         </ul>
       )}
 
-      <div className="border-t border-space-border px-3 pt-2 pb-1 text-sm font-semibold text-slate-300">Son kayıtlar</div>
+      <div className="border-t border-space-border px-3 pt-2 pb-1 text-sm font-semibold text-slate-300">Recent log</div>
       <ol className="px-3 pb-2">
-        {ledger.length === 0 && <li className="py-1 text-sm text-slate-400">Kayıt yok.</li>}
+        {ledger.length === 0 && <li className="py-1 text-sm text-slate-400">No log entries.</li>}
         {ledger.map((e) => (
           <li key={e.id} className="flex gap-2 py-0.5 text-sm">
             <span className="shrink-0 font-mono text-slate-400">{time(e.at)}</span>
@@ -99,7 +99,7 @@ function IncidentMessage({ inc, open, onToggle, onSelect }: { inc: Incident; ope
               <span className="font-mono" style={{ color: LEVEL_COLOR[s.level] }}>
                 {fmtMetric(s.key, s.value)}
               </span>{' '}
-              <span className="text-slate-400">(normal {fmtMetric(s.key, s.mean)})</span>
+              <span className="text-slate-400">(baseline {fmtMetric(s.key, s.mean)})</span>
             </span>
           ))}
         </p>
@@ -111,7 +111,7 @@ function IncidentMessage({ inc, open, onToggle, onSelect }: { inc: Incident; ope
             type="button"
             onClick={() => onSelect(id)}
             className="rounded px-2 py-0.5 font-semibold text-white ring-1 ring-white/25 hover:bg-white/10"
-            title="Konsolda bu kişiyi seç"
+            title="Select this crew member in the console"
           >
             {firstName(id)}
           </button>
@@ -124,11 +124,11 @@ function IncidentMessage({ inc, open, onToggle, onSelect }: { inc: Incident; ope
         <span className="ml-auto flex gap-1.5">
           {hasAstraExplanation && (
             <button type="button" onClick={onToggle} aria-expanded={open} className="rounded px-2 py-0.5 text-ai hover:bg-ai/10">
-              ✦ {open ? 'Gizle' : 'Açıkla'}
+              ✦ {open ? 'Hide' : 'Explain'}
             </button>
           )}
           {acked ? (
-            <span className="px-1 py-0.5 text-slate-400">✓ onaylandı</span>
+            <span className="px-1 py-0.5 text-slate-400">✓ acknowledged</span>
           ) : (
             <button
               type="button"
@@ -136,7 +136,7 @@ function IncidentMessage({ inc, open, onToggle, onSelect }: { inc: Incident; ope
               className="rounded px-2.5 py-0.5 font-semibold hover:bg-white/5"
               style={{ color: c, boxShadow: `inset 0 0 0 1px ${c}` }}
             >
-              Onayla
+              Acknowledge
             </button>
           )}
         </span>

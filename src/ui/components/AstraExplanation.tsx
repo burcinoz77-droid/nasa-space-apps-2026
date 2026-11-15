@@ -25,7 +25,7 @@ export function AstraExplanation({ incidentId }: { incidentId: string }) {
   return (
     <div className="rounded-xl border border-ai/40 bg-ai/10 px-4 py-3" aria-live="polite">
       <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-ai">
-        <span aria-hidden>✦</span> ASTRA açıklaması
+        <span aria-hidden>✦</span> ASTRA explanation
       </div>
       {answer ? (
         <>
@@ -33,9 +33,9 @@ export function AstraExplanation({ incidentId }: { incidentId: string }) {
           <AstraMeta answer={answer} />
         </>
       ) : exists ? (
-        <Thinking label="ASTRA olayı inceliyor" />
+        <Thinking label="ASTRA is reviewing the event" />
       ) : (
-        <p className="text-sm text-slate-400">Olay bulunamadı.</p>
+        <p className="text-sm text-slate-400">Event not found.</p>
       )}
     </div>
   );
@@ -45,27 +45,27 @@ export function AstraExplanation({ incidentId }: { incidentId: string }) {
 export function AstraMeta({ answer }: { answer: AstraAnswer }) {
   const offline = answer.source === 'fallback';
   const safety = answer.fallbackReason === 'safety';
-  const label = safety ? 'Yedek cevap · güvenlik süzgeci' : SOURCE_LABEL[answer.source];
+  const label = safety ? 'Fallback answer · safety filter' : SOURCE_LABEL[answer.source];
   const hint = safety
-    ? 'Modelin cevabı ilaç önerisi ya da kesin teşhis içerdiği için gösterilmedi; ayrıntı tarayıcı konsolunda. Bu cevap doğrudan veriden üretildi.'
+    ? 'The model answer was not shown because it contained medication advice or a definitive diagnosis; details are in the browser console. This answer was generated directly from the data.'
     : offline
-      ? 'Dil modeline ulaşılamadı; cevap doğrudan veriden kural tabanlı üretildi. Sebep tarayıcı konsolunda.'
+      ? 'The language model was unreachable; this rule-based answer was generated directly from the data. The reason is in the browser console.'
       : undefined;
   return (
     <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
       <span style={{ color: offline ? COLORS.offline : COLORS.ai }} title={hint}>
         {offline ? '◌' : '✦'} {label}
       </span>
-      {!offline && <span style={{ color: COLORS.textMuted }}>{fmt(answer.latencyMs / 1000, 1)} sn</span>}
+      {!offline && <span style={{ color: COLORS.textMuted }}>{fmt(answer.latencyMs / 1000, 1)} s</span>}
       {!offline && <VerifiedBadge ok={answer.verified} />}
       {!!answer.tools?.length && (
-        <span className="basis-full" style={{ color: COLORS.textMuted }} title="ASTRA bu cevap için veriyi şu araçlarla okudu (salt okunur).">
-          ⚙ Kullanılan araçlar: {answer.tools.join(' · ')}
+        <span className="basis-full" style={{ color: COLORS.textMuted }} title="ASTRA read the data for this answer with these tools (read-only).">
+          ⚙ Tools used: {answer.tools.join(' · ')}
         </span>
       )}
       {!!answer.sources?.length && (
         <span className="basis-full" style={{ color: COLORS.textMuted }}>
-          Kaynaklar:{' '}
+          Sources:{' '}
           {answer.sources.map((s, i) => (
             <span key={s.url}>
               {i > 0 && ' · '}
@@ -73,7 +73,7 @@ export function AstraMeta({ answer }: { answer: AstraAnswer }) {
                 href={s.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                title={`${s.ad} (yeni sekmede açılır)`}
+                title={`${s.ad} (opens in a new tab)`}
                 className="underline decoration-dotted underline-offset-2 hover:text-slate-200"
                 style={{ color: COLORS.calm }}
               >
@@ -92,9 +92,13 @@ export function VerifiedBadge({ ok }: { ok: boolean }) {
     <span
       className="rounded-full px-2 py-0.5 font-semibold"
       style={{ color: ok ? COLORS.normal : COLORS.caution, backgroundColor: `${ok ? COLORS.normal : COLORS.caution}1A` }}
-      title={ok ? 'Cevaptaki her sayı modele gönderilen veride var.' : 'Cevapta veride olmayan bir sayı var; ekrandaki değerle karşılaştırın.'}
+      title={
+        ok
+          ? 'Every number in the answer is in the data sent to the model.'
+          : 'The answer contains a number that is not in the data; compare it with the value on screen.'
+      }
     >
-      {ok ? '✓ Sayılar doğrulandı' : '▲ Sayıları kontrol et'}
+      {ok ? '✓ Numbers verified' : '▲ Check the numbers'}
     </span>
   );
 }

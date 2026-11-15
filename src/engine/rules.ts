@@ -52,7 +52,7 @@ const atLeast = (l: Level, min: Level) => LEVEL_RANK[l] >= LEVEL_RANK[min];
 const isNormal = (s: MetricScore) => s.level === 'normal';
 const rank = (s: MetricScore, c: CrewEval) => LEVEL_RANK[s.level] * 1000 + c.riskZ[s.key];
 const bySeverity = (c: CrewEval) => (a: MetricScore, b: MetricScore) => rank(b, c) - rank(a, c);
-const withBaseline = (s: MetricScore) => `${metricText(s.key, s.value)} (kişisel normal ${metricText(s.key, s.mean)})`;
+const withBaseline = (s: MetricScore) => `${metricText(s.key, s.value)} (personal baseline ${metricText(s.key, s.mean)})`;
 
 // ---------------------------------------------------------------------------
 // RADIATION — doz hızı riskZ ≥ 3 (3 ölçüm) → kritik + sığınak; toplam doz ≥ 480 / ≥ 600 mSv
@@ -75,14 +75,14 @@ const radiation: Rule = {
   title(crewIds, worst, loc) {
     const rate = worst.signals[0];
     if (rate.level === 'critical')
-      return `${LOCATION_LABELS[loc]} ekibi: radyasyon doz hızı kişisel normalin çok üzerinde (${metricText(rate.key, rate.value)})`;
+      return `${LOCATION_LABELS[loc][0].toUpperCase()}${LOCATION_LABELS[loc].slice(1)}: radiation dose rate far above personal baseline (${metricText(rate.key, rate.value)})`;
     const total = worst.signals[worst.signals.length - 1];
     const limit = ABSOLUTE_LIMITS['env.doseCumulative_mSv']!.critical;
-    return `${names(crewIds)}: toplam radyasyon dozu ${metricText(total.key, total.value)}, kariyer limiti ${num(limit)} mSv'nin %${num((total.value / limit) * 100)}'i`;
+    return `${names(crewIds)}: cumulative radiation dose ${metricText(total.key, total.value)}, ${num((total.value / limit) * 100)}% of the ${num(limit)} mSv career limit`;
   },
   reason(_ids, worst, loc) {
     const rate = worst.signals[0];
-    return `${LOCATION_LABELS[loc]} ekibi: doz hızı ${STREAK_REQUIRED} ölçümdür kritik, ${withBaseline(rate)}`;
+    return `${LOCATION_LABELS[loc][0].toUpperCase()}${LOCATION_LABELS[loc].slice(1)}: dose rate at warning level for ${STREAK_REQUIRED} samples, ${withBaseline(rate)}`;
   },
 };
 
@@ -104,13 +104,13 @@ const co2: Rule = {
   },
   isClear: (c) => isNormal(c.scores['env.ppCO2_mmHg']),
   title(_ids, worst, loc) {
-    const where = loc === 'KOKPIT' ? 'Kokpit kabininde' : 'Gezegen ekibinin giysi içinde';
-    return `${where} CO₂ yükseliyor (ppCO₂ ${metricText('env.ppCO2_mmHg', worst.signals[0].value)})`;
+    const where = loc === 'KOKPIT' ? 'Vehicle cabin' : 'Surface crew suit';
+    return `${where} CO₂ rising (ppCO₂ ${metricText('env.ppCO2_mmHg', worst.signals[0].value)})`;
   },
   reason(_ids, worst, loc) {
     const lim = ABSOLUTE_LIMITS['env.ppCO2_mmHg']!.critical;
-    const where = loc === 'KOKPIT' ? 'Kokpit kabini' : 'Gezegen ekibi giysileri';
-    return `${where}: ppCO₂ ${STREAK_REQUIRED} ölçümdür kritik sınırın (${num(lim, 1)} mmHg) üzerinde; normali ${metricText('env.ppCO2_mmHg', worst.signals[0].mean)}`;
+    const where = loc === 'KOKPIT' ? 'Vehicle cabin' : 'Surface crew suits';
+    return `${where}: ppCO₂ above the ${num(lim, 1)} mmHg warning limit for ${STREAK_REQUIRED} samples; baseline ${metricText('env.ppCO2_mmHg', worst.signals[0].mean)}`;
   },
 };
 
@@ -127,7 +127,7 @@ const hypoxia: Rule = {
     return { level: s.level, signals: [s, ...extra], actionable: false, severity: c.riskZ[s.key] };
   },
   isClear: (c) => isNormal(c.scores['cardio.spo2_pct']),
-  title: (ids, worst) => `${names(ids)}: oksijen doygunluğu düşük (SpO₂ ${metricText('cardio.spo2_pct', worst.signals[0].value)}), medikal kontrol önerilir`,
+  title: (ids, worst) => `${names(ids)}: low oxygen saturation (SpO₂ ${metricText('cardio.spo2_pct', worst.signals[0].value)}), medical check recommended`,
   reason: () => '',
 };
 
@@ -144,7 +144,7 @@ const cardio: Rule = {
     return { level: 'caution', signals: [ect, c.scores['cardio.hr_bpm']], actionable: false, severity: c.riskZ[ect.key] };
   },
   isClear: (c) => c.irregularStreak === 0 && isNormal(c.scores[CARDIO_ECTOPIC_KEY]),
-  title: (ids) => `${names(ids)}: EKG'de düzensiz atımlar görülüyor, medikal kontrol önerilir`,
+  title: (ids) => `${names(ids)}: irregular beats on ECG, medical check recommended`,
   reason: () => '',
 };
 
@@ -164,18 +164,18 @@ const thermal: Rule = {
     return { level: s.level, signals: [s, ...extra], actionable: true, severity: s.value };
   },
   isClear: (c) => isNormal(c.scores['resp.coreTemp_C']),
-  title: (ids, worst) => `${names(ids)}: çekirdek sıcaklık yükseliyor (${metricText('resp.coreTemp_C', worst.signals[0].value)})`,
-  reason: (ids, worst) => `${names(ids)}: çekirdek sıcaklık ${withBaseline(worst.signals[0])}`,
+  title: (ids, worst) => `${names(ids)}: core temperature rising (${metricText('resp.coreTemp_C', worst.signals[0].value)})`,
+  reason: (ids, worst) => `${names(ids)}: core temperature ${withBaseline(worst.signals[0])}`,
 };
 
 // ---------------------------------------------------------------------------
 // FATIGUE — uyku, PVT, PANAS olumlu, BSI-18, HRV: en az 3'ü aynı anda dikkatte → zorunlu dinlenme
 // ---------------------------------------------------------------------------
 const FATIGUE_WORDS: Partial<Record<MetricKey, string>> = {
-  'env.sleepLastNight_h': 'uyku',
-  'cog.pvtMeanRt_ms': 'tepki süresi',
-  'cog.panasPositive': 'ruh hali',
-  'cog.bsi18_gsi': 'sıkıntı skoru',
+  'env.sleepLastNight_h': 'sleep',
+  'cog.pvtMeanRt_ms': 'reaction time',
+  'cog.panasPositive': 'mood',
+  'cog.bsi18_gsi': 'distress score',
   'cardio.hrv_rmssd_ms': 'HRV',
 };
 
@@ -192,9 +192,9 @@ const fatigue: Rule = {
   isClear: (c) => FATIGUE_SIGNALS.every((k) => isNormal(c.scores[k])),
   title(ids, worst) {
     const words = FATIGUE_SIGNALS.filter((k) => worst.signals.some((s) => s.key === k)).map((k) => FATIGUE_WORDS[k]);
-    return `${names(ids)}: ${words.join(' + ')} birlikte kötüleşiyor`;
+    return `${names(ids)}: ${words.join(' + ')} worsening together`;
   },
-  reason: (ids, worst) => `${names(ids)}: ${worst.signals.length} yorgunluk sinyali aynı anda dikkat seviyesinde`,
+  reason: (ids, worst) => `${names(ids)}: ${worst.signals.length} fatigue signals at caution level at once`,
 };
 
 // ---------------------------------------------------------------------------
@@ -209,7 +209,7 @@ const stress: Rule = {
     return { level: 'caution', signals: all, actionable: false, severity: all.reduce((a, s) => a + c.riskZ[s.key], 0) };
   },
   isClear: (c) => STRESS_SIGNALS.every((k) => isNormal(c.scores[k])),
-  title: (ids) => `${names(ids)}: stres belirtileri birlikte yükseliyor (GSR + ter kortizolü + olumsuz duygu)`,
+  title: (ids) => `${names(ids)}: stress markers rising together (GSR + sweat cortisol + negative affect)`,
   reason: () => '',
 };
 
@@ -231,7 +231,7 @@ const multi: Rule = {
   isClear: (c) => MULTI_DOMAINS.every((d) => c.domainLevels[d] !== 'critical'),
   title(ids, worst) {
     const domains = [...new Set(worst.signals.map((s) => s.key.split('.')[0] as Domain))].map((d) => DOMAIN_LABELS[d]);
-    return `${names(ids)}: ${joinTr(domains)} alanlarında aynı anda kritik sapma`;
+    return `${names(ids)}: simultaneous warning-level deviation in ${joinTr(domains)}`;
   },
   reason: () => '',
 };

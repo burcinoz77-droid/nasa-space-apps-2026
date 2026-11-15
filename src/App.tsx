@@ -27,10 +27,10 @@ import { COLORS, fmt } from './ui/theme';
 type PageId = 'kokpit' | 'gorevler' | 'raporlar' | 'ayarlar';
 
 const PAGES: { id: PageId; label: string; title: string; icon: () => ReactNode }[] = [
-  { id: 'kokpit', label: 'Konsol', title: 'Sağlık konsolu', icon: IconCockpit },
-  { id: 'gorevler', label: 'Görevler', title: 'Görevler · EVA ve ekipman', icon: IconTasks },
-  { id: 'raporlar', label: 'Raporlar', title: 'Raporlar · olay kaydı', icon: IconReports },
-  { id: 'ayarlar', label: 'Ayarlar', title: 'Ayarlar · senaryo ve kaynaklar', icon: IconSettings },
+  { id: 'kokpit', label: 'Console', title: 'Crew Health Console', icon: IconCockpit },
+  { id: 'gorevler', label: 'Tasks', title: 'Tasks · EVA and equipment', icon: IconTasks },
+  { id: 'raporlar', label: 'Reports', title: 'Reports · event log', icon: IconReports },
+  { id: 'ayarlar', label: 'Settings', title: 'Settings · scenarios and sources', icon: IconSettings },
 ];
 
 const SCENARIOS: ScenarioId[] = ['NORMAL', 'SOLAR_STORM', 'MARS_DAY_180', 'CO2_SCRUBBER_FAIL', 'EVA_OVEREXERTION'];
@@ -113,7 +113,7 @@ function Rail({ page, onPage }: { page: PageId; onPage: (p: PageId) => void }) {
     );
   };
   return (
-    <aside className="flex w-[88px] shrink-0 flex-col items-center gap-1 bg-chrome px-2 py-3" aria-label="Sayfalar">
+    <aside className="flex w-[88px] shrink-0 flex-col items-center gap-1 bg-chrome px-2 py-3" aria-label="Pages">
       <div className="mb-3 flex flex-col items-center gap-1 text-white" title="Orbitalis · ASTRA-MED OS">
         <OrbitalisMark size={34} />
         <span className="font-display text-sm leading-none font-bold">Orbitalis</span>
@@ -124,10 +124,10 @@ function Rail({ page, onPage }: { page: PageId; onPage: (p: PageId) => void }) {
         <button
           onClick={() => controls.reset()}
           className="flex w-full flex-col items-center gap-1 rounded-md px-1 py-2 text-sm text-slate-200 hover:bg-white/10"
-          title="Simülasyonu sıfırla"
+          title="Reset simulation"
         >
           <IconReset />
-          <span className="leading-none">Sıfırla</span>
+          <span className="leading-none">Reset</span>
         </button>
       </div>
     </aside>
@@ -171,13 +171,13 @@ function TopBar({ title, onBell }: { title: string; onBell: () => void }) {
 
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-1">
         <Clock day={day} calibration={calibrating ? `${samples}/${SIM.baselineWindow}` : undefined} />
-        <Field label="Konum" className="hidden min-[1180px]:block">
-          Mars yörüngesi
+        <Field label="Location" className="hidden min-[1180px]:block">
+          Mars orbit
         </Field>
-        <Field label="Dünya bağlantısı">
-          <span style={{ color: linked ? COLORS.normal : COLORS.offline }}>{linked ? '● Aktif' : '○ Yok'}</span>
+        <Field label="Ground link">
+          <span style={{ color: linked ? COLORS.normal : COLORS.offline }}>{linked ? '● AOS' : '○ LOS'}</span>
         </Field>
-        <Field label="Gecikme · tek yön" mono>
+        <Field label="One-way light time" mono>
           <span className="flex items-center gap-2">
             {fmtDelay(delay)}
             <span className="hidden font-sans min-[1380px]:inline">
@@ -189,14 +189,14 @@ function TopBar({ title, onBell }: { title: string; onBell: () => void }) {
 
       <div className="flex shrink-0 items-center gap-3">
         {/* Senaryo seçimi gerçek konsolda olmaz: sönük "Simülasyon" menüsü (Azra, PR #22). Senaryo aktifken sarı. */}
-        <label className="flex items-center gap-2 text-sm text-slate-300" title="Simülasyon senaryosu (demo)">
-          <span className="hidden min-[1180px]:inline">Simülasyon</span>
+        <label className="flex items-center gap-2 text-sm text-slate-300" title="Simulation scenario (demo)">
+          <span className="hidden min-[1180px]:inline">Simulation</span>
           <select
             value={scenario ?? 'NORMAL'}
             onChange={(e) => controls.setScenario(e.target.value as ScenarioId)}
             className="rounded-md border border-white/20 bg-transparent px-2 py-1 text-sm"
             style={{ color: scenario && scenario !== 'NORMAL' ? COLORS.caution : COLORS.textMuted }}
-            aria-label="Simülasyon senaryosu"
+            aria-label="Simulation scenario"
           >
             {SCENARIOS.map((id) => (
               <option key={id} value={id} className="bg-space-bg">
@@ -209,8 +209,8 @@ function TopBar({ title, onBell }: { title: string; onBell: () => void }) {
           onClick={onBell}
           className="relative rounded-md p-2 hover:bg-white/10"
           style={{ color: critical ? COLORS.critical : open ? COLORS.caution : COLORS.text }}
-          aria-label={`${open} açık olay${critical ? ', kritik var' : ''}. Raporlar'ı aç`}
-          title="Açık olaylar"
+          aria-label={`${open} open event${open === 1 ? '' : 's'}${critical ? ', warning active' : ''}. Open Reports`}
+          title="Open events"
         >
           <IconBell />
           {open > 0 && (
@@ -228,7 +228,7 @@ function TopBar({ title, onBell }: { title: string; onBell: () => void }) {
           </span>
           <div className="hidden leading-tight min-[1600px]:block">
             <div className="text-sm font-semibold text-white">{me.name}</div>
-            <div className="text-sm text-slate-300">Sağlık sorumlusu</div>
+            <div className="text-sm text-slate-300">Crew Medical Officer</div>
           </div>
         </div>
       </div>
@@ -247,12 +247,12 @@ function Clock({ day, calibration }: { day: number | undefined; calibration?: st
     <div className="min-w-0 leading-tight">
       <div className="text-sm whitespace-nowrap text-slate-300">
         {calibration ? (
-          <span title="Katman 1 kişisel baseline'ı ilk 30 ölçümde kurar; senaryoyu bundan sonra başlatın.">Saat · baseline {calibration}</span>
+          <span title="Layer 1 sets personal baselines over the first 30 samples; start a scenario after that.">Time · baseline {calibration}</span>
         ) : (
-          <>Saat · görev günü {fmt(day)}</>
+          <>Time · Mission Day {fmt(day)}</>
         )}
       </div>
-      <div className="font-mono text-base text-white tabular-nums">{now.toLocaleTimeString('tr-TR')}</div>
+      <div className="font-mono text-base text-white tabular-nums">{now.toLocaleTimeString('en-GB')}</div>
     </div>
   );
 }

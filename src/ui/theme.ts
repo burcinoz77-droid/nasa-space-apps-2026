@@ -29,7 +29,7 @@ export const LEVEL_COLOR: Record<Level, string> = {
 };
 
 // Renk körlüğü için renk tek başına anlam taşımaz: her seviyenin bir de yazısı ve simgesi var.
-export const LEVEL_LABEL: Record<Level, string> = { normal: 'NORMAL', caution: 'DİKKAT', critical: 'KRİTİK' };
+export const LEVEL_LABEL: Record<Level, string> = { normal: 'NOMINAL', caution: 'CAUTION', critical: 'WARNING' };
 export const LEVEL_ICON: Record<Level, string> = { normal: '●', caution: '▲', critical: '■' };
 
 const LEVEL_RANK: Record<Level, number> = { normal: 0, caution: 1, critical: 2 };
@@ -63,8 +63,8 @@ export function alpha(hex: string, a: number): string {
   return `${hex}${v}`;
 }
 
-/** 36.8 -> "36,8" ; Türkçe sayı biçimi (sadece ekranda). */
+/** 36.8 -> "36.8", 1344 -> "1,344" ; İngilizce sayı biçimi (sadece ekranda). */
 export function fmt(value: number | undefined, decimals = 0): string {
   if (value === undefined || Number.isNaN(value)) return '—';
-  return value.toLocaleString('tr-TR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  return value.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }

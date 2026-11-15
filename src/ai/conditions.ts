@@ -32,10 +32,10 @@ export interface ConditionRule {
 
 export const CONDITION_RULES: ConditionRule[] = [
   {
-    durum: 'CO₂ birikmesine bağlı etkilenme (hiperkapni)',
-    aciklama: 'Ortamdaki CO₂ yükselince solunum ve nabız hızlanabilir; baş ağrısı ve dikkat kaybı görülebilir.',
+    durum: 'Effects of CO₂ build-up (hypercapnia)',
+    aciklama: 'When ambient CO₂ rises, breathing and heart rate can speed up; headache and loss of attention can follow.',
     kaynak: 'OCHMO-TB-004 CO₂',
-    oneri: 'Havalandırma ve CO₂ temizleyici kontrolü; baş ağrısı ve dikkat belirtilerinin izlenmesi',
+    oneri: 'Check ventilation and the CO₂ scrubber; monitor for headache and attention symptoms',
     isaretler: [
       { key: 'env.ppCO2_mmHg', dir: 'high', abs: 2.3 },
       { key: 'resp.etco2_mmHg', dir: 'high', abs: 45 },
@@ -47,10 +47,10 @@ export const CONDITION_RULES: ConditionRule[] = [
     zorunlu: 'env.ppCO2_mmHg',
   },
   {
-    durum: 'Oksijen yetersizliği (hipoksi)',
-    aciklama: 'Kandaki oksijen doygunluğu düşerse vücut solunumu ve nabzı hızlandırarak telafi etmeye çalışır.',
-    kaynak: 'NASA HRP hipoksi riski (SpO₂ eşiği klinik varsayım)',
-    oneri: 'Oksijen beslemesi, kabin ya da giysi basıncının kontrolü ve medikal kontrol',
+    durum: 'Low oxygen (hypoxia)',
+    aciklama: 'If blood oxygen saturation drops, the body tries to compensate by speeding up breathing and heart rate.',
+    kaynak: 'NASA HRP hypoxia risk (SpO₂ threshold is a clinical assumption)',
+    oneri: 'Check oxygen supply and cabin or suit pressure, and a medical check',
     isaretler: [
       { key: 'cardio.spo2_pct', dir: 'low', abs: 94 },
       { key: 'cardio.hr_bpm', dir: 'high' },
@@ -61,10 +61,10 @@ export const CONDITION_RULES: ConditionRule[] = [
     zorunlu: 'cardio.spo2_pct',
   },
   {
-    durum: 'Isı stresi ve aşırı efor',
-    aciklama: 'Yoğun efor ve giysi içinde ısı birikmesi çekirdek sıcaklığı, nabzı ve laktatı birlikte yükseltir.',
-    kaynak: 'Stahn vd. 2017, Sci Rep',
-    oneri: 'Eforun azaltılması, soğutma sisteminin kontrolü ve dinlenme',
+    durum: 'Heat stress and overexertion',
+    aciklama: 'Heavy effort and heat build-up inside the suit raise core temperature, heart rate and lactate together.',
+    kaynak: 'Stahn et al. 2017, Sci Rep',
+    oneri: 'Reduce effort, check the cooling system, and rest',
     isaretler: [
       { key: 'resp.coreTemp_C', dir: 'high', abs: 38.5 },
       { key: 'cardio.hr_bpm', dir: 'high' },
@@ -76,10 +76,10 @@ export const CONDITION_RULES: ConditionRule[] = [
     zorunlu: 'resp.coreTemp_C',
   },
   {
-    durum: 'Sıvı ve elektrolit kaybı (dehidratasyon) eğilimi',
-    aciklama: 'Yoğun terlemede ter sodyumu ve laktat artar; sıvı kaybı nabzı da yükseltebilir.',
-    kaynak: 'Ter biyobelirteçleri tablosu',
-    oneri: 'Sıvı ve elektrolit alımının değerlendirilmesi, eforun azaltılması',
+    durum: 'A tendency toward fluid and electrolyte loss (dehydration)',
+    aciklama: 'Heavy sweating raises sweat sodium and lactate; fluid loss can also raise heart rate.',
+    kaynak: 'Sweat biomarker table',
+    oneri: 'Review fluid and electrolyte intake, reduce effort',
     isaretler: [
       { key: 'biochem.sweatSodium_mM', dir: 'high' },
       { key: 'biochem.sweatLactate_mM', dir: 'high' },
@@ -90,10 +90,10 @@ export const CONDITION_RULES: ConditionRule[] = [
     zorunlu: 'biochem.sweatSodium_mM',
   },
   {
-    durum: 'Kalp ritim düzensizliği (aritmi) olasılığı',
-    aciklama: "EKG'de düzensiz atımların artması ritim bozukluğuna işaret edebilir; yorgunluk, stres ve efor da etkiler.",
-    kaynak: 'NASA HRP kalp-damar riski',
-    oneri: 'Eforun azaltılması, EKG izleminin sürdürülmesi ve medikal kontrol',
+    durum: 'A cardiac rhythm disturbance (arrhythmia)',
+    aciklama: 'More irregular beats on the ECG may point to a rhythm disturbance; fatigue, stress and effort also play a role.',
+    kaynak: 'NASA HRP cardiovascular risk',
+    oneri: 'Reduce effort, continue ECG monitoring, and a medical check',
     isaretler: [
       { key: 'cardio.ecg_ectopic_per_min', dir: 'high', abs: 6 },
       { key: 'cardio.hr_bpm', dir: 'high' },
@@ -103,10 +103,10 @@ export const CONDITION_RULES: ConditionRule[] = [
     zorunlu: 'cardio.ecg_ectopic_per_min',
   },
   {
-    durum: 'Uyku yoksunluğu ve yorgunluk',
-    aciklama: 'Yetersiz uyku tepki süresini uzatır, dikkat kayıplarını ve olumsuz duyguyu artırır.',
-    kaynak: 'Barger vd. 2014; Jones vd. 2022',
-    oneri: 'Dinlenme ve uyku planının gözden geçirilmesi, kritik görevlerin devri',
+    durum: 'Sleep deprivation and fatigue',
+    aciklama: 'Insufficient sleep lengthens reaction time and increases attention lapses and negative affect.',
+    kaynak: 'Barger et al. 2014; Jones et al. 2022',
+    oneri: 'Rest, review the sleep schedule, hand over critical tasks',
     isaretler: [
       { key: 'env.sleepLastNight_h', dir: 'low' },
       { key: 'cog.pvtMeanRt_ms', dir: 'high' },
@@ -119,10 +119,10 @@ export const CONDITION_RULES: ConditionRule[] = [
     enAz: 3,
   },
   {
-    durum: 'Akut stres yükü (kaygı belirtileri)',
-    aciklama: 'Deri iletkenliği, ter kortizolü ve olumsuz duygunun birlikte artması stres tepkisiyle uyumludur.',
-    kaynak: 'NASA HRP davranışsal sağlık riski',
-    oneri: 'Kısa mola, ekip içi görüşme; sürerse uçuş doktoru ve psikolojik destek değerlendirmesi',
+    durum: 'Acute stress load (signs of anxiety)',
+    aciklama: 'Skin conductance, sweat cortisol and negative affect rising together fit a stress response.',
+    kaynak: 'NASA HRP behavioral health risk',
+    oneri: 'A short break and a crew talk; if it persists, Flight Surgeon and psychological support review',
     isaretler: [
       { key: 'resp.gsr_uS', dir: 'high' },
       { key: 'biochem.sweatCortisol_ng_mL', dir: 'high' },
@@ -134,10 +134,10 @@ export const CONDITION_RULES: ConditionRule[] = [
     enAz: 3,
   },
   {
-    durum: 'Göz ve görmeyle ilgili değişiklik (SANS) şüphesi',
-    aciklama: 'Göz bebeği tepkisindeki değişiklik, uzun uçuşta görülen nöro-oküler değişikliklerin izlenmesini gerektirebilir.',
-    kaynak: 'NASA HRP SANS riski (göz bebeği ölçümleri varsayım)',
-    oneri: 'Göz muayenesi ve görme testlerinin planlanması',
+    durum: 'Eye and vision changes (SANS)',
+    aciklama: 'A change in pupil response may call for monitoring of the neuro-ocular changes seen in long-duration flight.',
+    kaynak: 'NASA HRP SANS risk (pupil measures are an assumption)',
+    oneri: 'Schedule an eye exam and vision tests',
     isaretler: [
       { key: 'cog.pupilLatency_ms', dir: 'high' },
       { key: 'cog.pupilDiameter_mm', dir: 'high' },
@@ -145,10 +145,10 @@ export const CONDITION_RULES: ConditionRule[] = [
     enAz: 2,
   },
   {
-    durum: 'Radyasyon maruziyetinde artış',
-    aciklama: 'Doz hızının artması toplam dozu hızla yükseltir; uzun vadeli sağlık riski toplam dozla artar.',
-    kaynak: 'NASA-STD-3001 (OCHMO radyasyon özeti)',
-    oneri: 'Radyasyon sığınağına geçişin değerlendirilmesi ve doz takibi',
+    durum: 'Increased radiation exposure',
+    aciklama: 'A higher dose rate quickly raises the cumulative dose; long-term health risk grows with cumulative dose.',
+    kaynak: 'NASA-STD-3001 (OCHMO radiation brief)',
+    oneri: 'Consider storm shelter ingress and track the dose',
     isaretler: [
       { key: 'env.doseRate_uSv_h', dir: 'high' },
       { key: 'env.doseCumulative_mSv', dir: 'high', abs: 480 },
@@ -212,13 +212,13 @@ function deviation(s: AstraState, id: CrewId, sign: Sign): Deviation | undefined
   const byAbs = sign.abs !== undefined && (sign.dir === 'high' ? value >= sign.abs : value <= sign.abs);
   if (!byZ && !byAbs) return undefined;
   const label = METRIC_BY_KEY[sign.key]?.label ?? sign.key;
-  const text = pn ? `${label} ${valueText(sign.key, value)} (kişisel normal ${valueText(sign.key, pn.mean)})` : `${label} ${valueText(sign.key, value)}`;
+  const text = pn ? `${label} ${valueText(sign.key, value)} (personal baseline ${valueText(sign.key, pn.mean)})` : `${label} ${valueText(sign.key, value)}`;
   return { key: sign.key, value, normal: pn?.mean, z, text };
 }
 
 export interface PossibleCondition {
   durum: string;
-  olasilik: 'düşük' | 'orta';
+  olasilik: 'low' | 'medium';
   dayanak: string[];
   aciklama: string;
   oneri: string;
@@ -239,7 +239,7 @@ export function possibleConditions(s: AstraState, id: CrewId): PossibleCondition
     const strong = devs.length >= rule.enAz + 1 || devs.some((d) => Math.abs(d.z ?? 0) >= 4);
     found.push({
       durum: rule.durum,
-      olasilik: strong ? 'orta' : 'düşük',
+      olasilik: strong ? 'medium' : 'low',
       dayanak: devs.map((d) => d.text),
       aciklama: rule.aciklama,
       oneri: rule.oneri,
@@ -254,4 +254,4 @@ export function possibleConditions(s: AstraState, id: CrewId): PossibleCondition
 }
 
 export const CONDITION_DISCLAIMER =
-  'Bu değerlendirme kesin değildir; ölçümlerdeki değişikliklere dayanan bir olasılıktır ve teşhis yerine geçmez. Medikal kontrol ve uçuş doktoru değerlendirmesi gerekir.';
+  'This assessment is not definitive; it is a possibility based on changes in the measurements and does not replace a diagnosis. A medical check and Flight Surgeon review are needed.';

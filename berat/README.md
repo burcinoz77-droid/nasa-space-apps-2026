@@ -46,6 +46,15 @@ Ekibin taslağına göre Kokpit tek ekranlık bir konsola dönüştü; renk ve y
 - Mürettebat sayfası konsola katıldı (seçili kişi sağ sütunda). Yörünge ekranı, `Card`, `StatTile`, `ProgressRing` kullanılmadığı için silindi. Konsolda yüzen "ASTRA'ya sor" düğmesi gizli (sohbet panelin içinde); diğer sayfalarda duruyor.
 - Geniş ve yüksek ekranda (≥1280×860) konsol tek ekrana sığar; daha küçük ekranda iki sütun olur ve sayfa kayar.
 
+## Sürüm 5 (İngilizce, NASA terimleri)
+
+- Uygulamanın ekranda görünen bütün metni İngilizce: dört parçanın sayfaları, olay kayıtları, sinematikler, kask vizörü, ASTRA'nın komutları, araç açıklamaları, yedek cevapları ve güvenlik süzgeci. Terimler NASA kullanımına göre; tek kaynak `docs/GLOSSARY.md` (ör. KRİTİK/DİKKAT/NORMAL → WARNING/CAUTION/NOMINAL, Onayla → Acknowledge, uçuş cerrahı → Flight Surgeon, Dünya bağlantısı → AOS/LOS, gecikme → OWLT, CO₂ temizleyici → CDRA).
+- Sayı biçimi İngilizce: `36.8 °C`, `87%`, `12 min 30 s`, `1,344`; saat 24 saatlik. ASTRA'nın sayı doğrulaması (`verify.ts`) yeni biçime göre.
+- Güvenlik süzgeci (`safety.ts`) İngilizce ilaç, doz ve kesin teşhis kalıplarını arar; testteki "geçmeli / engellemeli" cümleleri İngilizce karşılıklarıyla güncellendi.
+- Psikolojik testler resmi İngilizce maddelerle (NASA-TLX, Samn-Perelli).
+- Kod yorumları ve README'ler Türkçe kaldı. `types.ts`'teki alan adları değişmedi; ASTRA'ya giden JSON'daki Türkçe alan adları da aynı (talimat modele bunların anlamını söylüyor).
+- Testler: 165 test geçiyor.
+
 ## Nasıl denenir
 
 ```bash
@@ -54,7 +63,7 @@ npm run dev          # http://localhost:5173
 ```
 
 1. Uygulamayı ~40 sn açık bırakın (üst banttaki "baseline 30/30" dolsun).
-2. Üst banttaki senaryo listesinden **CO₂ temizleyici arızası**'nı seçin: hemen mavi "Gemi olayı" satırı, ~18 sn sonra sarı DİKKAT, ~40 sn sonra kırmızı KRİTİK bant ve "Havalandırma artırıldı · otomatik".
+2. Üst banttaki **Simulation** listesinden **CO₂ scrubber failure (CDRA)**'yı seçin: hemen mavi "Gemi olayı" satırı, ~18 sn sonra sarı DİKKAT, ~40 sn sonra kırmızı KRİTİK bant ve "Havalandırma artırıldı · otomatik".
 3. Astronotlar panelinde **Kerem**'e basın → sağda Kerem'in 3B modeli; çevre halkası kırmızı, "Önemli durum" CO₂.
 4. Ana istasyon panelinde **+ Kerem durumunu ekle** → **Gönder**: mesaj "Dünya'ya gidiyor", birkaç saniye sonra cerrahın yanıtı gelir; Revir › Tedavi'de "Uygulandı olarak işaretle" → parasetamol stoğu 1 azalır.
 5. **Onayla** → bant ince şeride döner, Raporlar'da "Mürettebat onayladı" satırı çıkar.

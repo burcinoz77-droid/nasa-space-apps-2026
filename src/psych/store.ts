@@ -86,11 +86,11 @@ export function applyTestResults(telemetry: Telemetry[]): void {
 /** "3 sa 20 dk önce" gibi görev süresi metni. */
 export function missionAgo(tick: number, now = useTests.getState().tick): string {
   const min = Math.max(0, now - tick) * MIN_PER_TICK;
-  if (min < 10) return 'az önce';
+  if (min < 10) return 'just now';
   const h = Math.floor(min / 60);
   const m = min % 60;
-  if (h >= 48) return `${Math.floor(h / 24)} görev günü önce`;
-  return `${h ? `${h} sa ` : ''}${m ? `${m} dk ` : ''}önce`.replace('  ', ' ');
+  if (h >= 48) return `${Math.floor(h / 24)} mission days ago`;
+  return `${h ? `${h} h ` : ''}${m ? `${m} min ` : ''}ago`.replace('  ', ' ');
 }
 
 /** Görev saati cinsinden yaş (ASTRA verisi için). */

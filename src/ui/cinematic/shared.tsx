@@ -24,7 +24,7 @@ export function Stage({ fading, onClose, credit, label, children }: { fading: bo
         onClick={() => setMuted(!muted)}
         className="absolute top-4 right-28 z-20 rounded-full border px-3 py-1.5 text-sm backdrop-blur hover:bg-white/10"
         style={{ borderColor: alpha(COLORS.text, 0.3), color: COLORS.text }}
-        aria-label={muted ? 'Sesi aç' : 'Sesi kapat'}
+        aria-label={muted ? 'Unmute' : 'Mute'}
       >
         {muted ? '🔇' : '🔊'}
       </button>
@@ -33,7 +33,7 @@ export function Stage({ fading, onClose, credit, label, children }: { fading: bo
         className="absolute top-4 right-4 z-20 rounded-full border px-4 py-1.5 text-sm backdrop-blur hover:bg-white/10"
         style={{ borderColor: alpha(COLORS.text, 0.3), color: COLORS.text }}
       >
-        Atla ✕
+        Skip ✕
       </button>
       <div className="absolute right-4 bottom-3 z-20 font-mono text-[11px]" style={{ color: alpha(COLORS.text, 0.45) }}>
         {credit}

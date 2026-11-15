@@ -13,7 +13,7 @@ import { alpha, COLORS, fmt, LEVEL_COLOR, LEVEL_ICON } from '../theme';
 import { TabHeader, Tile } from './Tile';
 
 type TabId = 'ilac' | 'teshis' | 'tedavi';
-const time = (ms: number) => new Date(ms).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+const time = (ms: number) => new Date(ms).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
 export function MedicalTile() {
   const [tab, setTab] = useState<TabId>('ilac');
@@ -33,17 +33,17 @@ export function MedicalTile() {
   return (
     <Tile
       area="med"
-      title="Revir"
+      title="Medical bay"
       bodyClass="p-0"
       header={
         <TabHeader<TabId>
-          label="Revir"
+          label="Medical bay"
           value={tab}
           onChange={setTab}
           tabs={[
-            { id: 'ilac', label: 'İlaç durumu', badge: dot(low, COLORS.caution) },
-            { id: 'teshis', label: 'Teşhisler' },
-            { id: 'tedavi', label: 'Tedavi', badge: dot(pending, COLORS.calm) },
+            { id: 'ilac', label: 'Medical kit', badge: dot(low, COLORS.caution) },
+            { id: 'teshis', label: 'Diagnoses' },
+            { id: 'tedavi', label: 'Treatment', badge: dot(pending, COLORS.calm) },
           ]}
         />
       }
@@ -70,7 +70,7 @@ function Medicines() {
                 <span className="block truncate text-sm font-semibold text-white">{m.name}</span>
                 <span className="block truncate text-sm text-slate-400">{m.use}</span>
               </span>
-              <span className="w-[92px] shrink-0 text-right">
+              <span className="w-[120px] shrink-0 text-right">
                 <span className="font-mono text-base" style={{ color: lowStock ? COLORS.caution : COLORS.text }}>
                   {lowStock && '▲ '}
                   {fmt(n)} <span className="text-sm text-slate-400">{m.unit}</span>
@@ -84,11 +84,11 @@ function Medicines() {
         })}
       </ul>
       <p className="px-3 py-2 text-sm text-slate-400">
-        ▲ eşiğin altında, ikmal planlanmalı. Kit içeriği:{' '}
+        ▲ below minimum, plan resupply. Kit contents:{' '}
         <a href={MED_SOURCE.url} target="_blank" rel="noreferrer" className="text-calm underline-offset-2 hover:underline" title={MED_SOURCE.note}>
           {MED_SOURCE.label}
         </a>
-        ; miktarlar senaryo varsayımı.
+        ; quantities are scenario assumptions.
       </p>
     </>
   );
@@ -103,12 +103,12 @@ function Diagnoses({ orders }: { orders: GroundMessage[] }) {
           {GROUND.role} · {GROUND.station}
         </h3>
         {orders.length === 0 ? (
-          <p className="text-sm text-slate-400">Henüz teşhis yok. Durum bildirmek için "Ana istasyon" panelinden uçuş cerrahına yazın.</p>
+          <p className="text-sm text-slate-400">No diagnoses yet. To report a status, message the Flight Surgeon from the Ground panel.</p>
         ) : (
           <ul className="space-y-1.5">
             {[...orders].reverse().map((m) => (
               <li key={m.id} className="rounded-md bg-white/[0.04] px-2.5 py-1.5 text-sm">
-                <span className="font-semibold text-white">{m.crewId ? firstName(m.crewId) : 'Ekip'}</span>
+                <span className="font-semibold text-white">{m.crewId ? firstName(m.crewId) : 'Crew'}</span>
                 <span className="text-slate-400"> · {time(m.at)}</span>
                 <span className="block text-slate-200">{m.diagnosis}</span>
               </li>
@@ -117,9 +117,9 @@ function Diagnoses({ orders }: { orders: GroundMessage[] }) {
         )}
       </section>
       <section>
-        <h3 className="mb-1 text-sm font-semibold text-ai">✦ ASTRA bulguları · teşhis değildir</h3>
+        <h3 className="mb-1 text-sm font-semibold text-ai">✦ ASTRA findings · not a diagnosis</h3>
         {findings.length === 0 ? (
-          <p className="text-sm text-slate-400">Açık bulgu yok.</p>
+          <p className="text-sm text-slate-400">No open findings.</p>
         ) : (
           <ul className="space-y-1">
             {findings.map((i) => (
@@ -144,9 +144,9 @@ function Treatments({ orders }: { orders: GroundMessage[] }) {
   return (
     <div className="space-y-3 p-3">
       <section>
-        <h3 className="mb-1 text-sm font-semibold text-slate-300">Uçuş cerrahının talimatları</h3>
+        <h3 className="mb-1 text-sm font-semibold text-slate-300">Flight Surgeon orders</h3>
         {orders.length === 0 ? (
-          <p className="text-sm text-slate-400">Talimat yok.</p>
+          <p className="text-sm text-slate-400">No orders.</p>
         ) : (
           <ul className="space-y-2">
             {[...orders].reverse().map((m) => {
@@ -157,12 +157,12 @@ function Treatments({ orders }: { orders: GroundMessage[] }) {
                   <div className="mt-1.5 flex flex-wrap items-center gap-2">
                     {med && (
                       <span className="rounded px-2 py-0.5 font-mono" style={{ color: COLORS.calm, backgroundColor: alpha(COLORS.calm, 0.12) }}>
-                        {med.name} · kalan {fmt(stock[med.id])} {med.unit}
+                        {med.name} · {fmt(stock[med.id])} {med.unit} left
                       </span>
                     )}
                     {m.applied ? (
                       <span className="ml-auto" style={{ color: COLORS.normal }}>
-                        ✓ uygulandı
+                        ✓ done
                       </span>
                     ) : (
                       <button
@@ -170,7 +170,7 @@ function Treatments({ orders }: { orders: GroundMessage[] }) {
                         onClick={() => applyOrder(m.id)}
                         className="ml-auto rounded px-2.5 py-0.5 font-semibold text-white ring-1 ring-calm hover:bg-calm/15"
                       >
-                        Uygulandı olarak işaretle
+                        Mark as done
                       </button>
                     )}
                   </div>
@@ -181,9 +181,9 @@ function Treatments({ orders }: { orders: GroundMessage[] }) {
         )}
       </section>
       <section>
-        <h3 className="mb-1 text-sm font-semibold text-slate-300">Otomatik güvenli adımlar · Katman 1</h3>
+        <h3 className="mb-1 text-sm font-semibold text-slate-300">Automatic safing actions · Layer 1</h3>
         {auto.length === 0 ? (
-          <p className="text-sm text-slate-400">Şu an uygulanan otomatik adım yok.</p>
+          <p className="text-sm text-slate-400">No automatic actions active.</p>
         ) : (
           <ul className="space-y-1">
             {auto.map((i) =>

@@ -59,7 +59,7 @@ export function BodyPanel({
   const use3D = webgl && !failed;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="@container flex flex-col gap-3">
       <div className="astra-scope relative overflow-hidden rounded-md border border-space-border" style={{ height }} onMouseLeave={() => setHover(null)}>
         {use3D ? (
           <Suspense fallback={<BodyMap status={status} selected={selected} onSelect={setPicked} />}>
@@ -71,13 +71,11 @@ export function BodyPanel({
           </div>
         )}
         {hover && <RiskTip hover={hover} status={status} t={t} />}
-        <div className="pointer-events-none absolute bottom-2 left-3 text-sm text-slate-400">
-          {use3D ? 'Sürükleyerek döndürün, bölgeye tıklayın' : 'Bölgeye tıklayın'}
-        </div>
+        <div className="pointer-events-none absolute bottom-2 left-3 text-sm text-slate-400">{use3D ? 'Drag to rotate, click a region' : 'Click a region'}</div>
       </div>
 
       {/* Bölge seçici: klavyeyle ve 3B olmadan da çalışır */}
-      <div className="grid grid-cols-4 gap-1.5" role="tablist" aria-label="Vücut bölgesi">
+      <div className="grid grid-cols-2 gap-1.5 @[440px]:grid-cols-4" role="tablist" aria-label="Body region">
         {REGIONS.map((r) => {
           const s = regionState(status, r.id);
           const c = s.level ? LEVEL_COLOR[s.level] : COLORS.offline;
@@ -94,7 +92,7 @@ export function BodyPanel({
             >
               <span className="block truncate text-sm font-semibold text-slate-100">{r.name}</span>
               <span className="block font-mono text-sm whitespace-nowrap" style={{ color: c }}>
-                {s.level ? LEVEL_ICON[s.level] : '—'} %{fmt(s.score)}
+                {s.level ? LEVEL_ICON[s.level] : '—'} {fmt(s.score)}%
               </span>
             </button>
           );
@@ -133,11 +131,11 @@ function RiskTip({ hover, status, t }: { hover: HoverInfo; status: CrewStatus | 
       <div className="flex items-baseline justify-between gap-2">
         <span className="font-semibold text-slate-100">{r.name}</span>
         <span className="font-mono font-semibold" style={{ color: c }}>
-          %{fmt(s.score)}
+          {fmt(s.score)}%
         </span>
       </div>
       <div className="font-mono text-sm font-semibold" style={{ color: c }}>
-        {s.level ? `${LEVEL_ICON[s.level]} ${LEVEL_LABEL[s.level]} risk` : 'veri yok'}
+        {s.level ? `${LEVEL_ICON[s.level]} ${LEVEL_LABEL[s.level]}` : 'no data'}
       </div>
       <div className="text-sm text-slate-400">{r.detail}</div>
       {sig && t && (
@@ -146,10 +144,10 @@ function RiskTip({ hover, status, t }: { hover: HoverInfo; status: CrewStatus | 
           <span className="font-mono" style={{ color: sig.level !== 'normal' ? LEVEL_COLOR[sig.level] : COLORS.text }}>
             {fmtMetric(sig.key, readMetric(t, sig.key))}
           </span>
-          <span className="text-slate-400"> (normal {fmtMetric(sig.key, sig.mean)})</span>
+          <span className="text-slate-400"> (baseline {fmtMetric(sig.key, sig.mean)})</span>
         </div>
       )}
-      <div className="mt-1 text-sm text-slate-500">Ayrıntı için tıklayın</div>
+      <div className="mt-1 text-sm text-slate-500">Click for details</div>
     </div>
   );
 }
@@ -164,15 +162,15 @@ function RegionDetail({ crewId, region, status, t }: { crewId: CrewId; region: R
       <div className="flex items-center justify-between gap-2 border-b border-space-border px-3 py-2">
         <div className="min-w-0">
           <h3 className="font-semibold text-slate-100">
-            Sağlık verileri · {r.name} <span className="font-sans font-normal text-slate-400">· {r.detail}</span>
+            Health data · {r.name} <span className="font-sans font-normal text-slate-400">· {r.detail}</span>
           </h3>
           <div className="text-sm text-slate-400">
-            {r.metrics.length} ölçüm, veri {r.groups}
+            {r.metrics.length} measures, data {r.groups}
           </div>
         </div>
         <div className="flex shrink-0 flex-col items-end">
           <span className="font-mono text-lg leading-tight font-semibold" style={{ color: s.level ? LEVEL_COLOR[s.level] : COLORS.offline }}>
-            %{fmt(s.score)}
+            {fmt(s.score)}%
           </span>
           <LevelBadge level={s.level} />
         </div>
@@ -191,7 +189,7 @@ function RegionDetail({ crewId, region, status, t }: { crewId: CrewId; region: R
                   {m.label}
                 </span>
                 <span className="block truncate text-sm text-slate-400">
-                  {sig ? `kişisel ${fmtMetric(k, sig.mean)} · ${fmtZ(sig.z)}` : ''}
+                  {sig ? `baseline ${fmtMetric(k, sig.mean)} · ${fmtZ(sig.z)}` : ''}
                   <RangeNote crewId={crewId} k={k} value={v} />
                   {k === 'cog.pvtMeanRt_ms' && <PvtSource crewId={crewId} />}
                 </span>
@@ -218,7 +216,7 @@ function PvtSource({ crewId }: { crewId: CrewId }) {
   const pvt = useTests(() => activePvt(crewId));
   return (
     <span className="ml-1.5" style={{ color: pvt ? COLORS.calm : COLORS.textMuted }}>
-      {pvt ? `PVT-B testi · ${missionAgo(pvt.tick, tick)}` : 'simüle · test yok'}
+      {pvt ? `PVT-B test · ${missionAgo(pvt.tick, tick)}` : 'simulated · no test'}
     </span>
   );
 }

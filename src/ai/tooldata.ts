@@ -29,10 +29,10 @@ export function buildToolData(s: AstraState) {
           ad: shortName(m.id),
           tamAd: m.name,
           rol: m.role,
-          konum: m.location === 'KOKPIT' ? 'Kokpit (yörüngedeki gemi)' : 'Gezegen yüzeyi (EVA giysisi)',
+          konum: m.location === 'KOKPIT' ? 'Orbit crew (vehicle in Mars orbit, IVA)' : 'Surface crew (Mars surface, EVA suit)',
           birim: m.unit,
           kisiselHassasiyet: m.sensitivity,
-          durum: st ? LEVEL_TR[st.level] : 'veri yok',
+          durum: st ? LEVEL_TR[st.level] : 'no data',
           saglikSkoru_pct: st ? Math.round(st.healthScore) : undefined,
           alanSkorlari_pct: st
             ? {
@@ -44,7 +44,7 @@ export function buildToolData(s: AstraState) {
               }
             : undefined,
           zorunluDinlenme: st?.restRequired ?? false,
-          ekgRitmi: t ? (t.cardio.ecg_rhythm === 'sinus' ? 'sinüs (normal)' : 'düzensiz') : undefined,
+          ekgRitmi: t ? (t.cardio.ecg_rhythm === 'sinus' ? 'sinus (normal)' : 'irregular') : undefined,
           olcumler: t
             ? METRICS.map((mi) => {
                 const pn = personalNormal(m.id, mi.key);
@@ -55,7 +55,7 @@ export function buildToolData(s: AstraState) {
                   grup: GROUP_NAMES[mi.group],
                   deger: round(readMetric(t, mi.key), mi.decimals),
                   ...(pn ? { kisiselNormal: round(pn.mean, mi.decimals) } : {}),
-                  ...(mi.cadence === 'daily' ? { olcumSikligi: 'günde bir' } : {}),
+                  ...(mi.cadence === 'daily' ? { olcumSikligi: 'once a day' } : {}),
                   ...(LICENSED_SIM_KEYS.includes(mi.key) ? { not: LICENSED_NOTE } : {}),
                 };
               })
@@ -105,11 +105,11 @@ export function buildToolData(s: AstraState) {
     murettebat,
     olasiDurumUyarisi: CONDITION_DISCLAIMER,
     gecmis,
-    gecmisAraligi: `son değerler eskiden yeniye; her ${TREND_STRIDE} ölçümde bir örnek (1 ölçüm = ${MISSION_MIN_PER_TICK} dk görev süresi)`,
+    gecmisAraligi: `latest values, oldest to newest; one sample every ${TREND_STRIDE} measurements (1 measurement = ${MISSION_MIN_PER_TICK} min of mission time)`,
     uzunGecmis,
     uzunGecmisKapsami_saat: round(longHistorySpanHours(), 1),
     olaylar: s.incidents.slice(0, 15).map(incidentSummary),
-    kayit: s.ledger.slice(0, 12).map((e) => ({ saat: new Date(e.at).toLocaleTimeString('tr-TR'), tur: e.kind, metin: e.text })),
+    kayit: s.ledger.slice(0, 12).map((e) => ({ saat: new Date(e.at).toLocaleTimeString('en-GB'), tur: e.kind, metin: e.text })),
     bilgi: REFERENCES,
     testler: buildTestData(s),
   };
