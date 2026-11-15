@@ -48,10 +48,16 @@ function Person({ id, on, onSelect }: { id: CrewId; on: boolean; onSelect: (id: 
       className={`relative flex min-w-0 flex-col items-center rounded-md px-2 pt-2.5 pb-1.5 text-center transition-colors ${on ? 'bg-select/30 ring-1 ring-calm' : 'hover:bg-white/5'}`}
       title={`${member.name} · ${member.role}`}
     >
-      {st?.restRequired && (
+      {st?.restRequired ? (
         <span className="absolute top-1 right-1 rounded px-1.5 text-sm" style={{ color: COLORS.caution, backgroundColor: alpha(COLORS.caution, 0.14) }}>
           med bay
         </span>
+      ) : (
+        member.location === 'GEZEGEN' && (
+          <span className="absolute top-1 right-1 rounded bg-chrome px-1.5 text-sm font-semibold text-white" title="On EVA, wearing an xEMU suit">
+            EVA
+          </span>
+        )
       )}
       <span
         className="flex h-[52px] w-[52px] items-center justify-center rounded-full font-display text-lg font-bold text-white"

@@ -182,24 +182,14 @@ export const PARAMS = {
   commDelayDemo: { label: 'Earth light time, demo', value: 750, unit: 's (one-way, 12.5 min)', ...SRC.relay },
   // Senaryo çarpanları (DONKI zamanı verir, doz değerini vermez)
   stormDoseMultiplierOnset: { label: 'Storm dose multiplier, onset', value: 25, unit: '× dose rate (orbit crew)', ...SRC.assumption },
-  stormDoseMultiplierPeak: {
-    label: 'Storm dose multiplier, peak',
-    value: 30,
-    unit: '× dose rate (orbit crew; Curiosity cruise ~332 quiet, >10,000 µGy/day in a storm)',
-    ...SRC.guo2015,
-  },
-  stormDoseMultiplierSurface: {
-    label: 'Storm dose multiplier, surface',
-    value: 5,
-    unit: '× dose rate (Mars atmosphere shields; NASA: 8,100 µGy on the surface in the May 2024 storm, ratio uncertain)',
-    ...SRC.assumption,
-  },
-  shelterDoseFactor: {
-    label: 'Dose multiplier in storm shelter',
-    value: 0.23,
-    unit: '× dose rate (Orion shelter: 414 → 95 µGy/min in a 1989-storm simulation)',
-    ...SRC.artemis1,
-  },
+  stormDoseMultiplierPeak: { label: 'Storm dose multiplier, peak', value: 30, unit: '× dose rate (orbit crew; Curiosity cruise ~332 quiet, >10,000 µGy/day in a storm)', ...SRC.guo2015 },
+  stormDoseMultiplierSurface: { label: 'Storm dose multiplier, surface', value: 5, unit: '× dose rate (Mars atmosphere shields; NASA: 8,100 µGy on the surface in the May 2024 storm, ratio uncertain)', ...SRC.assumption },
+  // Kriz sonrası toparlanma: değer kötüleşirken hızlı (SIM.approachRate), iyileşirken yavaş değişir.
+  // Yarı ömür = ln 2 / oran ölçüm. Ortam ölçümleri (CO₂, doz) fiziksel olduğu için hızlı kalır.
+  recoveryRateLive: { label: 'Post-crisis recovery rate, live measures', value: 0.025, unit: '× gap / sample (half-life ≈ 28 samples)', ...SRC.assumption },
+  recoveryRateDaily: { label: 'Post-crisis recovery rate, daily measures', value: 0.01, unit: '× gap / sample (sleep, reaction, mood; half-life ≈ 70 samples)', ...SRC.assumption },
+  recoveryRateRest: { label: 'Recovery rate during mandatory crew rest', value: 0.12, unit: '× gap / sample (heart rate, respiration, lactate, core temperature)', ...SRC.assumption },
+  shelterDoseFactor: { label: 'Dose multiplier in storm shelter', value: 0.23, unit: '× dose rate (Orion shelter: 414 → 95 µGy/min in a 1989-storm simulation)', ...SRC.artemis1 },
 } satisfies Record<string, Param>;
 
 export type ParamKey = keyof typeof PARAMS;

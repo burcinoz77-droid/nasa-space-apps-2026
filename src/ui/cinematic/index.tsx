@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAstra } from '../../store';
 import type { ScenarioId } from '../../types';
-import { CINEMATIC_END_EVENT, CINEMATIC_EVENT } from './phases';
+import { CINEMATIC_END_EVENT, CINEMATIC_EVENT, runtime } from './phases';
 import { SHOWS } from './shows';
 
 export function ScenarioCinematics() {
@@ -25,6 +25,10 @@ export function ScenarioCinematics() {
     window.addEventListener(CINEMATIC_EVENT, replay);
     return () => window.removeEventListener(CINEMATIC_EVENT, replay);
   }, []);
+
+  useEffect(() => {
+    runtime.cinematicPlaying = Boolean(playing);
+  }, [playing]);
 
   if (!playing) return null;
   const Show = SHOWS[playing.id]!;

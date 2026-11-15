@@ -50,3 +50,6 @@ export const CINEMATIC_END_EVENT = 'astra:cinematic-end';
 export const NAVIGATE_EVENT = 'astra:navigate';
 /** Kask vizörünü açar: detail = astronot id. */
 export const VISOR_EVENT = 'astra:visor';
+
+/** Sinematik ve demo turunun o anki durumu (vizörün kendiliğinden açılması bunlara göre bekler). */
+export const runtime = { cinematicPlaying: false, tourActive: false };

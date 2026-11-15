@@ -36,14 +36,21 @@ export function CrewDetail({ crewId }: { crewId: CrewId }) {
       title={m.name}
       meta={
         <>
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new CustomEvent(VISOR_EVENT, { detail: crewId }))}
-            className="rounded px-2 py-0.5 text-sm font-semibold text-calm ring-1 ring-calm/60 hover:bg-calm/10"
-            title="Show what this astronaut sees on the helmet HUD"
-          >
-            ◉ HUD
-          </button>
+          {/* Kask vizörü yalnız uzay yürüyüşündekilerde (Burçin, PR #24) */}
+          {m.location === 'GEZEGEN' && (
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent(VISOR_EVENT, { detail: crewId }))}
+              className="flex items-center gap-1.5 rounded bg-calm/15 px-2 py-0.5 text-sm font-semibold text-calm ring-1 ring-calm/70 hover:bg-calm/25"
+              title="Show what this astronaut sees on the helmet HUD"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                <path d="M4 13a8 8 0 0 1 16 0v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+                <path d="M7 12.5a5 5 0 0 1 10 0v1.5H7z" fill="currentColor" fillOpacity="0.25" />
+              </svg>
+              Helmet HUD
+            </button>
+          )}
           <TestsButton crewId={crewId} onOpen={() => setTests(true)} />
           <LevelBadge level={st?.level} />
         </>
