@@ -3,6 +3,7 @@
 // tıklayınca aşağıda o bölgenin bütün ölçümleri açılır. slot: bölge seçiciyle ölçümler arasına (örn. "Önemli durum").
 import { lazy, type ReactNode, Suspense, useMemo, useState } from 'react';
 import { METRIC_BY_KEY, readMetric } from '../../metrics';
+import { activePvt, missionAgo, useTests } from '../../psych/store';
 import { useAstra } from '../../store';
 import type { CrewId, CrewStatus, Level, MetricScore, Telemetry } from '../../types';
 import { REGION_BY_ID, REGIONS, regionState, worstRegion, type RegionId } from '../bodyRegions';
@@ -192,6 +193,7 @@ function RegionDetail({ crewId, region, status, t }: { crewId: CrewId; region: R
                 <span className="block truncate text-sm text-slate-400">
                   {sig ? `kişisel ${fmtMetric(k, sig.mean)} · ${fmtZ(sig.z)}` : ''}
                   <RangeNote crewId={crewId} k={k} value={v} />
+                  {k === 'cog.pvtMeanRt_ms' && <PvtSource crewId={crewId} />}
                 </span>
               </span>
               <span className="hidden @[440px]:block">
@@ -207,5 +209,16 @@ function RegionDetail({ crewId, region, status, t }: { crewId: CrewId; region: R
         })}
       </ul>
     </div>
+  );
+}
+
+/** PVT değeri astronotun yaptığı PVT-B testinden mi geliyor, simülasyondan mı? (Parça 4, PR #20) */
+function PvtSource({ crewId }: { crewId: CrewId }) {
+  const tick = useTests((s) => s.tick);
+  const pvt = useTests(() => activePvt(crewId));
+  return (
+    <span className="ml-1.5" style={{ color: pvt ? COLORS.calm : COLORS.textMuted }}>
+      {pvt ? `PVT-B testi · ${missionAgo(pvt.tick, tick)}` : 'simüle · test yok'}
+    </span>
   );
 }
