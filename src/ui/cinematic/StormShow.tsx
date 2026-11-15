@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from 'react';
 import { PARAMS } from '../../sim/parameters';
 import { useAstra } from '../../store';
 import { alpha, COLORS, fmt } from '../theme';
+import { Astronaut } from './Astronaut';
 import { fmtMinSec, usePhases } from './phases';
 import { Caption, Stage } from './shared';
 
@@ -174,6 +175,8 @@ function DrawnSun() {
 }
 
 /** ARES-1 ve Mars (sağ tarafta). sheltered: mürettebat sığınakta, kalkan parlar. */
+const STRIPES = [COLORS.calm, COLORS.caution, COLORS.ai];
+
 function Ship({ show, hot, sheltered }: { show: boolean; hot: boolean; sheltered: boolean }) {
   const crewColor = sheltered ? COLORS.normal : hot ? COLORS.critical : COLORS.calm;
   return (
@@ -197,8 +200,10 @@ function Ship({ show, hot, sheltered }: { show: boolean; hot: boolean; sheltered
         <circle cx="470" cy="300" r="120" fill="url(#mars)" />
         <circle cx="470" cy="300" r="124" fill="none" stroke="#f0a58a" strokeOpacity="0.25" strokeWidth="6" />
         {/* Gezegen ekibi (yüzey) */}
-        {[0, 1, 2].map((i) => (
-          <circle key={i} cx={420 + i * 22} cy={198 + Math.abs(i - 1) * 4} r="5" fill={crewColor} />
+        {STRIPES.map((stripe, i) => (
+          <g key={i} transform={`translate(${435 + i * 24 - 9} ${150 + Math.abs(i - 1) * 3})`}>
+            <Astronaut height={30} stripe={stripe} glow={hot || sheltered ? crewColor : undefined} />
+          </g>
         ))}
         <text x="470" y="440" textAnchor="middle" fill={COLORS.textMuted} fontSize="15">
           Gezegen ekibi · yüzey · atmosfer kalkanı
@@ -215,16 +220,16 @@ function Ship({ show, hot, sheltered }: { show: boolean; hot: boolean; sheltered
             sığınak
           </text>
           {/* Kokpit ekibi: sığınağa kayar */}
-          {[0, 1, 2].map((i) => (
-            <circle
+          {STRIPES.map((stripe, i) => (
+            <g
               key={i}
-              r="6"
-              fill={crewColor}
               style={{
-                transform: `translate(${sheltered ? 36 + i * 15 : -62 + i * 22}px, 0px)`,
-                transition: `transform 1.6s cubic-bezier(.6,0,.2,1) ${i * 0.15}s, fill .5s`,
+                transform: `translate(${(sheltered ? 31 + i * 20 : -64 + i * 26) - 11}px, -19px)`,
+                transition: `transform 1.6s cubic-bezier(.6,0,.2,1) ${i * 0.15}s`,
               }}
-            />
+            >
+              <Astronaut height={38} stripe={stripe} glow={hot || sheltered ? crewColor : undefined} />
+            </g>
           ))}
           {sheltered && <circle r="120" fill="url(#shield)" />}
         </g>
