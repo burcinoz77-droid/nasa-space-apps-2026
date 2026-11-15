@@ -1,129 +1,133 @@
-# ASTRA · Katman 2 (yapay zekâ) nasıl çalışır
+# ASTRA · how Layer 2 (AI) works
 
-ASTRA, ARES-1 mürettebatının gemideki sağlık asistanıdır. Katman 1'in açtığı olayları 2–3 cümleyle
-açıklar ve mürettebatın sorularını **sadece veriye dayanarak** Türkçe cevaplar. Dünya'daki uçuş
-doktoruna mesajın gidip dönmesi 6–44 dakika sürer (NASA Mars Relay Network); ASTRA bu aralıkta
-mürettebata destek olur.
+ASTRA is the onboard health assistant of the ARES-1 crew. It explains the incidents raised by Layer 1 in 2–3
+sentences and answers the crew's questions in English, **based only on the data**. A message to the flight
+surgeon on Earth and back takes 6–44 minutes (NASA Mars Relay Network); ASTRA supports the crew in between.
 
-## Yapamadıkları (kodda da geçerli)
+## What it cannot do (enforced in code)
 
-| Kural | Nerede uygulanıyor |
+| Rule | Where it is enforced |
 | --- | --- |
-| Uyarı açamaz, olay kapatamaz | Uyarıyı sadece Katman 1 (`src/engine/`) açar. `src/ai/` yalnızca `explanations` ve `chat` alanlarına yazar. |
-| Veriyi değiştiremez, sistem çalıştıramaz | Sunucu fonksiyonu sadece metin döndürür; otonom adımları Katman 1 başlatır. |
-| Kesin teşhis koymaz, ilaç ya da doz önermez | `src/ai/safety.ts` sadece gerçekten tehlikeli üç şeyi engeller: ilaç ya da doz önerisi ("400 mg verin", "ağrı kesici alsın"), kesin teşhis ("Kerem'de hipoksi var", "kesinlikle kalp krizi geçiriyor") ve hayati durumlarda kesin dışlama ("kalp krizi değil"). Kelimenin geçmesi sorun değildir: "kesin bir teşhis olmayıp", "İlaç öneremem", "... ile uyumlu olabilir" geçer. Engellenen cevabın yerine yedek cevap gelir; ekranda "Yedek cevap · güvenlik süzgeci" yazar, sebep konsolda görünür. `ai.test.ts`'te 19 "geçmeli" ve 10 "engellenmeli" gerçekçi cümle var; yeni bir yanlış engelleme görülürse o cümle listeye eklenir. |
-| Sayı uyduramaz | `src/ai/verify.ts`: cevaptaki her sayı modele giden veride aranır. Hepsi varsa yeşil **Sayılar doğrulandı**, yoksa amber **Sayıları kontrol et** rozeti. |
-| İnternet yoksa susmaz | `src/ai/fallback.ts`: veriden kural tabanlı Türkçe cevap üretir; gri **Yedek mod · çevrimdışı** etiketiyle gösterilir. |
+| Cannot raise alerts or close incidents | Only Layer 1 (`src/engine/`) raises alerts. `src/ai/` writes only to the `explanations` and `chat` fields. |
+| Cannot change data or operate systems | The server function only returns text; Layer 1 starts the autonomous actions. |
+| No definitive diagnosis, no medication or dose advice | `src/ai/safety.ts` blocks only three genuinely dangerous things: medication or dose advice ("give 400 mg", "he should take a painkiller"), a definitive diagnosis ("Kerem has hypoxia", "he is definitely having a heart attack") and a definitive exclusion for life-threatening conditions ("not a heart attack"). The word appearing is not a problem: "this is not a definitive diagnosis", "I cannot recommend medication", "... may be consistent with" all pass. A blocked answer is replaced by an offline answer; the screen shows "Offline answer · safety filter" and the reason appears in the console. `ai.test.ts` has realistic "should pass" and "should block" sentences in English and Turkish; if a new false block shows up, the sentence is added to the list. |
+| Cannot make up numbers | `src/ai/verify.ts`: every number in the answer is looked up in the data sent to the model. If all are found, a green **Numbers verified** badge; otherwise an amber **Check the numbers** badge. |
+| Does not go silent without internet | `src/ai/fallback.ts`: produces a rule-based English answer from the data; shown with a gray **Offline mode** label. |
 
-## Akış
+## Flow
 
 ```
-Soru / yeni olay
-  → src/ai/context.ts   kısa veri özeti (≈ 900–1.500 token)
-  → src/ai/client.ts    60 sn önbellek, 12 sn zaman aşımı
-  → POST /api/astra     (api/astra.ts: Gemini ya da Claude, fetch ile; anahtar sadece sunucuda)
-  → src/ai/safety.ts    teşhis / ilaç süzgeci
-  → src/ai/verify.ts    sayı doğrulama
-  → ekranda mor kutu    (hata ya da bağlantı yoksa → src/ai/fallback.ts)
+Question / new incident
+  → src/ai/context.ts   short data summary (≈ 900–1,500 tokens)
+  → src/ai/client.ts    60 s cache, 58 s timeout
+  → POST /api/astra     (api/astra.ts: Gemini or Claude, with fetch; the key stays on the server)
+  → src/ai/safety.ts    diagnosis / medication filter
+  → src/ai/verify.ts    number verification
+  → purple box on screen (on an error or no connection → src/ai/fallback.ts)
 ```
 
-**Veri özeti** (`context.ts`): durumu normal olan kişi için 8 ana ölçüm (nabız, SpO₂, solunum,
-çekirdek sıcaklık, doz hızı, toplam doz, CO₂, uyku); durumu normal olmayan, soruda adı geçen ya da
-olayda etkilenen kişi için 36 ölçümün tamamı ve en çok sapan 3 sinyal. Ayrıca cevapta geçebilecek
-sabitler: kariyer doz limiti 600 mSv (NASA-STD-3001), CO₂ dikkat/kritik sınırı 2,3 / 3,0 mmHg
-(OCHMO-TB-004), Dünya gecikmesi. Herkes kritik olsa bile 3.000 token altında kalır (testli).
+**Data summary** (`context.ts`): 8 key metrics for a person with Nominal status (heart rate, SpO₂, respiratory
+rate, core temperature, dose rate, total dose, CO₂, sleep); all 36 metrics and the 3 most deviating signals for a
+person who is not Nominal, is named in the question or is affected by an incident. Also the constants that may
+appear in an answer: career dose limit 600 mSv (NASA-STD-3001), CO₂ caution/warning limits 2.3 / 3.0 mmHg
+(OCHMO-TB-004), communication delay with Earth. It stays under 3,000 tokens even if everyone is at Warning (tested).
 
-**Yedek mod şablonları**: olay türüne göre (RADIATION, CO2, FATIGUE, THERMAL, HYPOXIA, CARDIO,
-STRESS, MULTI) güncel değerlerle; sohbette anahtar kelimeye göre (kim dinlenmeli, neden kritik,
-radyasyon, CO₂, gecikme, belirli bir ölçüm, ilaç, teşhis, komut, rol dışı istek).
+**Offline mode templates**: by incident type (RADIATION, CO2, FATIGUE, THERMAL, HYPOXIA, CARDIO, STRESS, MULTI)
+filled with current values; in chat by keyword (who should rest, why Warning, radiation, CO₂, delay, a specific
+metric, medication, diagnosis, commands, out-of-role requests).
 
-## Araç kullanımı, bağlam ve çok turlu sohbet
+## Tool use, context and multi-turn chat
 
-Mentor önerisiyle ASTRA üç yetenekle çalışır:
+Following a mentor's suggestion, ASTRA works with three capabilities:
 
-| Yetenek | Ne yapar | Nerede |
+| Capability | What it does | Where |
 | --- | --- | --- |
-| **Araç kullanımı (tool calling)** | Model, cevap için gereken ayrıntıyı 10 salt-okur araçla kendisi çeker: `get_crew_member` (bir astronotun ölçümleri kişisel normalleriyle, skorları, açık olayları), `get_metric_trend` (yakın ve uzun dönem gidiş: artıyor / azalıyor / sabit), `assess_possible_conditions` (veriye dayalı olası durumlar), `list_incidents`, `get_event_log`, `lookup_reference` (eşik, limit ve bilimsel kaynak); psikolojik testler için `get_test_results` (son sonuçlar ve değişim), `get_psych_state` (psikolojik durum ve etkenleri), `get_test_schedule` (kimin hangi testi ne zaman yapması gerektiği) ve `compare_crew_tests` (ekip karşılaştırması). Gemini'de `functionCall`, Claude'da `tool_use` ile; en fazla 3 tur. Kullanılan araçlar cevabın altında "⚙ Kullanılan araçlar" satırında görünür. | `api/astra.ts` (`TOOLS`, `runTool`) |
-| **Bağlam (context)** | Her soruda kısa bir canlı veri özeti (herkes için 8 ana ölçüm, sorunlu kişilerin en çok sapan sinyalleri, açık olaylar, sabitler) + araçların okuduğu anlık veri kopyası + NASA ve hakemli kaynaklı bilgi tabanı. | `src/ai/context.ts`, `src/ai/tooldata.ts`, `src/ai/knowledge.ts` |
-| **Çok turlu sohbet (multi-turn)** | Son 10 mesaj modele gider; "Peki Kerem?" gibi devam soruları anlaşılır. Sohbet sayfa yenilense de devam eder. | `src/ai/client.ts`, `api/astra.ts` (`cleanHistory`) |
+| **Tool use (tool calling)** | The model pulls the details it needs with 10 read-only tools: `get_crew_member` (an astronaut's metrics with personal baselines, scores, open incidents), `get_metric_trend` (short- and long-term trend: rising / falling / stable), `assess_possible_conditions` (data-based possible conditions), `list_incidents`, `get_event_log`, `lookup_reference` (thresholds, limits and scientific sources); for the psychological tests `get_test_results` (latest results and change), `get_psych_state` (psychological state and its factors), `get_test_schedule` (who should take which test when) and `compare_crew_tests` (crew comparison). With `functionCall` on Gemini and `tool_use` on Claude; at most 2 rounds. The tools used appear below the answer in the "⚙ Tools used" line. | `api/astra.ts` (`TOOLS`, `runTool`) |
+| **Context** | With every question, a short live data summary (8 key metrics for everyone, the most deviating signals of people with issues, open incidents, constants) + a data snapshot the tools read + a knowledge base sourced from NASA and peer-reviewed studies. | `src/ai/context.ts`, `src/ai/tooldata.ts`, `src/ai/knowledge.ts` |
+| **Multi-turn chat** | The last 10 messages go to the model, so follow-ups like "And Kerem?" are understood. The chat survives a page reload. | `src/ai/client.ts`, `api/astra.ts` (`cleanHistory`) |
 
-Araçlar hiçbir şeyi değiştiremez: sadece tarayıcının gönderdiği veri kopyasını okur. Model araç tanımlarını kabul
-etmezse sunucu araçsız ve ayrıntılı veriyle bir kez daha sorar. Olay açıklamaları hız için araçsız, tek adımdır.
+The tools cannot change anything: they only read the data snapshot sent by the browser. If the model rejects
+the tool definitions, the server asks once more without tools and with detailed data. Incident explanations are
+a single step without tools, for speed.
 
-## Olası durum tahmini (kesin teşhis değil)
+## Possible-condition estimate (not a definitive diagnosis)
 
-Ekip kararıyla ASTRA, değişen değerlere dayanarak olası durumları söyleyebilir. `src/ai/conditions.ts` her
-astronotun ölçümlerini kişisel normaliyle karşılaştırır (z ≥ 2,5 ya da mutlak eşik) ve 9 kuraldan uyanları
-döndürür: CO₂ birikmesi (hiperkapni), hipoksi, ısı stresi ve aşırı efor, sıvı-elektrolit kaybı, kalp ritim
-düzensizliği olasılığı, uyku yoksunluğu ve yorgunluk, akut stres yükü, SANS şüphesi, radyasyon maruziyetinde
-artış. Her sonuçta dayanak sinyaller (güncel değer + kişisel normal), olasılık (düşük / orta; asla "kesin"),
-önerilen kontrol ve kaynak bulunur. Model bunu `assess_possible_conditions` aracıyla okur ve şu sırayla
-anlatır: hangi değerler nasıl değişti → "... ile uyumlu olabilir" → kesin olmadığı ve medikal kontrol.
-Normal günde 200 ölçüm boyunca yanlış tahmin çıkmadığı testlidir.
+By team decision, ASTRA can state possible conditions based on changed values. `src/ai/conditions.ts` compares
+each astronaut's metrics with their personal baseline (z ≥ 2.5 or an absolute threshold) and returns the matching
+rules out of 9: CO₂ build-up (hypercapnia), hypoxia, heat stress and overexertion, fluid-electrolyte loss, possible
+heart rhythm irregularity, sleep deprivation and fatigue, acute stress load, suspected SANS, increased radiation
+exposure. Each result has the supporting signals (current value + personal baseline), the likelihood (low / medium;
+never "certain"), the recommended check and the source. The model reads this with the `assess_possible_conditions`
+tool and explains in this order: which values changed and how → "... may be consistent with" → that it is not
+definitive, and a medical check. It is tested that no false estimate comes up over 200 readings on a nominal day.
 
-## Ortam ölçümleri ve sistemde ölçülmeyen konular
+## Environmental metrics and topics the system does not measure
 
-NASA HRP'nin "kapalı ortam" tehlikesini karşılamak için çevre grubuna üç canlı ölçüm eklendi (toplam 36 ölçüm):
+To cover the NASA HRP "hostile/closed environment" hazard, three live metrics were added to the environmental group (36 metrics in total):
 
-| Ölçüm | Normal değer | Dayanak |
+| Metric | Baseline value | Basis |
 |---|---|---|
-| Ortam sıcaklığı (`env.ambientTemp_C`) | 22,5 °C | NASA-STD-3001 performans bölgesi 20–25 °C, sağlık sınırı 18–27 °C (OCHMO-TB-002) |
-| Ortam nemi (`env.humidity_pct`) | %45 | Performans bölgesi %30–60, sağlık sınırı %25–75 (OCHMO-TB-002) |
-| Ortam gürültüsü (`env.noise_dBA`) | 55 dBA (varsayım) | Sürekli gürültü sınırı NC-50, yaklaşık 58 dBA (OCHMO-TB-035); ISS sınırı 16 sa çalışmada 72 dBA, 8 sa uykuda 62 dBA |
+| Ambient temperature (`env.ambientTemp_C`) | 22.5 °C | NASA-STD-3001 performance zone 20–25 °C, health limit 18–27 °C (OCHMO-TB-002) |
+| Relative humidity (`env.humidity_pct`) | 45% | Performance zone 30–60%, health limit 25–75% (OCHMO-TB-002) |
+| Ambient noise (`env.noise_dBA`) | 55 dBA (assumption) | Continuous noise limit NC-50, about 58 dBA (OCHMO-TB-035); ISS limit 72 dBA over a 16 h work period, 62 dBA over 8 h of sleep |
 
-Senaryolar bu üç ölçümü değiştirmez; normal değerlerinde kalırlar.
+The scenarios do not change these three metrics; they stay at their baseline values.
 
-**Resmi normal aralık kuralı (Katman 1):** Kaynağında açık bir normal aralık olan ölçümlerde değer bu aralıktaysa yeni
-uyarı açılmaz; açık bir uyarı varsa histerezisle iner (`src/sim/parameters.ts` → `normalRangeFor`, `src/engine/index.ts`).
-Aralıklar: SpO₂ %96–100 (NIH), dinlenme solunumu 12–20/dk ve EtCO₂ 35–45 mmHg (JEMS), EVA nabzı 100–110 bpm (NASA Apollo),
-kabin CO₂ ≤ 2,3 mmHg (OCHMO), ortam 20–25 °C ve nem %30–60 (NASA-STD-3001), gürültü ≤ 72 dBA (ISS). Ayarlar'daki
-"Veri kaynakları" tablosunda "Normal aralık" sütununda görünür.
+**Official reference range rule (Layer 1):** for metrics whose source gives an explicit reference range, a value
+within that range does not raise a new alert; an open alert steps down with hysteresis (`src/sim/parameters.ts` →
+`normalRangeFor`, `src/engine/index.ts`). Ranges: SpO₂ 96–100% (NIH), resting respiratory rate 12–20/min and EtCO₂
+35–45 mmHg (JEMS), EVA heart rate 100–110 bpm (NASA Apollo), cabin CO₂ ≤ 2.3 mmHg (OCHMO), ambient 20–25 °C and
+humidity 30–60% (NASA-STD-3001), noise ≤ 72 dBA (ISS). Shown in the "Reference range" column of the "Data sources"
+table in Settings.
 
-Kemik, bağışıklık, denge, ekip uyumu, kabin mikropları ve göz yapısı (SANS) sistemde ölçülmez. ASTRA bunlar
-sorulunca önce ölçülmediğini söyler, sonra `lookup_reference` (`kemik`, `goz`, `olculmeyenler`, `yercekimi`, `ortam`)
-ya da bağlamdaki `sabitler` alanından NASA'nın genel bilgisini kaynağıyla ve "kişisel ölçüm değil, tahmin" diyerek verir.
-Örnek: kemik yoğunluğu kaybı NASA'ya göre ayda %1–1,5; 180. gün için kabaca %6–9 (`boneLossEstimate`).
-Yedek mod da aynı cevapları kurallı olarak verir.
+Bone, immunity, balance, crew cohesion, cabin microbes and eye structure (SANS) are not measured in the system.
+When asked about them, ASTRA first says they are not measured, then gives NASA's general information with its
+source from `lookup_reference` (`kemik`, `goz`, `olculmeyenler`, `yercekimi`, `ortam`) or the `sabitler` field of the
+context, stating "an estimate, not a personal measurement". Example: bone density loss is 1–1.5% per month according
+to NASA; roughly 6–9% by day 180 (`boneLossEstimate`). Offline mode gives the same answers by rules.
 
-## Hafıza
+## Memory
 
-- **Veri hafızası** (`src/ai/memory.ts`): 36 ölçümün kişisel normali (ilk 30 ölçüm) ve her 5 ölçümde bir
-  kayıtla en fazla 72 kayıtlık uzun geçmiş (yaklaşık 60 saat görev süresi). `get_metric_trend` yakın ve uzun
-  dönem gidişi birlikte verir. "Simülasyonu sıfırla" ile sıfırlanır.
-- **Sohbet hafızası**: son 10 mesaj modele gider. Sohbet tarayıcıda saklanır (`src/ai/chatStore.ts`); panel
-  kapatılıp açılınca ya da sayfa yenilenince devam eder. Panelin altındaki **Sohbeti sıfırla** düğmesi temizler.
+- **Data memory** (`src/ai/memory.ts`): the personal baseline of all 36 metrics (first 30 readings) and a long
+  history of at most 72 records, one every 5 readings (about 60 hours of mission time). `get_metric_trend` returns
+  the short- and long-term trend together. Reset with "Reset simulation".
+- **Chat memory**: the last 10 messages go to the model. The chat is saved in the browser (`src/ai/chatStore.ts`);
+  it continues when the panel is closed and reopened or the page reloads. The **Reset chat** button at the bottom
+  of the panel clears it.
 
-## Üslup ve sohbet
+## Tone and conversation
 
-ASTRA resmî ve saygılı konuşur ("siz" dili, emoji ve günlük ifade yok) ama cevabın biçimini soruya göre
-ayarlar: selama kısa bir tanıtımla, tek değer sorusuna değer + birimle, "neden" sorusuna gözlem → önem →
-yapılacak adım sırasıyla cevap verir. Sohbetin son 10 mesajı modele gider; "Peki Kerem?" gibi devam soruları
-anlaşılır. Örnek cevaplar `api/astra.ts` içindeki `SYSTEM_PROMPT`'ta.
+ASTRA speaks formally and respectfully (no emoji, no slang) but adapts the form of the answer to the question:
+a short introduction for a greeting, value + unit for a single-value question, observation → why it matters →
+what to do for a "why" question. It uses NASA terminology: Nominal / Caution / Warning, personal baseline,
+reference range, flight surgeon, storm shelter, mandatory crew rest, orbit crew (IVA) and surface crew (EVA).
+Example answers are in `SYSTEM_PROMPT` in `api/astra.ts`.
 
-## Sağlayıcı geçişi
+## Switching providers
 
-`.env` (yerel) ve Vercel ortam değişkenleri:
+`.env` (local), Vercel environment variables and Cloudflare secrets:
 
 ```
-ASTRA_PROVIDER=gemini          # yayında Gemini kullanıldı; claude isteğe bağlı
+ASTRA_PROVIDER=gemini          # Gemini was used in production; claude is optional
 GEMINI_API_KEY=...
 GEMINI_MODEL=gemini-3.8-flash
-GEMINI_FALLBACK_MODELS=gemini-3.5-flash-lite,gemini-3.7-flash  # ana model 503/429 verirse ya da 12 sn cevap vermezse sırayla denenir
-GEMINI_MODEL_TIMEOUT_MS=12000  # bir isteğin bekleme süresi; canlıda ölçülen ~6,7 sn, bunun altına indirmeyin
+GEMINI_FALLBACK_MODELS=gemini-3.5-flash-lite,gemini-3.7-flash  # tried in order if the main model returns 503/429 or does not answer in time
+GEMINI_MODEL_TIMEOUT_MS=24000  # timeout for one request; a simple question took ~11 s on the live site, do not go lower
 ANTHROPIC_API_KEY=...
 CLAUDE_MODEL=claude-haiku-5-5
 ```
 
-Claude'da düşünme kapalı (`thinking: disabled`, `effort: low`); model bu alanları tanımazsa kod bir kez
-onlarsız tekrar dener. Anahtar yoksa sunucu modeli hiç çağırmadan 503 döner, arayüz yedek moda geçer.
-Vercel'de değişkeni değiştirdikten sonra **Redeploy** gerekir.
+On Claude, thinking is off (`thinking: disabled`, `effort: low`); if the model does not recognize these fields the
+code retries once without them. Without a key the server returns 503 without calling the model and the interface
+switches to offline mode. On Vercel a **Redeploy** is needed after changing a variable.
 
-**Süreler:** Canlı sitede Gemini bir isteğe yaklaşık 6,7 sn'de cevap veriyor. Bir isteğin bekleme süresi 12 sn,
-toplam süre 35 sn (araç kullanan sorular 2 istek sürer); yedek modele ancak en az 8 sn kalmışsa geçilir.
-İstemci 38 sn bekler. Vercel'de fonksiyon süre sınırı `vercel.json`'da 60 sn. Sunucu terminalinde (ya da Vercel
-loglarında) `[ASTRA] gemini-... cevap verdi: X sn` satırı gerçek süreyi gösterir.
+**Timing:** on 15 November a simple question took about 11 s on the live site, and the old 12 s per-request limit
+pushed tool-using questions into offline mode. Now: 24 s per request, 55 s in total (tool-using questions take
+2 requests); a backup model is only tried if at least 14 s remain. The client waits 58 s. On Vercel the function
+time limit is 60 s in `vercel.json`. The `[ASTRA] gemini-... answered: X s` line in the server terminal (or in the
+Vercel/Cloudflare logs) shows the real duration.
 
-## Diğer parçalar için: olay açıklama kutusu
+## For the other parts: incident explanation box
 
 ```tsx
 import { AstraExplanation } from '../components/AstraExplanation';
@@ -131,12 +135,11 @@ import { AstraExplanation } from '../components/AstraExplanation';
 <AstraExplanation incidentId={incident.id} />
 ```
 
-Parça 3 bunu kritik olay bandının altına, Parça 2 Raporlar'daki olay satırının altına koyar. Aynı
-olay iki yerde gösterilse de modele **bir kez** sorulur; sonuç `useAstra((s) => s.explanations[id])`
-alanında saklanır.
+Part 3 puts it under the Warning incident banner, Part 2 under the incident row in Reports. Even if the same
+incident is shown in two places, the model is asked **once**; the result is stored in `useAstra((s) => s.explanations[id])`.
 
-## Testler
+## Tests
 
-- `npm run test`: güvenlik süzgeci, sayı doğrulama, veri özeti boyutu, 10 test sorusunun yedek mod
-  cevapları, olay şablonları, istemci (sahte fetch) ve sunucu fonksiyonu. Kota harcamaz.
-- Canlı model testi: `docs/test-sorulari.md`.
+- `npm run test`: safety filter, number verification, data summary size, offline answers to the 10 test questions,
+  incident templates, client (mocked fetch) and the server function. Uses no quota.
+- Live model test: `docs/test-sorulari.md`.

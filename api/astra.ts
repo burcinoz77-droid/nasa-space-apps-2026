@@ -552,7 +552,7 @@ async function callGemini(system: string, turns: Turn[], signal: AbortSignal, ki
   let lastError: unknown;
   for (const [i, model] of [primary, ...fallbacks].entries()) {
     if (i > 0 && deadline - Date.now() < MIN_TIME_FOR_NEXT_MODEL_MS) {
-      console.warn(`[ASTRA] Not enough time left for ${model}; switching to fallback mode.`);
+      console.warn(`[ASTRA] Not enough time left for ${model}; switching to offline mode.`);
       break;
     }
     const started = Date.now();
@@ -744,7 +744,7 @@ export default {
       });
     } catch (err) {
       // In this case the client switches to offline mode (src/ai/fallback.ts). Log the reason to the terminal too.
-      console.warn(`[ASTRA] No model answer; the screen will show fallback mode: ${String(err).slice(0, 300)}`);
+      console.warn(`[ASTRA] No model answer; the screen will show offline mode: ${String(err).slice(0, 300)}`);
       return Response.json({ error: String(err), source: provider }, { status: 502 });
     } finally {
       clearTimeout(timer);

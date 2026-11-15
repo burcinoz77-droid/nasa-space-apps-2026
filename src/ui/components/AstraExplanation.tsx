@@ -45,7 +45,7 @@ export function AstraExplanation({ incidentId }: { incidentId: string }) {
 export function AstraMeta({ answer }: { answer: AstraAnswer }) {
   const offline = answer.source === 'fallback';
   const safety = answer.fallbackReason === 'safety';
-  const label = safety ? 'Fallback answer · safety filter' : SOURCE_LABEL[answer.source];
+  const label = safety ? 'Offline answer · safety filter' : SOURCE_LABEL[answer.source];
   const hint = safety
     ? 'The model answer was hidden because it contained a medication recommendation or a definitive diagnosis; details in the browser console. This answer was generated directly from the data.'
     : offline

@@ -41,7 +41,7 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
   const tests = useTests((s) => s);
   const astra = useAstra((s) => s);
   const due = dueTests(crewId, astra, tests);
-  const urgentTests = due.filter((d) => d.oncelik === 'öncelikli').length;
+  const urgentTests = due.filter((d) => d.oncelik === 'priority').length;
   const psychLevel = psychState(crewId, astra, tests).seviye;
   const tabsRef = useRef<HTMLDivElement>(null);
   const openTab = (id: TabId | 'testler') => {

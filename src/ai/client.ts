@@ -86,7 +86,7 @@ async function askAstraInner(req: AstraRequest): Promise<AstraAnswer> {
     cache.set(key, { at: Date.now(), answer });
     return answer;
   } catch (err) {
-    console.warn('[ASTRA] Language model unreachable, switched to fallback mode:', err instanceof Error ? err.message : err);
+    console.warn('[ASTRA] Language model unreachable, switched to offline mode:', err instanceof Error ? err.message : err);
     return { ...fallbackAnswer(req), latencyMs: elapsed(), fallbackReason: 'connection' };
   }
 }

@@ -33,7 +33,7 @@ export function fallbackAnswer(req: AstraRequest, s: AstraState = useAstra.getSt
 
 const GENERIC = {
   incident: `No connection; Layer 1 raised and logged this incident. Check the values on the incident card and apply the recommended safe action. ${DOCTOR}`,
-  chat: `The language model is unreachable right now; I am in fallback mode. The Layer 1 alerts on screen are current and valid. ${DOCTOR}`,
+  chat: `The language model is unreachable right now; I am in offline mode. The Layer 1 alerts on screen are current and valid. ${DOCTOR}`,
 };
 
 // ---------------------------------------------------------------- helpers
@@ -329,7 +329,7 @@ function dueSentence(id: CrewId, s: AstraState): string | undefined {
   const due = dueTests(id, s);
   if (!due.length) return undefined;
   const first = due[0];
-  return `Recommended for ${shortName(id)}: ${list(due.map((d) => TEST_NAME[d.kind]))}${first.oncelik === 'öncelikli' ? `; priority because: ${lcFirst(first.neden.split('. ')[0].replace(/\.$/, ''))}` : ''}.`;
+  return `Recommended for ${shortName(id)}: ${list(due.map((d) => TEST_NAME[d.kind]))}${first.oncelik === 'priority' ? `; priority because: ${lcFirst(first.neden.split('. ')[0].replace(/\.$/, ''))}` : ''}.`;
 }
 
 function resultsSentence(id: CrewId): string | undefined {
@@ -359,7 +359,7 @@ function testText(s: AstraState, crew: CrewId[], has: (re: RegExp) => boolean): 
   // Plan: who should take which test
   if (has(/who|which|should|when|pending|schedule|plan|recommend|kim|hangi|yapmalı|zamanı|bekleyen|öneri/) && !crew.length) {
     const due = CREW_IDS.map((id) => ({ id, d: dueTests(id, s) })).filter((x) => x.d.length);
-    const urgent = due.filter((x) => x.d.some((d) => d.oncelik === 'öncelikli'));
+    const urgent = due.filter((x) => x.d.some((d) => d.oncelik === 'priority'));
     if (!due.length) return 'No tests are pending; all crew tests are up to date. Tests are taken from the Tests tab on the Astronaut View.';
     return sentences(
       urgent.length ? `Priority tests recommended for: ${list(urgent.map((x) => shortName(x.id)))}.` : 'No priority test recommendations.',
@@ -494,7 +494,7 @@ function summaryText(s: AstraState): string {
     `Overall status: ${list(parts)}.`,
     open.length ? `Open incidents: ${list(open.slice(0, 2).map((i) => i.title))}.` : 'No open incidents.',
     worst && `Lowest health score: ${shortName(worst)}, ${fmt(s.statuses[worst]!.healthScore)}%.`,
-    'I am in fallback mode; ask with an astronaut name or a metric and I will answer directly from the data.',
+    'I am in offline mode; ask with an astronaut name or a metric and I will answer directly from the data.',
   );
 }
 

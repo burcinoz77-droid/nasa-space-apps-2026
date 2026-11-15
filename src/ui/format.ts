@@ -32,12 +32,12 @@ export function fmtZ(z: number): string {
   return `${sign}${fmt(Math.abs(z), 1)}σ`;
 }
 
-/** "Dr. Elif Yılmaz" -> "Elif" */
+/** "Dr. Elif Yilmaz" -> "Elif" */
 export function firstName(id: CrewId): string {
   return CREW_BY_ID[id].name.replace(/^Dr\.\s*/, '').split(' ')[0];
 }
 
-/** "Dr. Elif Yılmaz" -> "EY" (avatar) */
+/** "Dr. Elif Yilmaz" -> "EY" (avatar) */
 export function initials(id: CrewId): string {
   const parts = CREW_BY_ID[id].name.replace(/^Dr\.\s*/, '').split(' ');
   return parts

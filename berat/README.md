@@ -1,59 +1,59 @@
-# Berat · Parça 3 · Arayüz
+# Berat · Part 3 · Interface
 
-Sahibi: @beyazitberatyusuf-afk · Dal: `berat/arayuz`
+Owner: @beyazitberatyusuf-afk · Branch: `berat/arayuz`
 
-Kod bu klasörde değil, ortak yapıda duruyor: `src/App.tsx`, `src/index.css`, `src/ui/` (Raporlar, Ayarlar ve Görevler hariç).
-Arayüz veri üretmez, karar vermez: sadece `useAstra`'dan okur, `controls.setScenario / acknowledge / reset` çağırır.
+The code is not in this folder; it lives in the shared structure: `src/App.tsx`, `src/index.css`, `src/ui/` (except Reports, Settings and Tasks).
+The interface produces no data and makes no decisions: it only reads from `useAstra` and calls `controls.setScenario / acknowledge / reset`.
 
-## Ne yapıldı
+## What was built
 
-| Adım | Nerede | Not |
+| Step | Where | Note |
 | --- | --- | --- |
-| Ortak bileşenler | `src/ui/components/` | `Card`, `StatTile`, `Sparkline` (Recharts) + `TrendLine` (hafif SVG), `SourceBadge`, `ProgressRing`, `LevelBadge`, `BodyMap`, `Planet`, `Icons` |
-| İskelet | `src/App.tsx` | Orbitalis logosu, ASTRA-MED OS, 6 sayfa; sol altta "Dünya bağlantısı" (`ship.commDelayOneWay_s` → 12 dk 30 sn) ve "Simülasyonu sıfırla"; üst barda senaryo hapları (aktif = `ship.scenario`), canlı saat + görev günü, zil (açık olay sayısı, kritikse kırmızı, tıklayınca Raporlar), profil kartı. İlk 30 ölçümde saatin altında "Baseline 12/30" yazar: senaryoyu bundan sonra başlatın |
-| Kokpit | `src/ui/pages/Kokpit.tsx` | Üç kutu (aktif astronot, ortalama sağlık, görev durumu: açık kritik olay varsa kırmızı "Müdahale gerekiyor"), Kokpit/Gezegen ekip listesi ve ekip ortalamaları, dönen gezegen (bilerek kırmızı değil), görev ilerleme halkası (Gün 180 / ~900, NASA DRA 5.0) |
-| Astronot Ekranı | `src/ui/pages/AstronotEkrani.tsx` | Astronot hapları, 2B SVG vücut haritası (baş = grup 4, göğüs = grup 1–2, deri = grup 2–3, çevre halkası = grup 5), sağlık kartı (skor, nabız, sıcaklık, SpO₂ + nabız grafiği), stres faktörleri (radyasyon doz hızı + toplam doz / 600 mSv çubuğu, CO₂ eşik çizgileriyle, uyku, PVT), sekmeler: Genel bakış / Sağlık / Performans / Çevre |
-| Astronotlar | `src/ui/pages/Astronotlar.tsx` | İki ekip başlığı (ortalama sağlıkla), 6 kart: rol, birim, hassasiyet, skor, seviye, nabız grafiği. Karta tıklayınca o kişinin Astronot Ekranı açılır (seçili kişi `App.tsx`'te) |
-| Olay deneyimi | `src/ui/components/IncidentBanner.tsx` | Kritik olay: üstte yapışkan kırmızı bant (başlık, etkilenenler, otonom adım "Havalandırma artırıldı · otomatik", **Onayla**); altında sinyaller (değer + birim + kişisel normal + z) ve Parça 4'ün mor ASTRA açıklaması. Onaylanınca ince şerit olur. Dikkat: amber tek satır, "Ayrıntı" ile açılır. Senaryo başlar başlamaz mavi "Gemi olayı" satırı görünür |
-| Biçim ve erişilebilirlik | `src/ui/theme.ts`, `src/ui/format.ts` | Sayılar Türkçe (`36,8 °C`, `%87`, `12 dk 30 sn`); her seviye renk + simge + yazı (● NORMAL, ▲ DİKKAT, ■ KRİTİK); en küçük yazı 14 px; `prefers-reduced-motion` desteklenir |
+| Shared components | `src/ui/components/` | `Card`, `StatTile`, `Sparkline` (Recharts) + `TrendLine` (lightweight SVG), `SourceBadge`, `ProgressRing`, `LevelBadge`, `BodyMap`, `Icons` |
+| App shell | `src/App.tsx` | Orbitalis logo, ASTRA-MED OS, 6 pages; bottom left "Comm with Earth" (`ship.commDelayOneWay_s` → 12 min 30 s) and "Reset simulation"; in the top bar the scenario menu (active = `ship.scenario`), live clock + Mission Day, bell (number of open incidents, red if Warning, click for Reports), profile card. During the first 30 readings "Baseline 12/30" shows under the clock: start a scenario after that |
+| Mission Status | `src/ui/pages/Kokpit.tsx` | Status strip (crew, average health, mission status: red "Intervention needed" if a Warning incident is open, Mission Day), crew table, orbit display, mission progress ring (Day 180 / ~900, NASA DRA 5.0) |
+| Astronaut View | `src/ui/pages/AstronotEkrani.tsx` | Astronaut pills, body map, health card (score, heart rate, temperature, SpO₂ + heart rate chart), stress factors (radiation dose rate + total dose / 600 mSv bar, CO₂ with threshold lines, sleep, PVT), tabs: Overview / Health / Performance / Environment |
+| Crew | `src/ui/pages/Astronotlar.tsx` | Two crew headers (with average health), 6 cards: role, unit, sensitivity, score, level, heart rate chart. Clicking a card opens that person's Astronaut View (the selected person is kept in `App.tsx`) |
+| Incident experience | `src/ui/components/IncidentBanner.tsx` | Warning incident: sticky red banner at the top (title, affected people, autonomous action "Ventilation increased · automatic", **Acknowledge**); below it the signals (value + unit + personal baseline + z) and Part 4's purple ASTRA explanation. Once acknowledged it becomes a thin strip. Caution: a single amber line, expanded with "Details". As soon as a scenario starts, a blue "Vehicle event" advisory line appears |
+| Format and accessibility | `src/ui/theme.ts`, `src/ui/format.ts` | Numbers in English format (`36.8 °C`, `87%`, `12 min 30 s`); every level has color + symbol + label (● NOMINAL, ▲ CAUTION, ■ WARNING); smallest text 14 px; `prefers-reduced-motion` supported |
 
-Kaynak rozeti (`SourceBadge`) her sayının yanında: NASA-STD-3001 / OSDR / Curiosity RAD / NASA HRP / hakemli çalışma (ör. "Norsk 2015") / gri "Varsayım". Tıklayınca `PARAMS`'taki kaynak linki açılır. Gezegen ekibinde doz hızı rozeti yüzey ölçümüne (Mars yüzeyi RAD), basınç ve O₂ rozeti giysi kaynağına döner.
+The source badge (`SourceBadge`) is next to every number: NASA-STD-3001 / OSDR / Curiosity RAD / NASA HRP / peer-reviewed study (e.g. "Norsk 2015") / gray "Assumption". Clicking opens the source link from `PARAMS`. For the surface crew the dose rate badge switches to the surface measurement (Mars surface RAD), and the pressure and O₂ badges to the suit source.
 
-## Sürüm 2 (Kokpit ve 3B astronot)
+## Version 2 (Mission Status and 3D astronaut)
 
-- **Kokpit** görev kontrol konsolu düzenine geçti: tek parça durum şeridi, mürettebat tablosu (nabız trendi, SpO₂, sıcaklık), tel çerçeve Mars yörünge ekranı (gemi işareti Kokpit ekibinin, EVA işareti Gezegen ekibinin durum rengini taşır), yaşam ortamı (kabin ve giysiler) ve son kayıtlar.
-- **Astronot Ekranı**'nda vücut haritası 3B astronot modeli oldu (`src/ui/components/Astronaut3D.tsx`, three.js, sayfa açılınca ayrı yüklenir). Model yavaşça döner, fareyle sürüklenir. Bölgeler: **baş** (kask: bilişsel ve göz), **göğüs** (gövde, kollar, sırt çantası: kalp ve solunum), **alt gövde** (kalça ve bacaklar: metabolizma, ter ve ısı) ve ayak altındaki **çevre** halkası. İmleç bir bölgenin üstüne gelince risk kutusu (seviye, skor, en çok sapan ölçüm) çıkar; tıklayınca bölgenin bütün ölçümleri açılır. WebGL yoksa 2B çizime düşer.
-- Model `src/ui/assets/astronaut.glb`; Draco kod çözücüsü three paketinden gelir. İkisi de derlemeye gömülü, internet gerekmez.
-- Yazı tipi Barlow / Barlow Semi Condensed (`@fontsource`, çevrimdışı).
+- **Mission Status** moved to a mission control console layout: one-piece status strip, crew table (heart rate trend, SpO₂, temperature), wireframe Mars orbit display (the spacecraft marker carries the orbit crew's status color, the EVA marker the surface crew's), habitable environment (cabin and suits) and latest log entries.
+- On the **Astronaut View** the body map became a 3D astronaut model (`src/ui/components/Astronaut3D.tsx`, three.js, loaded separately when the page opens). The model rotates slowly and can be dragged with the mouse. Regions: **head** (helmet: cognitive and eyes), **chest** (torso, arms, backpack: heart and breathing), **lower body** (hips and legs: metabolism, sweat and heat) and the **environment** ring under the feet. Hovering over a region shows a risk box (level, score, most deviating metric); clicking opens all metrics of the region. Without WebGL it falls back to a 2D drawing.
+- The model is `src/ui/assets/astronaut.glb`; the Draco decoder comes from the three package. Both are bundled into the build, no internet needed.
+- Typeface: Barlow / Barlow Semi Condensed (`@fontsource`, offline).
 
-## Nasıl denenir
+## How to try it
 
 ```bash
 npm install
 npm run dev          # http://localhost:5173
 ```
 
-1. Uygulamayı ~40 sn açık bırakın (saatin altındaki "Baseline 30/30" dolsun).
-2. Üst bardaki **CO₂ arızası** hapına basın: hemen mavi "Gemi olayı" satırı, ~18 sn sonra amber DİKKAT, ~40 sn sonra kırmızı KRİTİK bant ve "Havalandırma artırıldı · otomatik".
-3. Banttaki **Kerem**'e basın → Kerem'in Astronot Ekranı; vücut haritasında göğüs ve çevre halkası renk değiştirir.
-4. **Onayla** → bant ince şeride döner, Raporlar'da "Mürettebat onayladı" satırı çıkar.
-5. **EVA aşırı efor** → Mert kritik; nabız grafiği kırmızı, Sağlık sekmesinde sapan ölçümler ■ ile işaretli.
+1. Leave the app open for ~40 s (until "Baseline 30/30" under the clock is full).
+2. Choose **CO₂ failure** from the **Simulation ▾** menu: a blue "Vehicle event" line right away, an amber CAUTION after ~18 s, a red WARNING banner after ~40 s and "Ventilation increased · automatic".
+3. Click **Kerem** in the banner → Kerem's Astronaut View; the chest and the environment ring change color on the body map.
+4. **Acknowledge** → the banner becomes a thin strip and a "Crew acknowledged" row appears in Reports.
+5. **EVA overexertion** → Mert reaches Warning; the heart rate chart turns red and deviating metrics are marked with ■ on the Health tab.
 
-## Kontrol sonuçları (Pazar sabahı adımı)
+## Check results (Sunday morning step)
 
-Başsız Chrome ile 1280×800 ve 1024×768'de altı sayfa ve iki senaryo açıldı:
+Six pages and two scenarios were opened in headless Chrome at 1280×800 and 1024×768:
 
-- Yatay taşma yok, 14 px altında yazı yok (Ayarlar hariç, aşağıya bakın), konsolda hata yok.
-- Ekranda "ISS", "408 km" ya da NASA logosu yok (Ayarlar'daki kaynak tablosu hariç, aşağıya bakın).
-- "Onayla" olay kaydına düşüyor.
-- Parça 4'ün dalı (`azra/ai`, PR #3) ile birlikte birleştirilip denendi: derleniyor, 96 test geçiyor, mor ASTRA açıklaması bandın altında görünüyor.
+- No horizontal overflow, no text below 14 px (except Settings, see below), no console errors.
+- No "ISS", "408 km" or NASA logo on screen (except the source table in Settings, see below).
+- "Acknowledge" is written to the incident log.
+- Merged and tested together with Part 4's branch (`azra/ai`, PR #3): it builds, the tests pass, and the purple ASTRA explanation appears under the banner.
 
-## Ekibe notlar
+## Notes for the team
 
-- **Birleştirme sırası** planla aynı: Parça 1 → 2 → 4 → **3 en son**. ASTRA açıklaması `AstraSlot.tsx` içinden glob ile yüklenir (Raporlar'daki yöntem); Parça 4 birleşmeden de derleme bozulmaz.
-- **10 saniye kriteri (Parça 1 + 2):** Arayüz durumu her ölçümde (1,2 sn) çiziyor; mavi gemi olayı satırı 1,2 sn'de görünüyor. Ama Katman 1'in olayı CO₂ arızasında ~18 sn'de (dikkat) ve ~40 sn'de (kritik) açılıyor, çünkü ppCO₂ 90 ölçümde yükseliyor ve 3 ardışık ölçüm kuralı var. Demoda daha hızlı istenirse `CO2_SCRUBBER_FAIL.json`'daki `rampTicks` kısaltılabilir.
-- **Ayarlar (Parça 1):** kaynak tablosunda "ISS RR-19 medyan" ve "OSDR EDA (ISS çevre verisi)" yazıları ile 12 px (`text-xs`) yazılar var. "Ekranda ISS kalmasın" ve "en küçük yazı 14 px" kriterleri için bakılabilir.
-- **Yeni sabit:** görev süresi (~900 gün, NASA Mars DRA 5.0) `src/ui/params.ts`'te, `PARAMS` biçiminde. Parça 1 isterse `parameters.ts`'e taşıyabilir.
-- **Vücut haritası eşikleri:** alan skoru < 85 → DİKKAT, < 60 → KRİTİK (`theme.ts`). Normal günde 5 dakika boyunca hiçbir alan 88'in altına inmediği ölçüldü; yanlış alarm yok. Asıl uyarıyı yine Katman 1 açar.
-- `LevelBadge` artık 14 px; Raporlar ve Görevler de bundan faydalanır. `theme.ts`'teki mevcut adlar (`COLORS`, `fmt`, `LEVEL_*`) değişmedi, sadece eklendi.
-- Ekran görüntüsü 2–7'deki prototipin kodu elimizde yoktu; sayfalar kitteki v0'dan plandaki tarife göre geliştirildi.
+- **Merge order** as in the plan: Part 1 → 2 → 4 → **3 last**. The ASTRA explanation is loaded with a glob from `AstraSlot.tsx` (the same method as Reports); the build does not break even before Part 4 is merged.
+- **10-second criterion (Part 1 + 2):** the interface renders the state on every reading (1.2 s); the blue vehicle event line appears within 1.2 s. But Layer 1's incident in the CO₂ failure is raised after ~18 s (Caution) and ~40 s (Warning), because ppCO₂ rises over 90 readings and there is the 3-consecutive-reading rule. If a faster demo is wanted, `rampTicks` in `CO2_SCRUBBER_FAIL.json` can be shortened.
+- **Settings (Part 1):** the source table had "ISS RR-19 median" and "OSDR EDA (ISS environmental data)" and some 12 px (`text-xs`) text; worth checking against the "no ISS on screen" and "smallest text 14 px" criteria.
+- **New constant:** the mission duration (~900 days, NASA Mars DRA 5.0) is in `src/ui/params.ts`, in `PARAMS` format. Part 1 can move it to `parameters.ts` if wanted.
+- **Body map thresholds:** domain score < 85 → CAUTION, < 60 → WARNING (`theme.ts`). It was measured that no domain fell below 88 over 5 minutes on a nominal day; no false alarms. Layer 1 still raises the actual alert.
+- `LevelBadge` is now 14 px; Reports and Tasks benefit too. The existing names in `theme.ts` (`COLORS`, `fmt`, `LEVEL_*`) did not change, only additions.
+- We did not have the code of the prototype in screenshots 2–7; the pages were developed from the kit's v0 following the plan.

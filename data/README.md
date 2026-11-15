@@ -1,25 +1,25 @@
-Kaydedilmiş NASA verileri (DONKI, OSDR EDA) buraya JSON olarak konur. Demo internetsiz de çalışsın diye uygulama bu dosyaları kullanır, canlı API'yi çağırmaz.
+Recorded NASA data (DONKI, OSDR EDA) is stored here as JSON. The app uses these files so the demo also works without internet; it does not call the live API.
 
-| Dosya | Ne | Kaynak | Alındığı tarih |
+| File | What | Source | Retrieved |
 | --- | --- | --- | --- |
-| `donki_sep_2024-05.json` | Mayıs 2024 güneş parçacık olayları (SEP): 14 kayıt, 4'ü model tahmini. Ham API cevabı, değiştirilmedi. | https://ccmc.gsfc.nasa.gov/DONKI-API/get/SEP?startDate=2024-05-01&endDate=2024-05-31 | 14 Kasım 2026 |
+| `donki_sep_2024-05.json` | Solar energetic particle (SEP) events, May 2024: 14 records, 4 of them model predictions. Raw API response, unchanged. | https://ccmc.gsfc.nasa.gov/DONKI-API/get/SEP?startDate=2024-05-01&endDate=2024-05-31 | 14 November 2026 |
 
-Güneş fırtınası senaryosu (`src/sim/scenarios/SOLAR_STORM.json`) olay sırasını ve UTC zamanlarını bu kayıtlardan alır:
+The solar particle event scenario (`src/sim/scenarios/SOLAR_STORM.json`) takes its event order and UTC times from these records:
 
-| UTC | DONKI kaydı |
+| UTC | DONKI record |
 | --- | --- |
-| 10 May 2024 06:54 | X3.9 güneş patlaması zirvesi (FLR 30666) |
-| 10 May 2024 13:35 | GOES >10 MeV parçacık olayı (SEP 30677) |
-| 11 May 2024 01:23 | X5.8 güneş patlaması zirvesi (FLR 30711) |
-| 11 May 2024 02:10 | GOES >100 MeV parçacık olayı (SEP 30714) |
-| 13 May 2024 14:00 | GOES >10 MeV ikinci dalga (SEP 30817) |
+| 10 May 2024 06:54 | X3.9 solar flare peak (FLR 30666) |
+| 10 May 2024 13:35 | GOES >10 MeV particle event (SEP 30677) |
+| 11 May 2024 01:23 | X5.8 solar flare peak (FLR 30711) |
+| 11 May 2024 02:10 | GOES >100 MeV particle event (SEP 30714) |
+| 13 May 2024 14:00 | GOES >10 MeV second wave (SEP 30817) |
 
-DONKI olayın zamanını verir, doz değerini vermez. Senaryodaki doz çarpanları varsayımdır.
+DONKI gives the time of an event, not the dose. The dose multipliers in the scenario are assumptions.
 
-## Görüntü
+## Imagery
 
-| Dosya | Ne | Kaynak |
+| File | What | Source |
 | --- | --- | --- |
-| `public/media/sdo-x39-2024-05-10.mp4` | 10 Mayıs 2024 X3.9 güneş patlaması, NASA SDO AIA 304 Å. Orijinal 40 sn / 50 MB videodan 06.29–08.05 TAI arası 16 sn kesit, 720×720, sessiz. | NASA SVS 5286: https://svs.gsfc.nasa.gov/5286/ · Görüntü: NASA/SDO |
+| `public/media/sdo-x39-2024-05-10.mp4` | X3.9 solar flare on 10 May 2024, NASA SDO AIA 304 Å. A 16 s cut (06:29–08:05 TAI) from the original 40 s / 50 MB video, 720×720, no audio. | NASA SVS 5286: https://svs.gsfc.nasa.gov/5286/ · Imagery: NASA/SDO |
 
-NASA görüntüleri telifli değildir, kaynak gösterilerek kullanılır. NASA logosu kullanılmaz.
+NASA imagery is not copyrighted and is used with credit. The NASA logo is not used.

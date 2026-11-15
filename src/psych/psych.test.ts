@@ -114,7 +114,7 @@ describe('psych/analysis · ASTRA test plan and psychological state', () => {
     const s = runSimulation(3);
     useAstra.setState({ telemetry: { ...s.telemetry, elif: { ...s.telemetry.elif!, env: { ...s.telemetry.elif!.env, sleepLastNight_h: 5.2 } } } });
     const due = dueTests('elif');
-    expect(due.filter((d) => d.oncelik === 'öncelikli').map((d) => d.kind).sort()).toEqual(['PVT', 'SP']);
+    expect(due.filter((d) => d.oncelik === 'priority').map((d) => d.kind).sort()).toEqual(['PVT', 'SP']);
     expect(due[0].neden).toMatch(/5.2 h/);
     expect(due[0].kaynak?.url).toContain('PMC8919197');
   });

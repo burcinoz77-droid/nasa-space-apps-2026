@@ -1,27 +1,27 @@
-# Cloudflare yedeği (Türkiye'den erişim için)
+# Cloudflare backup (for access from Turkiye)
 
-Bazı Türkiye internet sağlayıcıları `*.vercel.app` adreslerine bağlantıyı kesiyor (`ERR_CONNECTION_RESET`).
-Bu klasör, sitenin ve ASTRA sunucusunun **aynısını** Cloudflare Workers'ta tek adreste çalıştırır.
-Gemini burada da canlıdır; GitHub Pages yedeğinden farkı budur.
+Some internet providers in Turkiye reset connections to `*.vercel.app` addresses (`ERR_CONNECTION_RESET`).
+This folder runs an **identical** copy of the site and the ASTRA server on Cloudflare Workers, at a single address.
+Gemini is live here too; that is the difference from the GitHub Pages backup.
 
-- `cloudflare/worker.ts`: `/api/astra` isteğini `api/astra.ts`'e (Vercel'deki dosyanın aynısı) yollar, gerisini `dist/`ten sunar.
-- `wrangler.jsonc`: Worker ayarları. Anahtar burada değil, Cloudflare'de "secret" olarak durur.
+- `cloudflare/worker.ts`: sends `/api/astra` requests to `api/astra.ts` (the same file as on Vercel) and serves everything else from `dist/`.
+- `wrangler.jsonc`: Worker settings. The key is not here; it is stored in Cloudflare as a secret.
 
-## İlk kurulum (repo sahibi, bir kez, ~10 dk)
+## First setup (repository owner, once, ~10 min)
 
 ```bash
 git checkout main
 git pull
 npm install
 npm run build
-npx wrangler login                     # tarayıcı açılır: Cloudflare'e kaydol / giriş yap → Allow
-npx wrangler deploy                    # ilk seferde workers.dev alt adı sorarsa bir ad yaz
-npx wrangler secret put GEMINI_API_KEY # sorunca anahtarı yapıştır, Enter (ekranda görünmez)
+npx wrangler login                     # a browser opens: sign up / log in to Cloudflare → Allow
+npx wrangler deploy                    # the first time it may ask for a workers.dev subdomain; type a name
+npx wrangler secret put GEMINI_API_KEY # paste the key when asked, Enter (it is not shown on screen)
 ```
 
-Son komuttan sonra site `https://nasa-space-apps-2026.<alt-ad>.workers.dev` adresinde canlıdır.
+After the last command the site is live at `https://nasa-space-apps-2026.<subdomain>.workers.dev`.
 
-## Güncelleme (main'e yeni kod girdiğinde)
+## Updating (when new code is merged into main)
 
 ```bash
 git pull
@@ -29,5 +29,5 @@ npm run build
 npx wrangler deploy
 ```
 
-Anahtar bir kez kaydedilir, her güncellemede tekrar girilmez. Claude'a geçerken:
-`npx wrangler secret put ANTHROPIC_API_KEY` ve `wrangler.jsonc` içinde `ASTRA_PROVIDER` → `claude`, sonra `npx wrangler deploy`.
+The key is saved once and does not need to be entered on every update. To switch to Claude:
+`npx wrangler secret put ANTHROPIC_API_KEY`, set `ASTRA_PROVIDER` → `claude` in `wrangler.jsonc`, then `npx wrangler deploy`.

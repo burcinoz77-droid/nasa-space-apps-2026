@@ -1,54 +1,54 @@
-# Emir · Parça 2 · Katman 1 (anomali tespiti ve olay kaydı)
+# Emir · Part 2 · Layer 1 (anomaly detection and incident log)
 
-Sahibi: @emirruzunn · Dal: `emir/katman1`
+Owner: @emirruzunn · Branch: `emir/katman1`
 
-Kod bu klasörde değil, ortak yapıda duruyor:
+The code is not in this folder; it lives in the shared structure:
 
-| Dosya | Ne yapar |
+| File | What it does |
 | --- | --- |
-| `src/engine/config.ts` | Eşikler, sd tabanları, kural sabitleri. NASA eşiklerinin kaynak linki eşiğin yanında |
-| `src/engine/baseline.ts` | Kişisel baseline (Welford, ilk 30 ölçüm, sonra donar), yönlü z-skoru, 3 ardışık ölçüm kuralı |
-| `src/engine/rules.ts` | Olay kuralları: RADIATION, CO2, HYPOXIA, CARDIO, THERMAL, FATIGUE, STRESS, MULTI |
-| `src/engine/index.ts` | `createDetector()`: sağlık skoru, olay aç/yükselt/çöz, otonom adım, olay kaydı |
-| `src/engine/labels.ts` | Türkçe olay ve otonom adım adları (`INCIDENT_LABELS`, `ACTION_LABELS`) |
-| `src/engine/*.test.ts` | 23 birim testi + 10 uçtan uca test (`npm run test`) |
-| `src/ui/pages/Raporlar.tsx` | Raporlar sayfası: olay kaydı, filtre, anlık telemetri raporu, onay |
+| `src/engine/config.ts` | Thresholds, SD floors, rule constants. The source link of every NASA threshold is next to it |
+| `src/engine/baseline.ts` | Personal baseline (Welford, first 30 readings, then frozen), directional z-score, 3-consecutive-reading rule |
+| `src/engine/rules.ts` | Incident rules: RADIATION, CO2, HYPOXIA, CARDIO, THERMAL, FATIGUE, STRESS, MULTI |
+| `src/engine/index.ts` | `createDetector()`: health score, raise/escalate/resolve incidents, autonomous actions, incident log |
+| `src/engine/labels.ts` | Incident and autonomous action names (`INCIDENT_LABELS`, `ACTION_LABELS`) |
+| `src/engine/*.test.ts` | Unit tests + end-to-end tests (`npm run test`) |
+| `src/ui/pages/Raporlar.tsx` | Reports page: incident log, filter, telemetry snapshot report, acknowledgement |
 
-## Nasıl çalışır (jüriye 30 saniyede)
+## How it works (for the jury, in 30 seconds)
 
-1. **Kişisel normal.** Her astronotun her ölçümü için ilk 30 ölçümün ortalaması ve sapması öğrenilir, sonra
-   dondurulur. Böylece "Zeynep'in nabzı düşük" normaldir, alarm değildir.
-2. **Sapma = z-skoru.** Sadece riskli yön sayılır (SpO₂ düşerse kötü, CO₂ artarsa kötü). z ≥ 2 dikkat, z ≥ 3 kritik.
-3. **NASA sınırı önce gelir.** ppCO₂ (> 2,3 / > 3,0 mmHg, OCHMO-TB-004), toplam doz (480 / 600 mSv, NASA-STD-3001),
-   SpO₂ (< 94 / < 90 %) ve çekirdek sıcaklık (38,5 / 39,0 °C) mutlak eşikle izlenir; bunlar baseline kurulmadan da çalışır.
-4. **Tek sıçrama alarm vermez.** Seviye ancak 3 ardışık ölçüm aynı yönde kalırsa değişir (yanlış alarmı azaltır).
-5. **Olay ve güvenli adım.** Kural tablosuna göre olay açılır; aynı kişi/yer + aynı tür için tek açık olay olur.
-   Sadece üç adım otomatik: radyasyon sığınağı, havalandırma artırma, zorunlu dinlenme. Her olayda en fazla bir kez.
-6. **Kendiliğinden çözülme.** Bütün sinyaller 10 ölçüm normal kalırsa olay "çözüldü" olur. Her şey olay kaydına düşer.
-7. **Yapay zekâ uyarı açamaz.** Uyarıyı sadece Katman 1 açar; ASTRA sadece açıklar.
+1. **Personal baseline.** For every metric of every astronaut, the mean and deviation of the first 30 readings are
+   learned, then frozen. So "Zeynep's heart rate is low" is her baseline, not an alarm.
+2. **Deviation = z-score.** Only the risky direction counts (SpO₂ falling is bad, CO₂ rising is bad). z ≥ 2 Caution, z ≥ 3 Warning.
+3. **NASA limits take precedence.** ppCO₂ (> 2.3 / > 3.0 mmHg, OCHMO-TB-004), total dose (480 / 600 mSv, NASA-STD-3001),
+   SpO₂ (< 94 / < 90%) and core temperature (38.5 / 39.0 °C) are tracked with absolute thresholds; these work before the baseline is built.
+4. **A single spike raises no alarm.** The level only changes if 3 consecutive readings stay in the same direction (fewer false alarms).
+5. **Incident and safe action.** Incidents are raised by the rule table; there is one open incident per person/location + type.
+   Only three actions are automatic: storm shelter ingress, increased ventilation, mandatory crew rest. At most once per incident.
+6. **Automatic resolution.** If all signals stay nominal for 10 readings, the incident is "resolved". Everything goes to the incident log.
+7. **The AI cannot raise alerts.** Only Layer 1 raises alerts; ASTRA only explains.
 
-## Senaryolarda ne olur (Parça 1 simülasyonuyla denendi, seed 2026)
+## What happens in the scenarios (tested with the Part 1 simulation, seed 2026)
 
-| Senaryo | Açılan olay | Otonom adım | İlk olay |
+| Scenario | Incident raised | Autonomous action | First incident |
 | --- | --- | --- | --- |
-| Normal gün | Hiçbiri (10 seed × 6,6 dk denendi, 0 yanlış alarm) | — | — |
-| Güneş fırtınası | Kokpit ve Gezegen radyasyon (kritik); Elif stres + çoklu sistem | Sığınak (iki ekip) | ~12 ölçüm |
-| CO₂ arızası | Kokpit CO₂ (dikkat → kritik) | Havalandırma; CO₂ düşer, olay çözülür | ~14 ölçüm |
-| Mars 180. gün | Elif yorgunluk + çoklu sistem; diğerleri sadece dikkat seviyesi | Elif zorunlu dinlenme | ~31 ölçüm |
-| EVA aşırı efor | Mert çoklu sistem (kritik) + ısı yükü | Mert zorunlu dinlenme; sıcaklık düşer | ~22 ölçüm |
+| Nominal day | None (10 seeds × 6.6 min tested, 0 false alarms) | — | — |
+| Solar particle event | Orbit and surface radiation (Warning); Elif stress + multi-system | Storm shelter (both crews) | ~12 readings |
+| CO₂ scrubber failure | Spacecraft CO₂ (Caution → Warning) | Ventilation; CO₂ falls, the incident resolves | ~14 readings |
+| Mars Day 180 workload | Elif fatigue + multi-system; the others only at Caution | Mandatory crew rest for Elif | ~31 readings |
+| EVA overexertion | Mert multi-system (Warning) + heat load | Mandatory crew rest for Mert; temperature falls | ~22 readings |
 
-"Tüm mürettebatı stabilize et" sonrası bütün olaylar 10–30 ölçümde kendiliğinden çözülür.
+After "Stabilize all crew", all incidents resolve by themselves in 10–30 readings.
 
-## Demo notları
+## Demo notes
 
-- Uygulama açıldıktan sonra **en az 36 saniye** (30 ölçüm) bekleyin: kayıtta "Kişisel baseline'lar kuruldu" yazınca senaryoyu başlatın.
-  Erken başlatılırsa baseline o ana kadarki ölçümlerle (en az 10) erken dondurulur, kayıtta yazar; demo yine çalışır.
-- Jüriye "varsayım" diye söylenecekler: sd tabanları, SpO₂ ve çekirdek sıcaklık eşikleri, MULTI kuralında çevre alanının sayılmaması.
+- After the app opens, wait **at least 36 seconds** (30 readings): start a scenario once the log says the personal baselines are built.
+  If started earlier, the baseline is frozen early with the readings so far (at least 10) and the log says so; the demo still works.
+- To be presented to the jury as "assumptions": SD floors, the SpO₂ and core temperature thresholds, and not counting the environmental domain in the MULTI rule.
 
-## Diğer parçalar için
+## For the other parts
 
-- **Parça 3:** olay bandında `incident.autoActions` için `ACTION_LABELS` (`src/engine`) kullanılabilir
-  ("Havalandırma artırıldı · otomatik"). Kişinin `level` alanı, açık olayının sinyalleri sürdükçe olayın seviyesini taşır.
-- **Parça 1:** Kokpit/Gezegen çapındaki adımlarda (sığınak, havalandırma) `AutoAction.crewIds` o yerdeki herkesi içerir.
-- **Parça 4:** `AstraExplanation` bileşeni eklendiğinde Raporlar'daki olay satırlarında kendiliğinden görünür.
-  Olay başlıkları teşhis koymaz; `incident.signals` içinde değer, kişisel ortalama ve z var.
+- **Part 3:** `ACTION_LABELS` (`src/engine`) can be used for `incident.autoActions` in the incident banner
+  ("Ventilation increased · automatic"). A person's `level` carries the incident's level while its signals persist.
+- **Part 1:** for orbit/surface-wide actions (storm shelter, ventilation), `AutoAction.crewIds` includes everyone at that location.
+- **Part 4:** the `AstraExplanation` component appears automatically in the incident rows on Reports.
+  Incident titles do not diagnose; `incident.signals` contains the value, personal mean and z.
