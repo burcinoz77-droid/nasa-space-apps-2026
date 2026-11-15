@@ -14,6 +14,7 @@ import { BodyPanel } from '../components/BodyPanel';
 import { Card } from '../components/Card';
 import { PsychTestsPanel } from '../components/PsychTests';
 import { LevelBadge } from '../components/LevelBadge';
+import { VISOR_EVENT } from '../cinematic/phases';
 import { SourceBadge } from '../components/SourceBadge';
 import { Sparkline, TrendLine } from '../components/Sparkline';
 import { domainLevel, fmtMetric, fmtUnit, fmtZ, initials, LOCATION_LONG, signalLevel } from '../format';
@@ -120,6 +121,14 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
             {urgentTests ? `▲ ${urgentTests} öncelikli test` : `${due.length} test önerisi`}
           </button>
         )}
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent(VISOR_EVENT, { detail: crewId }))}
+          className="rounded-full px-3 py-1 text-sm font-semibold hover:brightness-125"
+          style={{ color: COLORS.calm, backgroundColor: alpha(COLORS.calm, 0.12) }}
+          title="Bu astronotun kask vizöründe (HUD) ne gördüğünü aç"
+        >
+          ◉ Vizör görünümü
+        </button>
         <LevelBadge level={st?.level} pill />
       </div>
 
