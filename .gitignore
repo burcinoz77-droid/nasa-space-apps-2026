@@ -35,5 +35,5 @@ build/
 *.nc
 *.zip
 
-# Cloudflare yerel dosyaları
+# Cloudflare local files
 .wrangler/

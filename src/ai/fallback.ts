@@ -33,7 +33,7 @@ export function fallbackAnswer(req: AstraRequest, s: AstraState = useAstra.getSt
 
 const GENERIC = {
   incident: `No connection; Layer 1 raised and logged this incident. Check the values on the incident card and apply the recommended safe action. ${DOCTOR}`,
-  chat: `The language model is unreachable right now; I am in fallback mode. The Layer 1 alerts on screen are current and valid. ${DOCTOR}`,
+  chat: `The language model is unreachable right now; I am in offline mode. The Layer 1 alerts on screen are current and valid. ${DOCTOR}`,
 };
 
 // ---------------------------------------------------------------- helpers
@@ -494,7 +494,7 @@ function summaryText(s: AstraState): string {
     `Overall status: ${list(parts)}.`,
     open.length ? `Open incidents: ${list(open.slice(0, 2).map((i) => i.title))}.` : 'No open incidents.',
     worst && `Lowest health score: ${shortName(worst)}, ${fmt(s.statuses[worst]!.healthScore)}%.`,
-    'I am in fallback mode; ask with an astronaut name or a metric and I will answer directly from the data.',
+    'I am in offline mode; ask with an astronaut name or a metric and I will answer directly from the data.',
   );
 }
 

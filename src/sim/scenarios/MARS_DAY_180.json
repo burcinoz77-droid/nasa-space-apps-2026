@@ -1,6 +1,6 @@
 {
   "id": "MARS_DAY_180",
-  "name": "Mars day 180 load",
+  "name": "Mars Day 180 load",
   "seed": 180,
   "source": "Barger et al. 2014 (sleep in space 6.09 h); Jones et al. 2022 (sleep loss impairs PVT and increases stress)",
   "note": "Cumulative effect of six months of isolation and sleep debt. Elif at full intensity (table values), others at half intensity (fatigueResponse). Sleep, PVT, PANAS and BSI-18 are daily measures: they shift to the new value and stay there. Effect sizes are assumptions.",

@@ -1,8 +1,8 @@
-# Burçin – çalışma klasörü
+# Burçin – working folder
 
-Sahibi: @burcinoz77-droid
+Owner: @burcinoz77-droid
 
-Kodlarını bu klasöre koy. Dil serbest (Python, JS, notebook vs.).
-Başka birinin klasöründeki dosyaları değiştirme; böylece çakışma olmaz.
+Put your code in this folder. Any language (Python, JS, notebooks, etc.).
+Do not change files in someone else's folder; that way there are no conflicts.
 
-Bu dosyayı kodunun ne yaptığını ve nasıl çalıştırıldığını yazmak için kullanabilirsin.
+Use this file to describe what your code does and how to run it.

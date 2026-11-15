@@ -9,7 +9,7 @@ import type { ScenarioId } from './types';
 const SCENARIO_NAMES: Record<ScenarioId, string> = {
   NORMAL: 'Nominal day',
   SOLAR_STORM: 'Solar particle event',
-  MARS_DAY_180: 'Mars day 180 load',
+  MARS_DAY_180: 'Mars Day 180 load',
   CO2_SCRUBBER_FAIL: 'CO₂ scrubber failure',
   EVA_OVEREXERTION: 'EVA overexertion',
 };

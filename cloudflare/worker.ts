@@ -1,9 +1,9 @@
-// Cloudflare Workers girişi: vercel.app'e ulaşamayan ağlar (bazı Türkiye sağlayıcıları) için
-// sitenin ve ASTRA sunucusunun aynı adreste çalışan kopyası.
-// - /api/astra → api/astra.ts (Vercel'deki dosyanın aynısı, değiştirilmedi)
-// - geri kalan her şey → dist/ içindeki derlenmiş site (wrangler.jsonc "assets")
-// Anahtarlar Cloudflare'de "secret" olarak durur (npx wrangler secret put GEMINI_API_KEY);
-// nodejs_compat bayrağı sayesinde api/astra.ts bunları process.env'den okur.
+// Cloudflare Workers entry: for networks that cannot reach vercel.app (some providers in Türkiye),
+// a copy of the site and the ASTRA server running at a single address.
+// - /api/astra → api/astra.ts (the same file as on Vercel, unchanged)
+// - everything else → the built site in dist/ (wrangler.jsonc "assets")
+// Keys are stored in Cloudflare as secrets (npx wrangler secret put GEMINI_API_KEY);
+// thanks to the nodejs_compat flag, api/astra.ts reads them from process.env.
 import astra from '../api/astra';
 
 interface Env {

@@ -9,7 +9,7 @@ import type { AstraAnswer, AutoActionType, CrewId, IncidentType, Level, Scenario
 export const SOURCE_LABEL: Record<AstraAnswer['source'], string> = {
   gemini: 'Gemini',
   claude: 'Claude',
-  fallback: 'Fallback mode · offline',
+  fallback: 'Offline mode',
   cache: 'From cache',
 };
 
@@ -18,7 +18,7 @@ export const LEVEL_TR: Record<Level, string> = { normal: 'nominal', caution: 'ca
 export const SCENARIO_TR: Record<ScenarioId, string> = {
   NORMAL: 'Nominal day',
   SOLAR_STORM: 'Solar particle event',
-  MARS_DAY_180: 'Mars day 180 load',
+  MARS_DAY_180: 'Mars Day 180 load',
   CO2_SCRUBBER_FAIL: 'CO₂ scrubber failure',
   EVA_OVEREXERTION: 'EVA overexertion',
 };

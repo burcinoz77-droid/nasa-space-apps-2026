@@ -1,32 +1,32 @@
-# Azra – çalışma klasörü
+# Azra – working folder
 
-Sahibi: @azracetin335815-ux · **Parça 4 · ASTRA AI (Katman 2)** · dal: `azra/ai`
+Owner: @azracetin335815-ux · **Part 4 · ASTRA AI (Layer 2)** · branch: `azra/ai`
 
-Plan gereği kod bu klasörde değil, ortak uygulamanın içinde. Parça 4'ün dosyaları:
+As planned, the code is not in this folder but inside the shared app. Part 4's files:
 
-| Dosya | Ne yapar |
+| File | What it does |
 | --- | --- |
-| `api/astra.ts` | Sunucu fonksiyonu: sistem talimatı, Gemini ↔ Claude, anahtar kontrolü |
-| `src/ai/context.ts` | Modele giden kısa veri özeti (8 ana ölçüm / tüm ölçümler, sabitler) |
-| `src/ai/client.ts` | Önbellek, zaman aşımı, güvenlik süzgeci, yedek moda geçiş |
-| `src/ai/safety.ts` | Teşhis / ilaç / doz süzgeci |
-| `src/ai/verify.ts` | Cevaptaki sayıları veriyle karşılaştırır |
-| `src/ai/fallback.ts` | Yedek mod: güncel değerli Türkçe şablonlar |
-| `src/ai/explain.ts`, `src/ui/components/AstraExplanation.tsx` | Olay kartındaki mor "ASTRA açıklaması" |
-| `src/ui/components/AstraChatPanel.tsx` | Sohbet paneli |
-| `src/ui/pages/Gorevler.tsx` | Görevler sayfası |
-| `src/psych/` | Psikolojik testler: NASA-TLX, Samn-Perelli, PVT-B (resmi maddeler, puanlama, test planı, psikolojik durum) |
-| `src/ai/testdata.ts`, `src/ui/components/PsychTests.tsx` | Test sonuçlarının ASTRA'ya giden kopyası; Astronot Ekranı "Testler" sekmesi |
-| `src/ai/*.test.ts`, `src/psych/psych.test.ts` | Testler (`npm run test`) ve canlı model testi |
-| `docs/`, `README.md` | ASTRA belgeleri, test tablosu, yapay zekâ beyanı |
+| `api/astra.ts` | Server function: system instruction, Gemini ↔ Claude, key check, tools |
+| `src/ai/context.ts` | Short data summary sent to the model (8 key metrics / all metrics, constants) |
+| `src/ai/client.ts` | Cache, timeout, safety filter, switching to offline mode |
+| `src/ai/safety.ts` | Diagnosis / medication / dose filter (English and Turkish) |
+| `src/ai/verify.ts` | Compares the numbers in the answer with the data |
+| `src/ai/fallback.ts` | Offline mode: English templates filled with current values |
+| `src/ai/explain.ts`, `src/ui/components/AstraExplanation.tsx` | The purple "ASTRA explanation" on the incident card |
+| `src/ui/components/AstraChatPanel.tsx` | Chat panel |
+| `src/ui/pages/Gorevler.tsx` | Tasks page |
+| `src/psych/` | Psychological tests: NASA-TLX, Samn-Perelli, PVT-B (official items, scoring, test schedule, psychological state) |
+| `src/ai/testdata.ts`, `src/ui/components/PsychTests.tsx` | Copy of the test results sent to ASTRA; the "Tests" tab on the Astronaut View |
+| `src/ai/*.test.ts`, `src/psych/psych.test.ts` | Tests (`npm run test`) and the live model test |
+| `docs/`, `README.md` | ASTRA documentation, test table, AI use disclosure |
 
-## Durum
+## Status
 
-- ASTRA yayında Gemini ile çalışıyor (Vercel ve Cloudflare); Claude'a geçiş seçeneği kodda duruyor ama kullanılmadı.
-- Yerelde denemek için: `.env` dosyasına `GEMINI_API_KEY` yaz, `npm run dev`, sohbette hazır sorulardan birine bas.
-- Canlı model testi (10 soru): `docs/test-sorulari.md`.
+- ASTRA runs with Gemini in production (Vercel and Cloudflare); the option to switch to Claude is in the code but was not used.
+- To try it locally: put `GEMINI_API_KEY` in `.env`, run `npm run dev` and press one of the ready-made questions in the chat.
+- Live model test (10 questions): `docs/test-sorulari.md`.
 
-## Kalan işler
+## Remaining work
 
-1. 30 saniyelik demo videosu (İngilizce altyazılı) ve en fazla 7 slaytlık İngilizce sunum.
-2. Video ve sunum linklerini ana `README.md`'deki iki tabloya eklemek.
+1. A 30-second demo video (with English subtitles) and an English presentation of at most 7 slides.
+2. Adding the video and presentation links to the table in the main `README.md`.

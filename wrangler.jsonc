@@ -1,5 +1,5 @@
-// Cloudflare yedeği: npm run build && npx wrangler deploy
-// Ayrıntılar: cloudflare/README.md
+// Cloudflare backup: npm run build && npx wrangler deploy
+// Details: cloudflare/README.md
 {
   "name": "nasa-space-apps-2026",
   "main": "cloudflare/worker.ts",

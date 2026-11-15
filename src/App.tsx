@@ -53,7 +53,7 @@ const PAGES: { id: PageId; label: string; icon: () => ReactNode; subtitle: strin
 const SCENARIO_PILLS: { id: ScenarioId; label: string; short?: string }[] = [
   { id: 'NORMAL', label: 'Nominal day', short: 'Nominal' },
   { id: 'SOLAR_STORM', label: 'Solar particle event' },
-  { id: 'MARS_DAY_180', label: 'Mars day 180' },
+  { id: 'MARS_DAY_180', label: 'Mars Day 180' },
   { id: 'CO2_SCRUBBER_FAIL', label: 'CO₂ failure' },
   { id: 'EVA_OVEREXERTION', label: 'EVA overexertion', short: 'EVA' },
 ];
