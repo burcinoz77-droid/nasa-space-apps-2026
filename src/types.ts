@@ -207,6 +207,7 @@ export interface AstraAnswer {
   latencyMs: number;
   tools?: string[]; // ASTRA'nın cevap için çağırdığı araçlar, ekranda gösterilir (Parça 4 ekledi)
   fallbackReason?: 'connection' | 'safety'; // yedek cevabın sebebi: bağlantı yok mu, güvenlik süzgeci mi (Parça 4 ekledi)
+  sources?: { ad: string; url: string }[]; // cevabın dayandığı kaynaklar, ekranda link olarak (Parça 4 ekledi)
 }
 
 export interface ChatMessage {

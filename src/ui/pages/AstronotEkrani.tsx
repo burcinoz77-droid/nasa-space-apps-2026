@@ -4,7 +4,7 @@
 import { type ReactNode, useMemo, useRef, useState } from 'react';
 import { CREW, CREW_BY_ID } from '../../crew';
 import { GROUP_NAMES, METRIC_BY_KEY, METRICS, readMetric, type MetricInfo, type MetricKey } from '../../metrics';
-import { PARAMS } from '../../sim/parameters';
+import { normalRangeFor, PARAMS } from '../../sim/parameters';
 import { useAstra } from '../../store';
 import type { CrewId, CrewStatus, Level, MetricScore, Telemetry } from '../../types';
 import { type TabId } from '../bodyRegions';
@@ -180,7 +180,30 @@ function Vital({ crewId, t, st, k, label }: { crewId: CrewId; t: Telemetry | und
       <div className="mt-1">
         <SourceBadge metric={k} crewId={crewId} />
       </div>
+      <RangeNote crewId={crewId} k={k} value={t ? readMetric(t, k) : undefined} block />
     </div>
+  );
+}
+
+/** Resmi normal aralık: değer aralıktaysa ✓ (uyarı verilmez), dışındaysa ! (kişisel normalden sapma değerlendirilir). */
+function RangeNote({ crewId, k, value, block }: { crewId: CrewId; k: MetricKey; value: number | undefined; block?: boolean }) {
+  const r = normalRangeFor(k, CREW_BY_ID[crewId].location);
+  if (!r || value === undefined) return null;
+  const inside = value >= r[0] && value <= r[1];
+  const d = (n: number) => fmt(n, Number.isInteger(n) ? 0 : 1);
+  const text = r[0] === 0 ? `≤ ${d(r[1])}` : `${d(r[0])}–${d(r[1])}`;
+  return (
+    <span
+      className={`${block ? 'mt-1 block' : 'ml-1.5'} text-xs whitespace-nowrap`}
+      style={{ color: inside ? COLORS.normal : COLORS.caution }}
+      title={
+        inside
+          ? 'Resmi kaynağın normal aralığında: bu değer için uyarı verilmez (kaynak rozetine bakın).'
+          : 'Resmi normal aralığın dışında: kişisel normalden sapma değerlendirilir.'
+      }
+    >
+      normal {text} {inside ? '✓' : '!'}
+    </span>
   );
 }
 
@@ -458,6 +481,7 @@ function GroupTables({ crewId, t, st, groups }: { crewId: CrewId; t: Telemetry |
                 <Row
                   key={m.key}
                   label={m.label}
+                  note={<RangeNote crewId={crewId} k={m.key} value={t ? readMetric(t, m.key) : undefined} />}
                   value={t ? fmtMetric(m.key, readMetric(t, m.key)) : '—'}
                   level={l}
                   daily={m.cadence === 'daily'}
@@ -487,8 +511,10 @@ function Row({
   trend,
   badge,
   daily,
+  note,
 }: {
   label: string;
+  note?: ReactNode;
   value: string;
   level?: Level;
   trend?: ReactNode;
@@ -501,6 +527,7 @@ function Row({
       <span className="min-w-0 flex-1 truncate text-sm text-slate-300" title={label}>
         {label}
         {daily && <span className="ml-1.5 text-slate-500">· günlük</span>}
+        {note}
       </span>
       <span className="hidden min-[1000px]:block">{trend}</span>
       <span

@@ -63,6 +63,26 @@ export function AstraMeta({ answer }: { answer: AstraAnswer }) {
           ⚙ Kullanılan araçlar: {answer.tools.join(' · ')}
         </span>
       )}
+      {!!answer.sources?.length && (
+        <span className="basis-full" style={{ color: COLORS.textMuted }}>
+          Kaynaklar:{' '}
+          {answer.sources.map((s, i) => (
+            <span key={s.url}>
+              {i > 0 && ' · '}
+              <a
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={`${s.ad} (yeni sekmede açılır)`}
+                className="underline decoration-dotted underline-offset-2 hover:text-slate-200"
+                style={{ color: COLORS.calm }}
+              >
+                {s.ad.length > 40 ? `${s.ad.slice(0, 39)}…` : s.ad} ↗
+              </a>
+            </span>
+          ))}
+        </span>
+      )}
     </div>
   );
 }
