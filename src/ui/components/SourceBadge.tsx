@@ -17,6 +17,12 @@ function shortSource(p: Param): string {
   if (p.assumption) return 'Varsayım';
   const s = p.source;
   if (/NASA-STD-3001|OCHMO/.test(s)) return 'NASA-STD-3001';
+  if (/Apollo/.test(s)) return 'NASA Apollo';
+  if (/Artemis I/.test(s)) return 'NASA Artemis I';
+  if (/^NIH/.test(s)) return 'NIH';
+  if (/^ISS gürültü/.test(s)) return 'ISS gürültü';
+  const fr = s.match(/^Frontiers.*?(\d{4})/);
+  if (fr) return `Frontiers ${fr[1]}`;
   if (/OSDR/.test(s)) return 'OSDR';
   if (/DONKI/.test(s)) return 'DONKI';
   if (/Curiosity RAD/.test(s)) return 'Curiosity RAD';
@@ -39,7 +45,7 @@ function resolve(metric?: MetricKey, param?: ParamKey | UiParamKey, crewId?: Cre
     if (crewId && CREW_BY_ID[crewId].location === 'GEZEGEN') return PARAMS.suitPressure;
     return PARAMS.cabinPressure;
   }
-  return sourceForMetric(metric);
+  return sourceForMetric(metric, crewId ? CREW_BY_ID[crewId].location : undefined);
 }
 
 export function SourceBadge({ metric, param, crewId }: { metric?: MetricKey; param?: ParamKey | UiParamKey; crewId?: CrewId }) {
