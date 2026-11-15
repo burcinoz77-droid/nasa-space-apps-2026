@@ -73,6 +73,12 @@ NASA HRP'nin "kapalı ortam" tehlikesini karşılamak için çevre grubuna üç 
 
 Senaryolar bu üç ölçümü değiştirmez; normal değerlerinde kalırlar.
 
+**Resmi normal aralık kuralı (Katman 1):** Kaynağında açık bir normal aralık olan ölçümlerde değer bu aralıktaysa yeni
+uyarı açılmaz; açık bir uyarı varsa histerezisle iner (`src/sim/parameters.ts` → `normalRangeFor`, `src/engine/index.ts`).
+Aralıklar: SpO₂ %96–100 (NIH), dinlenme solunumu 12–20/dk ve EtCO₂ 35–45 mmHg (JEMS), EVA nabzı 100–110 bpm (NASA Apollo),
+kabin CO₂ ≤ 2,3 mmHg (OCHMO), ortam 20–25 °C ve nem %30–60 (NASA-STD-3001), gürültü ≤ 72 dBA (ISS). Ayarlar'daki
+"Veri kaynakları" tablosunda "Normal aralık" sütununda görünür.
+
 Kemik, bağışıklık, denge, ekip uyumu, kabin mikropları ve göz yapısı (SANS) sistemde ölçülmez. ASTRA bunlar
 sorulunca önce ölçülmediğini söyler, sonra `lookup_reference` (`kemik`, `goz`, `olculmeyenler`, `yercekimi`, `ortam`)
 ya da bağlamdaki `sabitler` alanından NASA'nın genel bilgisini kaynağıyla ve "kişisel ölçüm değil, tahmin" diyerek verir.

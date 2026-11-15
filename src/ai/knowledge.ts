@@ -54,7 +54,10 @@ export const REFERENCES: ReferenceTopic[] = [
       { bilgi: 'Katman 1, toplam doz 480 mSv (kariyer limitinin %80\'i) olunca dikkat, 600 mSv olunca kritik olay açar; doz hızı kişisel normalden z ≥ 3 sapınca radyasyon sığınağına geçişi başlatır.', kaynak: 'Katman 1 kuralı, NASA-STD-3001 limitine göre' },
       { bilgi: "ISS'teki toplam radyasyonun yaklaşık %30'u nötrondur; bu oran ISS içindir, Mars için kullanılmamalıdır.", kaynak: 'Kanada Uzay Ajansı (CSA), 2026', url: 'https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp' },
       { bilgi: "Mars yüzeyinde nötronlar toplam doz hızının yaklaşık %7'sini, biyolojik açıdan önemli doz eşdeğerinin yaklaşık %10'unu oluşturur. Uygulama nötron payını ayrıca göstermez.", kaynak: 'Köhler vd. 2014, Curiosity RAD Mars yüzeyi nötron ölçümü' },
-      { bilgi: 'Güneş fırtınası senaryosundaki olay sırası Mayıs 2024 DONKI kayıtlarını izler; doz çarpanları varsayımdır (DONKI doz değeri vermez).', ...src('donkiSep', 'NASA DONKI, Mayıs 2024 SEP') },
+      { bilgi: 'Güneş fırtınası senaryosundaki olay sırası Mayıs 2024 DONKI kayıtlarını izler (DONKI doz değeri vermez).', ...src('donkiSep', 'NASA DONKI, Mayıs 2024 SEP') },
+      { bilgi: `Mars yolculuğunda Curiosity, sakin dönemde günde yaklaşık 332 µGy, güneş fırtınalarında günde 10.000 µGy'nin üzerinde doz ölçtü; senaryodaki fırtına zirvesi bu yüzden normalin ${val('stormDoseMultiplierPeak', 30)} katıdır.`, ...src('stormDoseMultiplierPeak', 'Guo vd. 2015, A&A') },
+      { bilgi: `Artemis I'de Orion kapsülünün sığınağında doz, 1989 fırtınası simülasyonunda mürettebat bölümünün yaklaşık ${val('shelterDoseFactor', 0.23)} katıydı (414 µGy/dk yerine 95 µGy/dk).`, ...src('shelterDoseFactor', 'George vd. 2024, Nature') },
+      { bilgi: 'Mayıs 2024 fırtınasında Mars yüzeyinde Curiosity\'nin yanındaki bir astronot 8.100 mikrogray doz alırdı. Senaryodaki yüzey fırtına çarpanı (5 kat) ve fırtına başlangıç çarpanı (25 kat) varsayımdır.', ...src('stormDoseMultiplierSurface', 'NASA, Mayıs 2024') , kaynak: 'NASA, Mayıs 2024 Mars güneş fırtınası', url: 'https://www.nasa.gov/?p=670127' },
     ],
   },
   {
@@ -71,7 +74,8 @@ export const REFERENCES: ReferenceTopic[] = [
     konu: 'oksijen',
     anahtarKelimeler: ['oksijen', 'spo2', 'spo₂', 'doygunluk', 'hipoksi', 'basınç', 'giysi', 'kabin'],
     bilgiler: [
-      { bilgi: 'SpO₂ normalde %96–99; %94 altı dikkat, %90 altı kritik kabul edilir.', ...ASSUMPTION, kaynak: 'Klinik eşik, varsayım (risk: NASA HRP hipoksi)' },
+      { bilgi: 'SpO₂ deniz seviyesi basıncında normalde %96–100 arasıdır; kabin basıncı da deniz seviyesindedir. Bu aralıktaki değerler için uyarı verilmez.', ...src('spo2Normal', 'NIH StatPearls') },
+      { bilgi: "SpO₂ için %94 altı dikkat, %90 altı kritik eşikleri klinik varsayımdır.", ...ASSUMPTION, kaynak: 'Klinik eşik, varsayım (risk: NASA HRP hipoksi)' },
       { bilgi: `Kabin ${val('cabinPressure', 101.3)} kPa ve %21 O₂ (ISS ile aynı).`, ...src('cabinPressure', 'Kabin atmosferi (NASA NTRS)') },
       { bilgi: `EVA giysisi ${val('suitPressure', 29.6)} kPa ve %100 O₂.`, ...src('suitPressure', 'EVA giysisi regülatörü (NASA NTRS)') },
     ],
@@ -172,6 +176,7 @@ export const REFERENCES: ReferenceTopic[] = [
         kaynak: 'Proje yöntemi (plan: Veri ve kaynaklar)',
       },
       { bilgi: 'Uyarıları yalnızca Katman 1 açar; ASTRA (Katman 2) sadece okur ve açıklar.', kaynak: 'Proje mimarisi' },
+      { bilgi: 'Resmi kaynağında normal aralık verilen ölçümlerde değer bu aralıktaysa uyarı verilmez: SpO₂ %96–100 (NIH), dinlenme solunumu 12–20/dk ve EtCO₂ 35–45 mmHg (JEMS), uzay yürüyüşünde nabız 100–110 bpm (NASA, Apollo), kabin CO₂ 2,3 mmHg\'ye kadar, ortam 20–25 °C ve nem %30–60 (NASA), gürültü 72 dBA\'ya kadar (ISS). Aralık dışına çıkınca kişisel normalden sapma değerlendirilir.', kaynak: 'Proje yöntemi (src/sim/parameters.ts normal aralıkları)' },
     ],
   },
 ];

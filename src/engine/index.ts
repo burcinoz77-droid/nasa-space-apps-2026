@@ -27,6 +27,7 @@ import type {
   ShipState,
   Telemetry,
 } from '../types';
+import { normalRangeFor } from '../sim/parameters';
 import { MetricTracker } from './baseline';
 import { BASELINE_MIN_WINDOW, BASELINE_WINDOW, LEVEL_RANK, RESOLVE_AFTER, SCORE_WEIGHT, Z_EXCLUDED } from './config';
 import { ACTION_LABELS, names } from './labels';
@@ -47,6 +48,7 @@ interface CrewTrack {
   location: CrewLocation;
   trackers: Record<MetricKey, MetricTracker>;
   irregularStreak: number;
+  lastLevel: Partial<Record<MetricKey, Level>>; // son verilen seviye (normal aralık kuralı için)
   n: number;
   frozen: boolean; // baseline donduruldu mu
 }
@@ -61,7 +63,7 @@ interface OpenIncident {
 function newTrack(id: CrewId): CrewTrack {
   const trackers = {} as Record<MetricKey, MetricTracker>;
   for (const k of KEYS) trackers[k] = new MetricTracker(k);
-  return { id, location: CREW_BY_ID[id].location, trackers, irregularStreak: 0, n: 0, frozen: false };
+  return { id, location: CREW_BY_ID[id].location, trackers, irregularStreak: 0, lastLevel: {}, n: 0, frozen: false };
 }
 
 function freezeTrack(track: CrewTrack) {
@@ -77,9 +79,17 @@ function evaluate(track: CrewTrack, t: Telemetry): CrewEval {
   const domainLevels: Record<Domain, Level> = { cardio: 'normal', resp: 'normal', biochem: 'normal', cog: 'normal', env: 'normal' };
   for (const k of KEYS) {
     const tr = track.trackers[k];
-    const s = tr.push(readMetric(t, k));
-    scores[k] = s;
-    riskZ[k] = tr.riskZ;
+    const value = readMetric(t, k);
+    const s = tr.push(value);
+    // Resmi kaynağın normal aralığındaki değer yeni bir uyarı başlatmaz (z ekranda kalır).
+    // Uyarı zaten açıksa seviye, Katman 1'in histerezisiyle iner; aralık içinde asla yükselmez.
+    const range = normalRangeFor(k, track.location);
+    const inRange = range !== undefined && value >= range[0] && value <= range[1];
+    const prev = track.lastLevel[k] ?? 'normal';
+    const level: Level = inRange ? (prev === 'normal' ? 'normal' : LEVEL_RANK[s.level] <= LEVEL_RANK[prev] ? s.level : prev) : s.level;
+    track.lastLevel[k] = level;
+    scores[k] = level === s.level ? s : { ...s, level };
+    riskZ[k] = inRange && level === 'normal' ? 0 : tr.riskZ;
     const d = domainOf(k);
     domainLevels[d] = maxLevel(domainLevels[d], s.level);
   }
