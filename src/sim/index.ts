@@ -9,7 +9,10 @@
 //     Ekrana giden ölçüm = x + gaussian × sd × 0.3 (sensör gürültüsü; birikmez, yanlış alarm üretmez).
 //  4. Günlük ölçümler (uyku, PVT, BSI-18, PANAS ...) her tick değişmez; gürültüsüzdür ve
 //     sadece senaryo hedefini değiştirdiğinde yeni değere kayar.
-//  5. Toplam doz birikir: doseCumulative_mSv += doseRate_uSv_h × (görev dk / 60) / 1000.
+//  5. Toparlanma: değer kişisel normalinden UZAKLAŞIRKEN hızlı (0.25), normale DÖNERKEN yavaş değişir
+//     (canlı 0.025, günlük 0.01, zorunlu dinlenmede 0.12). Kriz bitince iz bir süre kalır, sağlık skoru
+//     kademeli toparlanır. Ortam ölçümleri (env.*) fiziksel olduğu için hızlı döner.
+//  6. Toplam doz birikir: doseCumulative_mSv += doseRate_uSv_h × (görev dk / 60) / 1000.
 import { CREW } from '../crew';
 import { METRICS, type MetricKey } from '../metrics';
 import type { AutoAction, CrewId, CrewMember, ScenarioId, ShipState, Simulation, Telemetry } from '../types';
@@ -36,6 +39,16 @@ const VENT_TARGET_mmHg = 2.0; // havalandırma artırılınca hedef ppCO₂ (pla
 const VENT_TICKS = 40; // bu hedefe kaç ölçümde iner
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+/** Bu tick'te değer hedefe ne hızla yaklaşır: kötüleşirken hızlı, toparlanırken yavaş. */
+function rateFor(c: CrewState, key: MetricKey, target: number, daily: boolean): number {
+  if (key.startsWith('env.')) return SIM.approachRate; // fiziksel ortam: hızlı
+  const base = c.baseline[key];
+  const recovering = Math.abs(target - base) < Math.abs(c.x[key] - base);
+  if (!recovering) return SIM.approachRate;
+  if (c.resting && REST_KEYS.includes(key)) return PARAMS.recoveryRateRest.value;
+  return daily ? PARAMS.recoveryRateDaily.value : PARAMS.recoveryRateLive.value;
+}
 
 /** Bir astronotun kişisel baseline'ı: konum normali + kişisel fark + hassasiyet kayması. */
 export function makeBaseline(member: CrewMember, rand: () => number): Values {
@@ -130,12 +143,13 @@ export function createSimulation(seed = 2026): Simulation {
           const n = NORMALS[key];
           if (key === 'env.doseCumulative_mSv') continue;
           const target = targetFor(c, key, elapsed);
+          const rate = rateFor(c, key, target, DAILY.has(key));
           if (DAILY.has(key)) {
             // Günlük ölçüm: gürültü yok, yeni hedefe yumuşakça kayar
-            c.x[key] += SIM.approachRate * (target - c.x[key]);
+            c.x[key] += rate * (target - c.x[key]);
             out[key] = c.x[key];
           } else {
-            c.x[key] += SIM.approachRate * (target - c.x[key]);
+            c.x[key] += rate * (target - c.x[key]);
             out[key] = c.x[key] + gaussian(rand) * n.sd * SIM.noiseScale;
           }
           out[key] = clamp(out[key], n.min, n.max);

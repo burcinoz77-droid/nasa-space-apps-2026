@@ -125,6 +125,11 @@ export const PARAMS = {
   stormDoseMultiplierOnset: { label: 'Fırtına doz çarpanı, başlangıç', value: 25, unit: '× doz hızı (Kokpit)', ...SRC.assumption },
   stormDoseMultiplierPeak: { label: 'Fırtına doz çarpanı, zirve', value: 30, unit: '× doz hızı (Kokpit; Curiosity yolculukta sakin ~332, fırtınada >10.000 µGy/gün)', ...SRC.guo2015 },
   stormDoseMultiplierSurface: { label: 'Fırtına doz çarpanı, yüzey', value: 5, unit: '× doz hızı (Mars atmosferi kalkan; NASA: Mayıs 2024 fırtınasında yüzeyde 8.100 µGy, oran belirsiz)', ...SRC.assumption },
+  // Kriz sonrası toparlanma: değer kötüleşirken hızlı (SIM.approachRate), iyileşirken yavaş değişir.
+  // Yarı ömür = ln 2 / oran ölçüm. Ortam ölçümleri (CO₂, doz) fiziksel olduğu için hızlı kalır.
+  recoveryRateLive: { label: 'Kriz sonrası toparlanma hızı, canlı ölçümler', value: 0.025, unit: '× fark / ölçüm (yarı ömür ≈ 28 ölçüm)', ...SRC.assumption },
+  recoveryRateDaily: { label: 'Kriz sonrası toparlanma hızı, günlük ölçümler', value: 0.01, unit: '× fark / ölçüm (uyku, tepki, ruh hali; yarı ömür ≈ 70 ölçüm)', ...SRC.assumption },
+  recoveryRateRest: { label: 'Zorunlu dinlenmede toparlanma hızı', value: 0.12, unit: '× fark / ölçüm (nabız, solunum, laktat, çekirdek sıcaklık)', ...SRC.assumption },
   shelterDoseFactor: { label: 'Sığınakta doz çarpanı', value: 0.23, unit: '× doz hızı (Orion sığınağı: 1989 fırtınası simülasyonunda 414 → 95 µGy/dk)', ...SRC.artemis1 },
 } satisfies Record<string, Param>;
 
