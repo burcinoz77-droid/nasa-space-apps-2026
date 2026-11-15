@@ -2,6 +2,7 @@
 // sorularında lookup_reference aracıyla buradan okur ve kaynağı belirtir.
 // Sayılar planın "Veri ve kaynaklar" tablosundan ve src/sim/parameters.ts'ten gelir; yeni sayı uydurulmaz.
 // "Varsayım" yazanların NASA ya da hakemli bir kaynağı yoktur.
+import { TEST_SOURCES } from '../psych/instruments';
 import { PARAMS } from '../sim/parameters';
 
 export interface Fact {
@@ -22,6 +23,11 @@ type ParamLike = { value: number; source?: string; url?: string };
 function src(key: string, fallback: string): Pick<Fact, 'kaynak' | 'url'> {
   const p = (PARAMS as Record<string, ParamLike | undefined>)[key];
   return { kaynak: p?.source ?? fallback, ...(p?.url ? { url: p.url } : {}) };
+}
+
+/** Test kaynağını bilgi tabanı biçimine çevirir. */
+function fromTest(t: { ad: string; url: string }): Pick<Fact, 'kaynak' | 'url'> {
+  return { kaynak: t.ad, url: t.url };
 }
 
 function val(key: string, fallback: number): string {
@@ -105,6 +111,18 @@ export const REFERENCES: ReferenceTopic[] = [
       { bilgi: `PVT'de ${val('pvtLapseThreshold', 355)} ms ve üzerindeki tepkiler dikkat kaybı sayılır.`, ...src('pvtLapseThreshold', 'Basner vd. 2011, PVT-B') },
       { bilgi: 'PANAS olumlu duygu ortalaması 33,3, olumsuz duygu ortalaması 17,4 (10–50 ölçeği).', ...src('panasPositiveMean', 'Watson vd. 1988, PANAS') },
       { bilgi: 'Katman 1, GSR, ter kortizolü ve PANAS olumsuz duygunun üçü birlikte yükselirse stres olayı açar.', kaynak: 'Katman 1 kuralı' },
+    ],
+  },
+  {
+    konu: 'testler',
+    anahtarKelimeler: ['test', 'tlx', 'nasa-tlx', 'iş yükü', 'samn', 'perelli', 'yorgunluk ölçeği', 'psikolojik', 'anket', 'ölçek'],
+    bilgiler: [
+      { bilgi: 'NASA-TLX, NASA Ames\'te geliştirilen iş yükü ölçeğidir: zihinsel, fiziksel ve zamansal talep, performans, efor ve engellenme olmak üzere 6 alt ölçek, her biri 0–100.', ...fromTest(TEST_SOURCES.tlx) },
+      { bilgi: 'Raw TLX, altı alt ölçeğin ağırlıksız ortalamasıdır ve ikili karşılaştırma adımı olmadan kullanılır.', ...fromTest(TEST_SOURCES.hart2006) },
+      { bilgi: 'Samn-Perelli, 1 (tamamen zinde) ile 7 (tamamen bitkin) arasında 7 basamaklı bir yorgunluk ölçeğidir; NASA–easyJet pilot yorgunluğu çalışmasında PVT ile birlikte kullanıldı.', ...fromTest(TEST_SOURCES.nasaFatigue) },
+      { bilgi: 'PVT-B, 3 dakikalık tepki testidir; uyaranlar 1–4 saniye arayla gelir, 355 ms ve üzeri tepki dikkat kaybı sayılır.', ...fromTest(TEST_SOURCES.basner2011) },
+      { bilgi: 'ISS\'te astronotlar PVT-B\'yi Reaction Self Test adıyla, kısa ruh hali ve iş yükü puanlarıyla birlikte uçuş boyunca 4 günde bir, sabah ve akşam yaptı; 6 saatten kısa uyku daha yavaş tepkiyle ilişkili bulundu.', ...fromTest(TEST_SOURCES.jones2022) },
+      { bilgi: 'Testlerin seviye eşikleri (Samn-Perelli 5 ve üzeri, NASA-TLX 50 ve üzeri dikkat) varsayımdır; resmi bir kesme noktası yoktur.', kaynak: 'Varsayım (proje kuralı)' },
     ],
   },
   {

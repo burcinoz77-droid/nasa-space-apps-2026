@@ -9,6 +9,7 @@ import { incidentSummary, signalSummary } from './context';
 import { REFERENCES } from './knowledge';
 import { LEVEL_TR, shortName } from './labels';
 import { longHistory, longHistorySpanHours, MISSION_MIN_PER_TICK, personalNormal } from './memory';
+import { buildTestData } from './testdata';
 
 /** Geçmişten kaç ölçümde bir örnek alınır ve en fazla kaç nokta gönderilir. */
 const TREND_STRIDE = 6;
@@ -108,6 +109,7 @@ export function buildToolData(s: AstraState) {
     olaylar: s.incidents.slice(0, 15).map(incidentSummary),
     kayit: s.ledger.slice(0, 12).map((e) => ({ saat: new Date(e.at).toLocaleTimeString('tr-TR'), tur: e.kind, metin: e.text })),
     bilgi: REFERENCES,
+    testler: buildTestData(s),
   };
 }
 

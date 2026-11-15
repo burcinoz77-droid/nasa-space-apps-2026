@@ -56,6 +56,10 @@ export const TOOL_TR: Record<string, string> = {
   list_incidents: 'Olaylar',
   get_event_log: 'Olay kaydı',
   lookup_reference: 'Kaynak bilgisi',
+  get_test_results: 'Test sonuçları',
+  get_psych_state: 'Psikolojik durum',
+  get_test_schedule: 'Test planı',
+  compare_crew_tests: 'Ekip test karşılaştırması',
 };
 
 /** "Ölçüm gidişi · Kerem, CO₂" */

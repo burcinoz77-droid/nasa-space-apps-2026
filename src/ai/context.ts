@@ -11,6 +11,7 @@ import type { CrewId, Incident, MetricScore } from '../types';
 import { possibleConditions } from './conditions';
 import { boneLossEstimate } from './knowledge';
 import { ACTION_TR, crewInText, delayText, INCIDENT_TR, LEVEL_TR, SCENARIO_TR, shortName } from './labels';
+import { testSummary } from './testdata';
 
 /** Normal durumdaki kişi için gönderilen 8 ana ölçüm. */
 export const KEY_METRICS: MetricKey[] = [
@@ -139,6 +140,8 @@ export function buildContext(s: AstraState, opts: ContextOptions = {}): Record<s
       tahminiKemikKaybi: `${boneLossEstimate(s.ship?.missionDay ?? 180)} (NASA: ayda %1–1,5; ölçüm değil, tahmin)`,
     },
     murettebat: CREW.map((m) => crewSummary(s, m.id, isDetailed(m.id), keysOnly)),
+    // Psikolojik testler (Samn-Perelli, NASA-TLX, PVT-B): kısa özet; ayrıntı get_test_results aracında
+    psikolojikTestler: testSummary(s),
     acikOlaylar: openIncidents.map(incidentSummary),
     ...(opts.incident
       ? {

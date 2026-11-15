@@ -324,7 +324,7 @@ describe('Araçlar (tool calling) · salt-okur araçlar', () => {
     return JSON.parse(JSON.stringify(buildToolData(s)));
   };
 
-  it('6 araç tanımlı ve her birinin açıklaması var', () => {
+  it('10 araç tanımlı ve her birinin açıklaması var', () => {
     expect(TOOLS.map((t) => t.name)).toEqual([
       'get_crew_member',
       'get_metric_trend',
@@ -332,6 +332,10 @@ describe('Araçlar (tool calling) · salt-okur araçlar', () => {
       'list_incidents',
       'get_event_log',
       'lookup_reference',
+      'get_test_results',
+      'get_psych_state',
+      'get_test_schedule',
+      'compare_crew_tests',
     ]);
     for (const t of TOOLS) expect(t.description.length).toBeGreaterThan(30);
   });
@@ -627,7 +631,7 @@ describe('api/astra.ts · sunucu fonksiyonu', () => {
     expect(out.tools).toEqual([{ ad: 'get_crew_member', girdi: { ad: 'Kerem' } }]);
     expect(out.toolOutput).toContain('Kerem');
     const first = JSON.parse(String(f.mock.calls[0][1].body));
-    expect(first.tools[0].functionDeclarations).toHaveLength(6);
+    expect(first.tools[0].functionDeclarations).toHaveLength(TOOLS.length);
     expect(first.systemInstruction.parts[0].text).toContain('get_metric_trend');
     const second = JSON.parse(String(f.mock.calls[1][1].body));
     expect(second.contents.at(-2).parts[0].thoughtSignature).toBe('imza'); // imza aynen geri gider
@@ -665,7 +669,7 @@ describe('api/astra.ts · sunucu fonksiyonu', () => {
     expect(out.text).toContain('600 mSv');
     expect(out.tools[0].ad).toBe('lookup_reference');
     const first = JSON.parse(String(c.mock.calls[0][1].body));
-    expect(first.tools).toHaveLength(6);
+    expect(first.tools).toHaveLength(TOOLS.length);
     const second = JSON.parse(String(c.mock.calls[1][1].body));
     expect(second.messages.at(-1).content[0]).toMatchObject({ type: 'tool_result', tool_use_id: 't1' });
   });

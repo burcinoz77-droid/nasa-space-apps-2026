@@ -12,6 +12,10 @@ import { possibleConditions } from './conditions';
 import { boneLossEstimate } from './knowledge';
 import { ACTION_DONE_TR, crewInText, delayText, LEVEL_TR, shortName, valueText } from './labels';
 import { baselineReady } from './memory';
+import { crewComparison, dueTests, psychState } from '../psych/analysis';
+import type { TestKind } from '../psych/instruments';
+import { spLabel, tlxHighest } from '../psych/scoring';
+import { resultsOf } from '../psych/store';
 
 const DOCTOR = 'Bu konuda uçuş doktoruna danışmayı öneririm.';
 
@@ -317,6 +321,71 @@ function restText(s: AstraState): string {
   );
 }
 
+// ---------------------------------------------------------------- psikolojik testler
+
+const TEST_NAME: Record<TestKind, string> = { SP: 'yorgunluk (Samn-Perelli)', TLX: 'iş yükü (NASA-TLX)', PVT: 'PVT-B tepki testi' };
+
+function dueSentence(id: CrewId, s: AstraState): string | undefined {
+  const due = dueTests(id, s);
+  if (!due.length) return undefined;
+  const first = due[0];
+  return `${shortName(id)} için önerilen: ${list(due.map((d) => TEST_NAME[d.kind]))}${first.oncelik === 'öncelikli' ? `; öncelik nedeni: ${lcFirst(first.neden.split('. ')[0].replace(/\.$/, ''))}` : ''}.`;
+}
+
+function resultsSentence(id: CrewId): string | undefined {
+  const sp = resultsOf(id, 'SP')[0];
+  const tlx = resultsOf(id, 'TLX')[0];
+  const pvt = resultsOf(id, 'PVT')[0];
+  const parts = [
+    sp && `yorgunluk ${sp.puan}/7 (${lcFirst(spLabel(sp.puan))})`,
+    tlx && `iş yükü ${fmt(tlx.raw, 1)}/100 (en yüksek alt ölçek: ${lcFirst(tlxHighest(tlx.ratings).ad)})`,
+    pvt && `PVT-B ortalama ${pvt.meanRt_ms} ms ve ${pvt.lapses} dikkat kaybı`,
+  ].filter((p): p is string => !!p);
+  return parts.length ? `${shortName(id)} son testler: ${list(parts)}.` : undefined;
+}
+
+function testText(s: AstraState, crew: CrewId[], has: (re: RegExp) => boolean): string {
+  // Karşılaştırma
+  if (has(/en yorgun|karşılaştır|kıyasla|ekip|kim daha|sırala/) && !crew.length) {
+    const c = crewComparison(CREW_IDS);
+    if (!c.yorgunluk.length && !c.isYuku.length && !c.tepki.length) return 'Son 4 görev gününde kimse test yapmadı; karşılaştırma için önce testlerin yapılması gerekir. Testler astronot ekranındaki Testler sekmesinden yapılır.';
+    return sentences(
+      c.yorgunluk.length > 0 && `En yüksek yorgunluk: ${shortName(c.yorgunluk[0].id)} (${c.yorgunluk[0].puan}/7).`,
+      c.isYuku.length > 0 && `En yüksek iş yükü: ${shortName(c.isYuku[0].id)} (${fmt(c.isYuku[0].puan, 1)}/100).`,
+      c.tepki.length > 0 && `En yavaş PVT-B: ${shortName(c.tepki[0].id)} (ortalama ${c.tepki[0].ortalama_ms} ms).`,
+      c.testYapmayanlar.length > 0 && `Test yapmayanlar: ${list(c.testYapmayanlar.map(shortName))}.`,
+    );
+  }
+  // Plan: kim, hangi testi yapmalı
+  if (has(/kim|hangi|yapmalı|zamanı|bekleyen|plan|öneri/) && !crew.length) {
+    const due = CREW_IDS.map((id) => ({ id, d: dueTests(id, s) })).filter((x) => x.d.length);
+    const urgent = due.filter((x) => x.d.some((d) => d.oncelik === 'öncelikli'));
+    if (!due.length) return 'Şu an bekleyen test yok; tüm mürettebatın testleri güncel. Testler astronot ekranındaki Testler sekmesinden yapılır.';
+    return sentences(
+      urgent.length ? `Öncelikli test önerilenler: ${list(urgent.map((x) => shortName(x.id)))}.` : 'Öncelikli test önerisi yok.',
+      ...urgent.slice(0, 2).map((x) => dueSentence(x.id, s)),
+      'Rutin plan her test için 4 görev gününde birdir (ISS Reaction Self Test sıklığı); testler astronot ekranındaki Testler sekmesinden yapılır.',
+    );
+  }
+  // Bir kişi ya da genel durum
+  const ids = crew.length ? crew.slice(0, 1) : CREW_IDS.filter((id) => resultsSentence(id));
+  if (!ids.length) {
+    return sentences(
+      'Henüz kimse psikolojik test yapmadı.',
+      'Mevcut testler NASA-TLX (iş yükü), Samn-Perelli (yorgunluk) ve PVT-B (3 dakikalık tepki testi); astronot ekranındaki Testler sekmesinden yapılır.',
+      'Öz bildirim testleri teşhis değildir.',
+    );
+  }
+  const id = ids[0];
+  const ps = psychState(id, s);
+  return sentences(
+    resultsSentence(id) ?? `${shortName(id)} için henüz test sonucu yok.`,
+    ps.ozet,
+    dueSentence(id, s),
+    crew.length ? 'Öz bildirim testleri teşhis değildir; gerekirse uçuş doktoruna danışın.' : ids.length > 1 && `Test yapan diğer kişiler: ${list(ids.slice(1).map(shortName))}.`,
+  );
+}
+
 function radiationText(s: AstraState, crew: CrewId[]): string {
   const limit = param('careerDoseLimit', 600);
   const inc = openIncidents(s, (i) => i.type === 'RADIATION')[0];
@@ -464,6 +533,8 @@ function chatText(question: string, s: AstraState): string {
   }
   // 5) Kim dinlenmeli
   if (has(/dinlen/)) return restText(s);
+  // 5b) Psikolojik testler (Samn-Perelli, NASA-TLX, PVT-B): sonuçlar, plan, karşılaştırma
+  if (has(/test|tlx|samn|perelli|iş yük|is yuk|psikoloj|anket/)) return testText(s, crew, has);
   // 6) Neden kritik / neden dikkat
   if (has(/neden|niye|sebep/) && (crew.length || has(/kritik|dikkat/))) {
     const id = crew[0] ?? mostSevere(s);

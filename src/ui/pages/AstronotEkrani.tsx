@@ -6,10 +6,13 @@ import { CREW, CREW_BY_ID } from '../../crew';
 import { GROUP_NAMES, METRIC_BY_KEY, METRICS, readMetric, type MetricInfo, type MetricKey } from '../../metrics';
 import { normalRangeFor, PARAMS } from '../../sim/parameters';
 import { useAstra } from '../../store';
+import { dueTests, psychState } from '../../psych/analysis';
+import { activePvt, missionAgo, useTests } from '../../psych/store';
 import type { CrewId, CrewStatus, Level, MetricScore, Telemetry } from '../../types';
 import { type TabId } from '../bodyRegions';
 import { BodyPanel } from '../components/BodyPanel';
 import { Card } from '../components/Card';
+import { PsychTestsPanel } from '../components/PsychTests';
 import { LevelBadge } from '../components/LevelBadge';
 import { SourceBadge } from '../components/SourceBadge';
 import { Sparkline, TrendLine } from '../components/Sparkline';
@@ -32,9 +35,15 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
   const st = useAstra((s) => s.statuses[crewId]);
   const statuses = useAstra((s) => s.statuses);
   const incidents = useAstra((s) => s.incidents);
-  const [tab, setTab] = useState<TabId>('genel');
+  const [tab, setTab] = useState<TabId | 'testler'>('genel');
+  // Psikolojik testler (Parça 4): ASTRA'nın önerdiği testler ve test sonuçlarına göre psikolojik durum
+  const tests = useTests((s) => s);
+  const astra = useAstra((s) => s);
+  const due = dueTests(crewId, astra, tests);
+  const urgentTests = due.filter((d) => d.oncelik === 'öncelikli').length;
+  const psychLevel = psychState(crewId, astra, tests).seviye;
   const tabsRef = useRef<HTMLDivElement>(null);
-  const openTab = (id: TabId) => {
+  const openTab = (id: TabId | 'testler') => {
     setTab(id);
     tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -97,6 +106,20 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
             ✓ Zorunlu dinlenme · otomatik
           </span>
         )}
+        {due.length > 0 && (
+          <button
+            onClick={() => openTab('testler')}
+            className="rounded-full px-3 py-1 text-sm font-semibold"
+            style={
+              urgentTests
+                ? { color: COLORS.caution, backgroundColor: alpha(COLORS.caution, 0.12) }
+                : { color: COLORS.ai, backgroundColor: alpha(COLORS.ai, 0.12) }
+            }
+            title="ASTRA'nın test önerilerini aç"
+          >
+            {urgentTests ? `▲ ${urgentTests} öncelikli test` : `${due.length} test önerisi`}
+          </button>
+        )}
         <LevelBadge level={st?.level} pill />
       </div>
 
@@ -155,8 +178,29 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
                 </button>
               );
             })}
+            <button
+              role="tab"
+              aria-selected={tab === 'testler'}
+              onClick={() => setTab('testler')}
+              className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm ${tab === 'testler' ? 'bg-calm/20 font-semibold text-calm ring-1 ring-calm/50' : 'text-slate-300 hover:bg-white/5'}`}
+            >
+              Testler
+              {psychLevel !== 'normal' ? (
+                <span style={{ color: LEVEL_COLOR[psychLevel] }} aria-label={LEVEL_LABEL[psychLevel]}>
+                  {LEVEL_ICON[psychLevel]}
+                </span>
+              ) : (
+                due.length > 0 && (
+                  <span className="rounded-full px-1.5 text-xs" style={{ color: urgentTests ? COLORS.caution : COLORS.ai, backgroundColor: alpha(urgentTests ? COLORS.caution : COLORS.ai, 0.15) }}>
+                    {due.length}
+                  </span>
+                )
+              )}
+            </button>
           </div>
-          {tab === 'genel' ? (
+          {tab === 'testler' ? (
+            <PsychTestsPanel key={crewId} crewId={crewId} />
+          ) : tab === 'genel' ? (
             <Overview crewId={crewId} st={st} />
           ) : (
             <GroupTables crewId={crewId} t={t} st={st} groups={TABS.find((x) => x.id === tab)!.groups} />
@@ -406,7 +450,19 @@ function PvtCard({ crewId, t, st }: { crewId: CrewId; t: Telemetry | undefined; 
         <SourceBadge metric="cog.pvtLapses" />
       </div>
       <div className="mt-1 text-sm text-slate-400">dinlenmiş ~{fmtUnit(PARAMS.pvtMeanRtRested.value, 'ms')}</div>
+      <PvtSourceNote crewId={crewId} />
     </FactorCard>
+  );
+}
+
+/** PVT değeri astronotun yaptığı PVT-B testinden mi geliyor, simülasyondan mı? */
+function PvtSourceNote({ crewId }: { crewId: CrewId }) {
+  const tick = useTests((s) => s.tick);
+  const pvt = useTests(() => activePvt(crewId));
+  return (
+    <div className="mt-1 text-xs" style={{ color: pvt ? COLORS.calm : COLORS.textMuted }}>
+      {pvt ? `PVT-B testi · ${missionAgo(pvt.tick, tick)}` : 'simüle · test yok'}
+    </div>
   );
 }
 

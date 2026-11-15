@@ -15,7 +15,9 @@ Plan gereği kod bu klasörde değil, ortak uygulamanın içinde. Parça 4'ün d
 | `src/ai/explain.ts`, `src/ui/components/AstraExplanation.tsx` | Olay kartındaki mor "ASTRA açıklaması" |
 | `src/ui/components/AstraChatPanel.tsx` | Sohbet paneli |
 | `src/ui/pages/Gorevler.tsx` | Görevler sayfası |
-| `src/ai/*.test.ts` | Testler (`npm run test`) ve canlı model testi |
+| `src/psych/` | Psikolojik testler: NASA-TLX, Samn-Perelli, PVT-B (resmi maddeler, puanlama, test planı, psikolojik durum) |
+| `src/ai/testdata.ts`, `src/ui/components/PsychTests.tsx` | Test sonuçlarının ASTRA'ya giden kopyası; Astronot Ekranı "Testler" sekmesi |
+| `src/ai/*.test.ts`, `src/psych/psych.test.ts` | Testler (`npm run test`) ve canlı model testi |
 | `docs/`, `README.md` | ASTRA belgeleri, test tablosu, yapay zekâ beyanı |
 
 ## Sıradaki adımlar
