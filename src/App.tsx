@@ -10,7 +10,7 @@ import { SIM } from './sim/parameters';
 import { useAstra } from './store';
 import type { CrewId, ScenarioId, Telemetry } from './types';
 import { AstraChatPanel } from './ui/components/AstraChatPanel';
-import { StormCinematic } from './ui/cinematic/StormCinematic';
+import { ScenarioCinematics } from './ui/cinematic';
 import {
   IconAstronaut,
   IconBell,
@@ -90,8 +90,8 @@ export default function App() {
         </main>
       </div>
       <AstraChatPanel />
-      {/* Parça 1: senaryo Güneş fırtınasına geçince tam ekran sinematik (Atla ile kapanır) */}
-      <StormCinematic />
+      {/* Parça 1: senaryo değişince o senaryonun tam ekran sinematiği (Atla ile kapanır) */}
+      <ScenarioCinematics />
     </div>
   );
 }

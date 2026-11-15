@@ -5,7 +5,7 @@ import { SCENARIOS } from '../../sim/scenario';
 import { PARAMS, SIM, type Param } from '../../sim/parameters';
 import { useAstra } from '../../store';
 import type { ScenarioId, Telemetry } from '../../types';
-import { CINEMATIC_EVENT } from '../cinematic/StormCinematic';
+import { CINEMATIC_EVENT, SHOWS } from '../cinematic/shows';
 import { alpha, COLORS, fmt } from '../theme';
 
 const EMPTY: Telemetry[] = [];
@@ -123,13 +123,18 @@ export function Ayarlar() {
           <p className="mt-2 text-xs" style={{ color: COLORS.textMuted }}>
             Aynı seed: demo her seferinde aynı veriyi baştan üretir.
           </p>
-          <button
-            onClick={() => window.dispatchEvent(new Event(CINEMATIC_EVENT))}
-            className="mt-3 w-full rounded-lg px-3 py-2 hover:bg-white/10"
-            style={{ background: alpha(COLORS.caution, 0.12), color: COLORS.caution }}
-          >
-            ▶ Fırtına sinematiğini tekrar oynat
-          </button>
+          <div className="mt-3 flex flex-col gap-2">
+            {(Object.keys(SHOWS) as ScenarioId[]).map((id) => (
+              <button
+                key={id}
+                onClick={() => window.dispatchEvent(new CustomEvent(CINEMATIC_EVENT, { detail: id }))}
+                className="w-full rounded-lg px-3 py-2 hover:bg-white/10"
+                style={{ background: alpha(COLORS.caution, 0.12), color: COLORS.caution }}
+              >
+                ▶ Sinematik: {SCENARIOS[id]?.name ?? id}
+              </button>
+            ))}
+          </div>
         </section>
       </div>
 

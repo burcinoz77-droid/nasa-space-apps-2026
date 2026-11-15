@@ -9,55 +9,30 @@
 //   5. Kapanış  : Kokpit'e döner; gerçek olay bandı orada.
 // Her sahnenin bir de üst süre sınırı var: veri gecikse bile sinematik takılmaz.
 //
-// Tetikleme: senaryo SOLAR_STORM'a geçince kendiliğinden oynar. Tekrar oynatmak için:
-//   window.dispatchEvent(new Event(CINEMATIC_EVENT))  (Ayarlar'daki düğme bunu yapar)
+// Tetikleme: index.tsx (senaryo SOLAR_STORM'a geçince ya da Ayarlar'daki düğmeyle).
 // Görüntü: NASA/SDO (kamu malı, kaynak gösterilir). NASA logosu kullanılmaz.
 import { useEffect, useRef, useState } from 'react';
-import { useAstra } from '../../store';
 import { PARAMS } from '../../sim/parameters';
+import { useAstra } from '../../store';
 import { alpha, COLORS, fmt } from '../theme';
+import { fmtMinSec, usePhases } from './phases';
+import { Caption, Stage } from './shared';
 
-export const CINEMATIC_EVENT = 'astra:storm-cinematic';
 const VIDEO_URL = `${import.meta.env.BASE_URL}media/sdo-x39-2024-05-10.mp4`;
 const BASE_DOSE = (PARAMS.doseRateMarsTransit.value * 1000) / 24; // 76,7 µSv/sa
 
-type Phase = 'flare' | 'travel' | 'impact' | 'response' | 'outro';
-
+const ORDER = ['flare', 'travel', 'impact', 'response'] as const;
+type Phase = (typeof ORDER)[number];
 // Sahne süreleri (ms): [en az, en çok]
-const LIMITS: Record<Exclude<Phase, 'outro'>, [number, number]> = {
+const LIMITS: Record<Phase, [number, number]> = {
   flare: [6000, 6000],
   travel: [3500, 12000],
   impact: [3000, 9000],
   response: [6500, 6500],
 };
 
-export function StormCinematic() {
-  const [run, setRun] = useState(0); // 0 = kapalı; her oynatmada artar
-  const scenario = useAstra((s) => s.ship?.scenario);
-  const prev = useRef(scenario);
-
-  useEffect(() => {
-    if (scenario === 'SOLAR_STORM' && prev.current !== 'SOLAR_STORM') setRun((r) => r + 1);
-    prev.current = scenario;
-  }, [scenario]);
-
-  useEffect(() => {
-    const replay = () => setRun((r) => r + 1);
-    window.addEventListener(CINEMATIC_EVENT, replay);
-    return () => window.removeEventListener(CINEMATIC_EVENT, replay);
-  }, []);
-
-  if (!run) return null;
-  return <Show key={run} onClose={() => setRun(0)} />;
-}
-
-function Show({ onClose }: { onClose: () => void }) {
-  const [phase, setPhase] = useState<Phase>('flare');
+export function StormShow({ onClose }: { onClose: () => void }) {
   const [videoOk, setVideoOk] = useState(true);
-  const phaseStart = useRef(0);
-  useEffect(() => {
-    phaseStart.current = performance.now();
-  }, []);
   const dose = useAstra((s) => s.telemetry.elif?.env.doseRate_uSv_h ?? BASE_DOSE);
   const surfaceDose = useAstra((s) => s.telemetry.emir?.env.doseRate_uSv_h ?? 26.7);
   const cumulative = useAstra((s) => s.telemetry.elif?.env.doseCumulative_mSv ?? 0);
@@ -65,51 +40,20 @@ function Show({ onClose }: { onClose: () => void }) {
   const incident = useAstra((s) => s.incidents.find((i) => i.type === 'RADIATION' && i.level === 'critical' && i.status !== 'resolved'));
   const sheltered = Boolean(incident?.autoActions.includes('RADIATION_SHELTER'));
 
-  // Sahne geçişleri: veri koşulu + en az / en çok süre
-  useEffect(() => {
-    const id = setInterval(() => {
-      const t = performance.now() - phaseStart.current;
-      const go = (next: Phase) => {
-        phaseStart.current = performance.now();
-        setPhase(next);
-      };
-      if (phase === 'outro') return;
-      const [min, max] = LIMITS[phase];
-      if (t < min) return;
-      if (phase === 'flare') go('travel');
-      else if (phase === 'travel' && (dose > BASE_DOSE * 3 || t >= max)) go('impact');
-      else if (phase === 'impact' && (incident || t >= max)) go('response');
-      else if (phase === 'response') go('outro');
-    }, 150);
-    return () => clearInterval(id);
-  }, [phase, dose, incident]);
-
-  useEffect(() => {
-    if (phase !== 'outro') return;
-    const id = setTimeout(onClose, 1200);
-    return () => clearTimeout(id);
-  }, [phase, onClose]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  const phase = usePhases(ORDER, LIMITS, (p) => (p === 'travel' ? dose > BASE_DOSE * 3 : p === 'impact' ? Boolean(incident) : true), onClose);
 
   const small = phase !== 'flare'; // Güneş köşeye küçülür
   const hot = phase === 'impact' || (phase === 'response' && !sheltered);
   const multiplier = dose / BASE_DOSE;
 
   return (
-    <div
-      className="fixed inset-0 z-[100] overflow-hidden select-none"
-      style={{ background: '#02040b', opacity: phase === 'outro' ? 0 : 1, transition: 'opacity 1.1s ease' }}
-      role="dialog"
-      aria-label="Güneş fırtınası sinematiği"
+    <Stage
+      fading={phase === 'outro'}
+      onClose={onClose}
+      label="Güneş fırtınası sinematiği"
+      credit={`${videoOk ? 'Görüntü: NASA/SDO · ' : ''}Olay zamanları: NASA DONKI · Doz: ARES-1 simülasyonu (canlı)`}
     >
-      <Stars />
       <Particles active={phase !== 'flare'} shielded={phase === 'response' && sheltered} />
-
       {/* Güneş: gerçek SDO görüntüsü (tam ekrandan sol köşeye küçülür) */}
       <div
         className="absolute overflow-hidden"
@@ -211,39 +155,11 @@ function Show({ onClose }: { onClose: () => void }) {
         </div>
       </Caption>
 
-      {/* Atla */}
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 rounded-full border px-4 py-1.5 text-sm backdrop-blur hover:bg-white/10"
-        style={{ borderColor: alpha(COLORS.text, 0.3), color: COLORS.text }}
-      >
-        Atla ✕
-      </button>
-      <div className="absolute right-4 bottom-3 font-mono text-[11px]" style={{ color: alpha(COLORS.text, 0.45) }}>
-        {videoOk ? 'Görüntü: NASA/SDO · ' : ''}Olay zamanları: NASA DONKI · Doz: ARES-1 simülasyonu (canlı)
-      </div>
-    </div>
+    </Stage>
   );
 }
 
 // ---------- Parçalar ----------
-
-function Caption({ show, pos, children }: { show: boolean; pos: 'top' | 'bottom-left' | 'top-right'; children: React.ReactNode }) {
-  const place: React.CSSProperties =
-    pos === 'top'
-      ? { top: '7vh', left: '50%', transform: `translate(-50%, ${show ? 0 : -12}px)`, textAlign: 'center' }
-      : pos === 'bottom-left'
-        ? { bottom: '8vh', left: '5vw', transform: `translateY(${show ? 0 : 12}px)` }
-        : { top: '6vh', right: '5vw', transform: `translateY(${show ? 0 : -12}px)`, textAlign: 'right' };
-  return (
-    <div
-      className="pointer-events-none absolute z-10"
-      style={{ ...place, opacity: show ? 1 : 0, transition: 'opacity .7s ease, transform .7s ease', color: COLORS.text, textShadow: '0 2px 12px #000' }}
-    >
-      {children}
-    </div>
-  );
-}
 
 function DrawnSun() {
   return (
@@ -320,25 +236,6 @@ function Ship({ show, hot, sheltered }: { show: boolean; hot: boolean; sheltered
   );
 }
 
-/** Yıldız alanı (bir kez çizilir). */
-function Stars() {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const c = ref.current!;
-    const ctx = c.getContext('2d')!;
-    c.width = window.innerWidth;
-    c.height = window.innerHeight;
-    for (let i = 0; i < 260; i++) {
-      ctx.fillStyle = `rgba(255,255,255,${0.15 + Math.random() * 0.6})`;
-      const r = Math.random() * 1.3;
-      ctx.beginPath();
-      ctx.arc(Math.random() * c.width, Math.random() * c.height, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }, []);
-  return <canvas ref={ref} className="absolute inset-0 h-full w-full" />;
-}
-
 /** Güneş'ten gemiye akan parçacıklar. shielded: gemiye ulaşmadan sönerler. */
 function Particles({ active, shielded }: { active: boolean; shielded: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -389,10 +286,4 @@ function Particles({ active, shielded }: { active: boolean; shielded: boolean })
   }, []);
 
   return <canvas ref={ref} className="pointer-events-none absolute inset-0 h-full w-full" />;
-}
-
-function fmtMinSec(s: number): string {
-  const m = Math.floor(s / 60);
-  const r = Math.round(s % 60);
-  return `${m} dk ${r} sn`;
 }
