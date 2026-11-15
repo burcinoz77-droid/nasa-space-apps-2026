@@ -1,12 +1,12 @@
-// Parça 4 · Olay kartındaki mor "ASTRA açıklaması" kutusu. Mor = yapay zekânın sesi;
-// Katman 1'in kırmızı/amber uyarısından görsel olarak ayrıdır. Uyarıyı her zaman Katman 1 açar.
+// Part 4 · The purple "ASTRA explanation" box on the incident card. Purple = the voice of the AI;
+// visually separate from Layer 1's red/amber alert. Layer 1 always raises the alert.
 //
-// Kullanım (Parça 3 olay bandına, Parça 2 Raporlar sayfasına koyar):
+// Usage (Part 3 puts it in the incident banner, Part 2 on the Reports page):
 //   import { AstraExplanation } from '../components/AstraExplanation';
 //   <AstraExplanation incidentId={incident.id} />
 //
-// Olayın açıklaması yoksa ASTRA'ya BİR KEZ sorar (src/ai/explain.ts) ve sonucu ortak
-// durumun explanations alanına yazar. Katman 2 başka hiçbir alana yazmaz.
+// If the incident has no explanation, asks ASTRA ONCE (src/ai/explain.ts) and writes the result to the
+// explanations field of the shared state. Layer 2 writes to no other field.
 import { useEffect } from 'react';
 import { requestExplanation } from '../../ai/explain';
 import { SOURCE_LABEL } from '../../ai/labels';
@@ -41,7 +41,7 @@ export function AstraExplanation({ incidentId }: { incidentId: string }) {
   );
 }
 
-/** Cevabın altındaki satır: kaynak (Gemini / Claude / Yedek mod), süre, doğrulama rozeti. */
+/** Line under the answer: source (Gemini / Claude / Offline mode), duration, verification badge. */
 export function AstraMeta({ answer }: { answer: AstraAnswer }) {
   const offline = answer.source === 'fallback';
   const safety = answer.fallbackReason === 'safety';
@@ -99,7 +99,7 @@ export function VerifiedBadge({ ok }: { ok: boolean }) {
   );
 }
 
-/** Mor "düşünüyor" animasyonu. */
+/** Purple "thinking" animation. */
 export function Thinking({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-2 text-sm text-ai" role="status">

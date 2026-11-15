@@ -1,8 +1,8 @@
-// Parça 3 · Kokpit: görevin tek bakışta özeti, görev kontrol konsolu düzeninde.
-//  1. Durum şeridi: mürettebat, ortalama sağlık (trendiyle), görev durumu, görev günü
-//  2. Mürettebat tablosu (nabız trendi, SpO₂, çekirdek ısı, sağlık) · yörünge ekranı (gemi ve EVA bölgesi)
-//  3. Ortam: kabin ve EVA giysileri yan yana · son kayıtlar
-// Tüm sayılar canlı veriden (useAstra); renkler theme.ts'ten; her sayı sütununun kaynak rozeti var.
+// Part 3 · Mission Status: the mission at a glance, in a mission control console layout.
+//  1. Status strip: crew, average health (with trend), mission status, Mission Day
+//  2. Crew table (heart rate trend, SpO₂, core temperature, health) · orbit display (spacecraft and EVA zone)
+//  3. Environment: cabin and EVA suits side by side · latest log entries
+// All numbers from live data (useAstra); colors from theme.ts; every number column has a source badge.
 import { type ReactNode, useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { CREW } from '../../crew';
@@ -25,8 +25,8 @@ const TEAMS: { loc: CrewLocation; title: string; where: string }[] = [
 ];
 const idsOf = (loc: CrewLocation) => CREW.filter((m) => m.location === loc).map((m) => m.id);
 
-// Ortalama sağlık trendi: store sağlık skoru geçmişi tutmaz; burada son 120 ölçüm biriktirilir.
-// Modül düzeyinde: sayfa değişince sıfırlanmaz; simülasyon sıfırlanınca (ship = null) temizlenir.
+// Average health trend: the store keeps no health score history; the last 120 readings are accumulated here.
+// At module level: not reset when the page changes; cleared when the simulation is reset (ship = null).
 const avgTrend: number[] = [];
 let avgTrendT = 0;
 function useAverageTrend(avg: number | undefined, t: number | undefined) {
@@ -93,7 +93,7 @@ export function Kokpit({ onOpenCrew, onOpenReports }: { onOpenCrew: (id: CrewId)
   );
 }
 
-// ---------- Ortak panel ----------
+// ---------- Shared panel ----------
 function Panel({ title, meta, children, flush = false }: { title: string; meta?: ReactNode; children: ReactNode; flush?: boolean }) {
   return (
     <section className="flex min-w-0 flex-col rounded-xl border border-space-border bg-space-panel" aria-label={title}>
@@ -106,7 +106,7 @@ function Panel({ title, meta, children, flush = false }: { title: string; meta?:
   );
 }
 
-// ---------- 1. Durum şeridi ----------
+// ---------- 1. Status strip ----------
 function StatusStrip() {
   const { ship, statuses, telemetry, incidents } = useAstra(
     useShallow((s) => ({ ship: s.ship, statuses: s.statuses, telemetry: s.telemetry, incidents: s.incidents })),
@@ -179,7 +179,7 @@ function StatusStrip() {
   );
 }
 
-// Hücre kenarları: genişte 4 sütun (aralarda dikey çizgi), tablette 2×2 (ortada artı şeklinde çizgi)
+// Cell borders: 4 columns when wide (vertical lines between), 2×2 on a tablet (cross-shaped lines in the middle)
 const CELL_BORDER = ['border-r max-[1179px]:border-b', 'min-[1180px]:border-r max-[1179px]:border-b', 'border-r', ''];
 
 function Cell({ i, label, right, children }: { i: number; label: string; right?: ReactNode; children: ReactNode }) {
@@ -206,8 +206,8 @@ function Sub({ children }: { children: ReactNode }) {
   return <div className="mt-1.5 truncate text-sm text-slate-400">{children}</div>;
 }
 
-// ---------- 2a. Mürettebat tablosu ----------
-// Dar tabloda (tablet, 1280 px'de yan panelle) nabız trendi gizlenir ve ad sütunu genişler
+// ---------- 2a. Crew table ----------
+// In a narrow table (tablet, 1280 px with the side panel) the heart rate trend is hidden and the name column widens
 const COLS =
   'grid grid-cols-[minmax(0,1.95fr)_minmax(0,0.8fr)_minmax(0,0.6fr)_minmax(0,0.8fr)_minmax(0,0.95fr)] @[520px]:grid-cols-[minmax(0,1.7fr)_minmax(0,1.35fr)_minmax(0,0.6fr)_minmax(0,0.75fr)_minmax(0,1fr)] items-center gap-x-3';
 
@@ -322,7 +322,7 @@ function CrewRow({ id, onOpen }: { id: CrewId; onOpen: () => void }) {
   );
 }
 
-// ---------- 2b. Yörünge ekranının alt göstergesi ----------
+// ---------- 2b. Bottom readout of the orbit display ----------
 function TeamMarker({ glyph, title, sub, level }: { glyph: string; title: string; sub: string; level: Level | undefined }) {
   const c = level ? LEVEL_COLOR[level] : COLORS.offline;
   return (
@@ -339,7 +339,7 @@ function TeamMarker({ glyph, title, sub, level }: { glyph: string; title: string
   );
 }
 
-// ---------- 3a. Yaşam ortamı: kabin ve EVA giysileri ----------
+// ---------- 3a. Habitable environment: cabin and EVA suits ----------
 const ENV_ROWS: { key: MetricKey; label: string; limit?: (v: number) => Level }[] = [
   {
     key: 'env.ppCO2_mmHg',
@@ -402,7 +402,7 @@ function EnvironmentTable() {
   );
 }
 
-// ---------- 3b. Son kayıtlar ----------
+// ---------- 3b. Latest log entries ----------
 const KIND: Record<LedgerEntry['kind'], { text: string; color: string }> = {
   INCIDENT_OPENED: { text: 'Incident', color: COLORS.caution },
   INCIDENT_RESOLVED: { text: 'Resolved', color: COLORS.normal },

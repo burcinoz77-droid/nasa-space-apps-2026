@@ -1,7 +1,7 @@
-// Parça 4 · Katman 2 sunucu fonksiyonu: POST /api/astra
-// Vercel'de otomatik olarak /api/astra olur. Yerelde vite.config.ts aynı dosyayı çağırır.
-// API anahtarları SADECE burada, process.env'den okunur; tarayıcıya asla gitmez.
-// Bu dosya başka yerel dosya import ETMEZ (Vercel'de sorunsuz paketlensin diye).
+// Part 4 · Layer 2 server function: POST /api/astra
+// On Vercel this becomes /api/astra automatically. Locally, vite.config.ts calls the same file.
+// API keys are read ONLY here, from process.env; they never reach the browser.
+// This file does NOT import other local files (so it bundles cleanly on Vercel).
 
 type Provider = 'gemini' | 'claude';
 
@@ -9,19 +9,19 @@ interface Body {
   mode: 'chat' | 'incident';
   question: string;
   context: unknown;
-  /** Sohbetteki son mesajlar (en fazla 10), devam sorularını anlamak için. İstemci gönderir. */
+  /** Latest chat messages (at most 10), used to understand follow-up questions. Sent by the client. */
   history?: unknown;
-  /** Araçların okuduğu anlık veri kopyası (src/ai/tooldata.ts). Sadece sohbette gelir. */
+  /** Snapshot of the data the tools read (src/ai/tooldata.ts). Only sent with chat requests. */
   toolData?: unknown;
 }
 
-/** Modele giden bir konuşma adımı. */
+/** One conversation turn sent to the model. */
 interface Turn {
   role: 'user' | 'assistant';
   text: string;
 }
 
-/** Geçmişi temizler: en fazla 10 mesaj, kullanıcıyla başlar, sırayla değişir, ASTRA'nın cevabıyla biter. */
+/** Cleans the history: at most 10 messages, starts with the user, alternates, ends with an ASTRA answer. */
 function cleanHistory(raw: unknown): Turn[] {
   if (!Array.isArray(raw)) return [];
   const items = raw
@@ -97,7 +97,7 @@ Task: Write an incident explanation of at most 3 sentences for "aciklanacakOlay"
 
 function buildSystem(body: Body, kit: ToolKit | null): string {
   let data: unknown = body.context ?? {};
-  // Model araç kullanamıyorsa (araçsız yedek), ayrıntıyı doğrudan talimata koy.
+  // If the model cannot use tools (tool-less fallback), put the details straight into the instructions.
   if (!kit && body.mode === 'chat' && body.toolData && typeof body.toolData === 'object') {
     const td = body.toolData as ToolData;
     data = { ozet: body.context, ayrinti: { murettebat: td.murettebat, olaylar: td.olaylar, kayit: td.kayit, bilgi: td.bilgi } };
@@ -108,9 +108,9 @@ function buildSystem(body: Body, kit: ToolKit | null): string {
   );
 }
 
-// ---------------------------------------------------------------- Araçlar (tool calling)
-// Model ihtiyaç duyduğu ayrıntıyı bu salt-okur araçlarla çeker. Araçlar, istemcinin gönderdiği
-// anlık veri kopyası (toolData) üzerinde çalışır; hiçbir şeyi değiştiremez, uyarı açamaz.
+// ---------------------------------------------------------------- Tools (tool calling)
+// The model pulls the details it needs with these read-only tools. The tools work on the data snapshot
+// (toolData) sent by the client; they cannot change anything or raise alerts.
 
 interface MetricData {
   anahtar: string;
@@ -259,7 +259,7 @@ const TEST_KEYS: Record<string, { sonuc: string; sira: string }> = {
   pvt: { sonuc: 'tepki_PvtB', sira: 'enYavasTepkidenBaslayarak' },
 };
 
-/** "iş yükü", "TLX", "Samn-Perelli", "tepki" gibi adları test anahtarına çevirir. */
+/** Maps names like "workload", "TLX", "Samn-Perelli", "reaction" to a test key. */
 function testKey(value: unknown): string | undefined {
   const q = norm(String(value ?? ''));
   if (!q) return undefined;
@@ -269,14 +269,14 @@ function testKey(value: unknown): string | undefined {
   return undefined;
 }
 
-/** Karşılaştırma için sadeleştirir: küçük harf, "₂" -> "2", harf ve rakam dışını atar. */
+/** Normalizes for comparison: lower case, "₂" -> "2", drops everything except letters and digits. */
 const norm = (s: string) =>
   s
     .toLowerCase()
     .replace(/₂/g, '2')
     .replace(/[^a-z0-9çğıöşü]/g, '');
 
-/** Sık kullanılan adlar -> ölçüm anahtarı. Uzun olan önce denenir ("toplam doz" "doz"dan önce). */
+/** Common names -> metric key. Longer names are tried first ("total dose" before "dose"). */
 const METRIC_ALIASES: [string, string][] = (
   [
     ['cardio.hr_bpm', ['nabız', 'nabz', 'kalp atış', 'kalp hızı', 'heart rate', 'heartrate', 'pulse', 'hr']],
@@ -331,7 +331,7 @@ function findMetric(crew: CrewData, query: unknown): MetricData | undefined {
   return list.find((m) => norm(m.ad).includes(q) || q.includes(norm(m.ad)));
 }
 
-/** Değer listesinin yönü: artıyor, azalıyor ya da sabit. */
+/** Direction of a value series: rising, falling or stable. */
 function direction(values: number[]): 'rising' | 'falling' | 'stable' {
   if (values.length < 2) return 'stable';
   const first = values[0];
@@ -342,7 +342,7 @@ function direction(values: number[]): 'rising' | 'falling' | 'stable' {
 
 const crewNames = (data: ToolData) => Object.values(data.murettebat ?? {}).map((c) => c.ad);
 
-/** Bir aracı veri kopyası üzerinde çalıştırır. Hata yerine açıklayıcı bir sonuç döner. */
+/** Runs a tool on the data snapshot. Returns an explanatory result instead of throwing. */
 export function runTool(name: string, args: ToolArgs, data: ToolData): unknown {
   switch (name) {
     case 'get_crew_member': {
@@ -479,7 +479,7 @@ function claudeTools() {
   }));
 }
 
-// ---------------------------------------------------------------- Model çağrıları
+// ---------------------------------------------------------------- Model calls
 
 interface UsedTool {
   name: string;
@@ -491,9 +491,9 @@ interface ModelResult {
   outputs: unknown[];
 }
 
-/** Model geçici olarak cevap veremiyor: yoğunluk (503), kota (429), sunucu hatası (500), model yok (404), zaman aşımı. */
+/** The model temporarily cannot answer: overloaded (503), quota (429), server error (500), model not found (404), timeout. */
 class ModelUnavailableError extends Error {}
-/** Model araç tanımlarını kabul etmedi: araçsız tekrar denenir. */
+/** The model rejected the tool definitions: retried without tools. */
 class ToolsUnsupportedError extends Error {}
 class HttpError extends Error {
   readonly status: number;
@@ -508,19 +508,19 @@ class RequestTimeoutError extends Error {}
 
 const RETRY_WITH_NEXT_MODEL = new Set([404, 429, 500, 503]);
 const TOOL_ERROR = /function|tool|declaration|schema/i;
-/** Araç turu sınırı: bu kadar turdan sonra model metinle cevap vermeye zorlanır. */
+/** Tool round limit: after this many rounds the model is forced to answer in text. */
 const MAX_TOOL_ROUNDS = 2;
 /**
- * Tüm denemelerin toplam üst sınırı. Canlı sitede Gemini bir isteğe ~7 sn'de cevap veriyor; araç kullanan
- * sorular 2 istek sürer. İstemci 58 sn bekler. Vercel'de süre sınırı vercel.json'da 60 sn.
+ * Overall upper limit for all attempts. On the live site Gemini answers a request in ~7 s; questions that
+ * use tools take 2 requests. The client waits 58 s. On Vercel the time limit is 60 s in vercel.json.
  */
 const TOTAL_TIMEOUT_MS = 55_000;
-/** Bir isteğin bekleme süresi (GEMINI_MODEL_TIMEOUT_MS ile değişir). 15 Kasım: canlıda basit bir soru bile ~11 sn sürdü; 12 sn sınırı araç kullanan sorularda yedek moda düşürüyordu. */
+/** Timeout for one request (override with GEMINI_MODEL_TIMEOUT_MS). 15 November: on the live site even a simple question took ~11 s; the 12 s limit pushed tool-using questions into offline mode. */
 const DEFAULT_REQUEST_TIMEOUT_MS = 24_000;
-/** Yedek modele geçmek için en az bu kadar süre kalmış olmalı; yoksa hemen yedek moda düşülür. */
+/** At least this much time must remain to try the next model; otherwise fall back to offline mode immediately. */
 const MIN_TIME_FOR_NEXT_MODEL_MS = 14_000;
 
-/** Tek bir HTTP isteği; kendi zaman aşımıyla. Yoğun model bazen hiç cevap vermez. */
+/** A single HTTP request with its own timeout. An overloaded model sometimes never answers. */
 async function postJson(url: string, headers: Record<string, string>, body: unknown, signal: AbortSignal, timeoutMs: number): Promise<unknown> {
   const attempt = new AbortController();
   const stop = () => attempt.abort();
@@ -540,8 +540,8 @@ async function postJson(url: string, headers: Record<string, string>, body: unkn
 }
 
 /**
- * Önce GEMINI_MODEL'i dener; o model yoğunsa, kotası dolduysa ya da bir isteğe 6 sn içinde cevap
- * vermezse sıradaki yedek modele geçer. Yedekler GEMINI_FALLBACK_MODELS ile değiştirilebilir.
+ * Tries GEMINI_MODEL first; if that model is overloaded, out of quota or does not answer a request within
+ * the timeout, moves on to the next backup model. Backups can be changed with GEMINI_FALLBACK_MODELS.
  */
 async function callGemini(system: string, turns: Turn[], signal: AbortSignal, kit: ToolKit | null, deadline: number): Promise<ModelResult> {
   const primary = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
@@ -562,7 +562,7 @@ async function callGemini(system: string, turns: Turn[], signal: AbortSignal, ki
       return result;
     } catch (err) {
       lastError = err;
-      if (signal.aborted || !(err instanceof ModelUnavailableError)) throw err; // anahtar hatası gibi: başka model de çözmez
+      if (signal.aborted || !(err instanceof ModelUnavailableError)) throw err; // e.g. a key error: another model will not fix it
       console.warn(`[ASTRA] ${err.message}; trying the next model.`);
     }
   }
@@ -602,7 +602,7 @@ async function geminiConversation(model: string, system: string, turns: Turn[], 
     } catch (err) {
       if (err instanceof RequestTimeoutError) throw new ModelUnavailableError(`${model}: ${err.message}`);
       if (!(err instanceof HttpError)) throw err;
-      // Model "thinkingConfig" alanını tanımazsa bir kez onsuz dene
+      // If the model does not recognize the "thinkingConfig" field, retry once without it
       if (err.status === 400 && withThinking && /thinking/i.test(err.detail)) return geminiConversation(model, system, turns, signal, kit, false);
       if (err.status === 400 && kit && TOOL_ERROR.test(err.detail)) throw new ToolsUnsupportedError(`gemini ${model}: ${err.detail.slice(0, 200)}`);
       const message = `gemini ${model} ${err.status}: ${err.detail.slice(0, 300)}`;
@@ -618,7 +618,7 @@ async function geminiConversation(model: string, system: string, turns: Turn[], 
         .trim();
       return { text, tools, outputs };
     }
-    // Modelin araç isteğini (düşünce imzasıyla birlikte) aynen geri koy, sonra araç sonuçlarını ekle.
+    // Put the model's tool request back exactly (with its thought signature), then append the tool results.
     contents.push({ role: 'model', parts });
     contents.push({
       role: 'user',
@@ -649,7 +649,7 @@ async function callClaude(system: string, turns: Turn[], signal: AbortSignal, ki
   for (let round = 0; ; round++) {
     const body: Record<string, unknown> = { model, max_tokens: 1024, system, messages };
     if (withSpeedConfig) {
-      body.thinking = { type: 'disabled' }; // hız için düşünmeyi kapat
+      body.thinking = { type: 'disabled' }; // turn off thinking for speed
       body.output_config = { effort: 'low' };
     }
     if (kit) {
@@ -667,7 +667,7 @@ async function callClaude(system: string, turns: Turn[], signal: AbortSignal, ki
       )) as typeof data;
     } catch (err) {
       if (!(err instanceof HttpError)) throw err;
-      // Model "thinking" ya da "effort" alanını tanımazsa bir kez onlarsız dene
+      // If the model does not recognize the "thinking" or "effort" field, retry once without them
       if (err.status === 400 && withSpeedConfig && /thinking|effort|output_config/i.test(err.detail)) return callClaude(system, turns, signal, kit, false);
       if (err.status === 400 && kit && TOOL_ERROR.test(err.detail)) throw new ToolsUnsupportedError(`claude: ${err.detail.slice(0, 200)}`);
       throw new Error(`claude ${err.status}: ${err.detail.slice(0, 300)}`);
@@ -713,7 +713,7 @@ export default {
     const provider = (process.env.ASTRA_PROVIDER === 'claude' ? 'claude' : 'gemini') as Provider;
     const keyName = provider === 'claude' ? 'ANTHROPIC_API_KEY' : 'GEMINI_API_KEY';
     if (!process.env[keyName]) {
-      // Anahtar yoksa modeli hiç çağırma; istemci hemen yedek moda geçer.
+      // With no key, never call the model; the client switches to offline mode immediately.
       return Response.json({ error: `${keyName} is not set (.env or deployment environment variable)`, source: provider }, { status: 503 });
     }
     const controller = new AbortController();
@@ -721,7 +721,7 @@ export default {
     const deadline = started + TOTAL_TIMEOUT_MS;
     try {
       const turns: Turn[] = [...(body.mode === 'chat' ? cleanHistory(body.history) : []), { role: 'user', text: body.question }];
-      // Araçlar sadece sohbette ve veri kopyası geldiyse; olay açıklaması hızlı olsun diye tek adım.
+      // Tools only in chat and only when a data snapshot was sent; incident explanations stay a single step for speed.
       const kit: ToolKit | null = body.mode === 'chat' && body.toolData && typeof body.toolData === 'object' ? { data: body.toolData as ToolData } : null;
       const ask = (k: ToolKit | null) =>
         provider === 'claude' ? callClaude(buildSystem(body, k), turns, controller.signal, k) : callGemini(buildSystem(body, k), turns, controller.signal, k, deadline);
@@ -743,7 +743,7 @@ export default {
         ...(result.outputs.length ? { toolOutput: JSON.stringify(result.outputs).slice(0, 20_000) } : {}),
       });
     } catch (err) {
-      // İstemci bu durumda yedek moda geçer (src/ai/fallback.ts). Sebep terminalde de görünsün.
+      // In this case the client switches to offline mode (src/ai/fallback.ts). Log the reason to the terminal too.
       console.warn(`[ASTRA] No model answer; the screen will show fallback mode: ${String(err).slice(0, 300)}`);
       return Response.json({ error: String(err), source: provider }, { status: 502 });
     } finally {

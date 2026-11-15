@@ -1,7 +1,7 @@
-// Parça 4 · Yedek mod: internet ya da model yoksa, veriden kural tabanlı Türkçe cevap üretir.
-// Sabit metin yerine güncel değerlerle doldurulan şablonlar kullanılır; böylece yedek cevap da
-// doğru sayılar içerir. Kurallar modelinkiyle aynı: en fazla 4 cümle, teşhis yok, ilaç yok,
-// uyarı açmak yok, veride olmayan sayı yok.
+// Part 4 · Offline mode: with no internet or model, produces a rule-based English answer from the data.
+// Instead of fixed text it uses templates filled with current values, so the offline answer also
+// contains correct numbers. Same rules as the model: at most 4 sentences, no diagnosis, no medication,
+// no raising alerts, no numbers that are not in the data.
 import { CREW, CREW_BY_ID, CREW_IDS } from '../crew';
 import { GROUP_NAMES, METRIC_BY_KEY, readMetric, type MetricKey } from '../metrics';
 import { normalRangeFor, PARAMS } from '../sim/parameters';
@@ -24,7 +24,7 @@ export function fallbackAnswer(req: AstraRequest, s: AstraState = useAstra.getSt
   try {
     text = req.mode === 'incident' ? incidentText(req, s) : chatText(req.question, s);
   } catch (err) {
-    // Şablon bir veri eksikliğine takılırsa yine de güvenli bir cevap ver.
+    // If a template trips over missing data, still give a safe answer.
     console.warn('[ASTRA] Fallback template error:', err);
     text = GENERIC[req.mode];
   }
@@ -36,19 +36,19 @@ const GENERIC = {
   chat: `The language model is unreachable right now; I am in fallback mode. The Layer 1 alerts on screen are current and valid. ${DOCTOR}`,
 };
 
-// ---------------------------------------------------------------- yardımcılar
+// ---------------------------------------------------------------- helpers
 
 function param(key: string, fallback: number): number {
   return (PARAMS as Record<string, { value: number } | undefined>)[key]?.value ?? fallback;
 }
 
-/** "a", "a ve b", "a, b ve c" */
+/** "a", "a and b", "a, b and c" */
 function list(items: string[]): string {
   if (items.length <= 1) return items[0] ?? '';
   return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 }
 
-/** Cümle içinde etiketin ilk harfini küçültür (kısaltmalar hariç: "CO₂", "PVT"). */
+/** Lower-cases the first letter of a label inside a sentence (except abbreviations: "CO₂", "PVT"). */
 function lcFirst(label: string): string {
   return label.length > 1 && label[1] === label[1].toLowerCase()
     ? label.charAt(0).toLowerCase() + label.slice(1)
@@ -59,7 +59,7 @@ function label(key: MetricKey): string {
   return lcFirst(METRIC_BY_KEY[key]?.label ?? key);
 }
 
-/** "kalp atış hızı 155 bpm (kişisel normal 92 bpm)" */
+/** "heart rate 155 bpm (personal baseline 92 bpm)" */
 function signalText(sig: MetricScore): string {
   return `${label(sig.key)} ${valueText(sig.key, sig.value)} (personal baseline ${valueText(sig.key, sig.mean)})`;
 }
@@ -90,9 +90,9 @@ function sentences(...parts: (string | false | undefined)[]): string {
   return parts.filter(Boolean).slice(0, 4).join(' ');
 }
 
-// ---------------------------------------------------------------- olay açıklaması
+// ---------------------------------------------------------------- incident explanation
 
-/** Olayda sinyal yoksa canlı veriden okunacak ölçümler. */
+/** Metrics read from live data if the incident has no signals. */
 const TYPE_KEYS: Record<IncidentType, MetricKey[]> = {
   RADIATION: ['env.doseRate_uSv_h', 'env.doseCumulative_mSv'],
   CO2: ['env.ppCO2_mmHg', 'resp.rr_bpm'],
@@ -106,7 +106,7 @@ const TYPE_KEYS: Record<IncidentType, MetricKey[]> = {
 
 function incidentSignals(inc: Incident, s: AstraState): string {
   if (inc.signals.length) {
-    // Aynı ölçüm birden fazla kişiden geldiyse bir kez yaz.
+    // If the same metric came from more than one person, write it once.
     const seen = new Set<MetricKey>();
     const uniq = inc.signals.filter((x) => (seen.has(x.key) ? false : (seen.add(x.key), true)));
     return list(uniq.slice(0, 3).map(signalText));
@@ -189,9 +189,9 @@ function incidentText(req: AstraRequest, s: AstraState): string {
   }
 }
 
-// ---------------------------------------------------------------- sohbet
+// ---------------------------------------------------------------- chat
 
-/** Soru kelimesi -> ölçümler. İlk eşleşen kullanılır. */
+/** Question word -> metrics. The first match is used. */
 const METRIC_WORDS: [RegExp, MetricKey[]][] = [
   [/hrv|variabilit|değişkenli/, ['cardio.hrv_rmssd_ms']],
   [/heart rate|pulse|heartbeat|nabz|nabız|kalp atış|kalp hız/, ['cardio.hr_bpm']],
@@ -214,7 +214,7 @@ const METRIC_WORDS: [RegExp, MetricKey[]][] = [
   [/cabin pressure|suit pressure|kabin basın|giysi basın/, ['env.pressure_kPa']],
 ];
 
-/** Sistemde ölçülmeyen konular için kaynaklı, kesin olmayan cevap. */
+/** Sourced, non-definitive answer for topics the system does not measure. */
 function unmeasuredText(s: AstraState, has: (re: RegExp) => boolean): string | undefined {
   if (has(/bone|osteopor|kemik/)) {
     const day = s.ship?.missionDay ?? 180;
@@ -272,7 +272,7 @@ function whyText(s: AstraState, id: CrewId, askedCritical: boolean): string {
   );
 }
 
-/** Olası durum cevabı: önce değişen değerler, sonra "... ile uyumlu olabilir", sonra kesin olmadığı. */
+/** Possible-condition answer: first the changed values, then "... may be consistent with", then that it is not definitive. */
 function conditionText(s: AstraState, id: CrewId | undefined, urgent: boolean): string {
   const lifeThreat = urgent && 'I cannot confirm a life-threatening condition from this data; if there are symptoms, report them to the flight surgeon immediately.';
   if (!id) return sentences('I cannot give a definitive diagnosis.', lifeThreat, DOCTOR);
@@ -321,7 +321,7 @@ function restText(s: AstraState): string {
   );
 }
 
-// ---------------------------------------------------------------- psikolojik testler
+// ---------------------------------------------------------------- psychological tests
 
 const TEST_NAME: Record<TestKind, string> = { SP: 'fatigue (Samn-Perelli)', TLX: 'workload (NASA-TLX)', PVT: 'PVT-B reaction test' };
 
@@ -345,7 +345,7 @@ function resultsSentence(id: CrewId): string | undefined {
 }
 
 function testText(s: AstraState, crew: CrewId[], has: (re: RegExp) => boolean): string {
-  // Karşılaştırma
+  // Comparison
   if (has(/most tired|compare|comparison|rank|who is more|crew|team|en yorgun|karşılaştır|kıyasla|ekip|kim daha|sırala/) && !crew.length) {
     const c = crewComparison(CREW_IDS);
     if (!c.yorgunluk.length && !c.isYuku.length && !c.tepki.length) return 'Nobody has taken a test in the last 4 mission days; tests are needed before comparing. Tests are taken from the Tests tab on the Astronaut View.';
@@ -356,7 +356,7 @@ function testText(s: AstraState, crew: CrewId[], has: (re: RegExp) => boolean): 
       c.testYapmayanlar.length > 0 && `Not tested: ${list(c.testYapmayanlar.map(shortName))}.`,
     );
   }
-  // Plan: kim, hangi testi yapmalı
+  // Plan: who should take which test
   if (has(/who|which|should|when|pending|schedule|plan|recommend|kim|hangi|yapmalı|zamanı|bekleyen|öneri/) && !crew.length) {
     const due = CREW_IDS.map((id) => ({ id, d: dueTests(id, s) })).filter((x) => x.d.length);
     const urgent = due.filter((x) => x.d.some((d) => d.oncelik === 'öncelikli'));
@@ -367,7 +367,7 @@ function testText(s: AstraState, crew: CrewId[], has: (re: RegExp) => boolean): 
       'The routine plan is each test every 4 mission days (ISS Reaction Self Test frequency); tests are taken from the Tests tab on the Astronaut View.',
     );
   }
-  // Bir kişi ya da genel durum
+  // One person or the overall status
   const ids = crew.length ? crew.slice(0, 1) : CREW_IDS.filter((id) => resultsSentence(id));
   if (!ids.length) {
     return sentences(
@@ -466,7 +466,7 @@ function metricText(s: AstraState, crew: CrewId[], keys: MetricKey[]): string {
   return sentences(`${METRIC_BY_KEY[key].label}: ${list(parts)}.`, LICENSED_SIM_KEYS.includes(key) && LICENSED_NOTE, rangeSentence(s, ids, key));
 }
 
-/** Resmi normal aralığı olan ölçümde: herkes aralıktaysa bunu, değilse aralık dışındakileri söyler. */
+/** For a metric with an official reference range: says so if everyone is within it, otherwise names those outside it. */
 function rangeSentence(s: AstraState, ids: CrewId[], key: MetricKey): string | undefined {
   const withRange = ids.filter((id) => normalRangeFor(key, CREW_BY_ID[id].location));
   if (!withRange.length) return undefined;
@@ -505,16 +505,16 @@ function chatText(question: string, s: AstraState): string {
 
   if (Object.keys(s.telemetry).length === 0) return 'No telemetry has arrived yet; please ask again in a few seconds.';
 
-  // 0) Selamlama, teşekkür, "kimsin"
+  // 0) Greeting, thanks, "who are you"
   if (has(/^(hello|hi|hey|good (morning|evening|afternoon)|thanks|thank you|who are you|how are you|merhaba|selam|günaydın|iyi akşamlar|iyi geceler|iyi günler|teşekkür|sağ ol|kimsin|sen kimsin|nasılsın)/) && q.length < 40) {
     if (has(/^(thanks|thank you|teşekkür|sağ ol)/)) return 'You are welcome. I am glad to help with any other question.';
     return 'Hello, I am ASTRA, the health decision-support assistant for the ARES-1 crew. I can answer questions about the crew\'s health and environment data; for example, you can ask "Who should rest today?"';
   }
-  // 1) Rol dışı istekler
+  // 1) Out-of-role requests
   if (has(/instruction|forget|poem|story|song|joke|write code|role ?play|pretend|talimat|unut|şiir|hikaye|hikâye|şarkı|masal|fıkra|kod yaz|rol yap|rolünden/)) {
     return 'I am ASTRA; I only help with the ARES-1 crew\'s health and environment data. For example, you can ask "Who should rest today?" or "How is the radiation situation?"';
   }
-  // 2) Komut: uyarı açma, sistem kapatma
+  // 2) Commands: raising alerts, shutting down systems
   if (has(/(raise|create|open|trigger|start) (an? )?(alert|alarm|incident)|turn off|shut down|disable|silence|mute|(uyarı|alarm|olay)[a-zçğıöşü]*\s+(aç|oluştur|başlat)(?![ıi])|kapat|devre dışı|sustur/)) {
     const co2 = Math.max(...crewAt(s, 'KOKPIT').map((id) => metricNow(s, id, 'env.ppCO2_mmHg') ?? 0), 0);
     return sentences(
@@ -523,7 +523,7 @@ function chatText(question: string, s: AstraState): string {
       has(/ventilat|co2|co₂|havalandır/) && `For reference: Cabin CO₂ partial pressure is currently ${valueText('env.ppCO2_mmHg', co2)}.`,
     );
   }
-  // 3) İlaç ve doz
+  // 3) Medication and dose
   if (has(/medication|medicine|drug|pill|tablet|capsule|painkiller|antibiotic|ibuprofen|aspirin|paracetamol|give (a )?dose|ilaç|ilac|kapsül|hap(?![a-zçğıöşü])|doz ver|ağrı kesici|antibiyotik|(^|\s)mg(\s|$)/)) {
     return sentences(
       'I cannot recommend medication or doses; that decision belongs to the flight surgeon.',
@@ -532,39 +532,39 @@ function chatText(question: string, s: AstraState): string {
       DOCTOR,
     );
   }
-  // 4) Hastalık, teşhis, "ne olabilir?": veriye dayalı olası durum, ihtimal diliyle
+  // 4) Illness, diagnosis, "what could it be?": data-based possible condition, worded as a possibility
   if (has(/heart attack|attack|diagnos|disease|illness|is (he|she) sick|ill\b|stroke|infarction|what could|going on with|wrong with|unwell|what is the problem|kriz|teşhis|tanı(?![a-zçğıöşü])|hastalı|hasta mı|enfarktüs|inme geçir|felç|ne olabilir|rahatsız|sorun ne/)) {
     return conditionText(s, crew[0] ?? mostSevere(s), has(/heart attack|stroke|infarction|kriz|enfarktüs|inme|felç/));
   }
-  // 5) Kim dinlenmeli
+  // 5) Who should rest
   if (has(/rest|dinlen/)) return restText(s);
-  // 5b) Psikolojik testler (Samn-Perelli, NASA-TLX, PVT-B): sonuçlar, plan, karşılaştırma
+  // 5b) Psychological tests (Samn-Perelli, NASA-TLX, PVT-B): results, plan, comparison
   if (has(/test|tlx|samn|perelli|workload|psycholog|questionnaire|iş yük|is yuk|psikoloj|anket/)) return testText(s, crew, has);
-  // 6) Neden kritik / neden dikkat
+  // 6) Why Warning / why Caution
   if (has(/why|reason|cause|neden|niye|sebep/) && (crew.length || has(/critical|caution|warning|kritik|dikkat/))) {
     const id = crew[0] ?? mostSevere(s);
     if (id) return whyText(s, id, has(/critical|warning|kritik/));
   }
-  // 7) Konular
+  // 7) Topics
   if (has(/radiation|dose|sievert|msv|solar storm|radyasyon|doz|güneş fırtına/)) return radiationText(s, crew);
   if (has(/co2|co₂|carbon dioxide|ventilat|air quality|karbondioksit|karbon dioksit|havalandır|hava kalite/)) return co2Text(s);
   if (has(/delay|earth|communicat|message|gecikme|dünya|iletişim|mesaj/)) return delayAnswer(s);
-  // 8) Belirli bir ölçüm
+  // 8) A specific metric
   const match = METRIC_WORDS.find(([re]) => re.test(q));
   if (match) return metricText(s, crew, match[1]);
-  // 8b) Sistemde ölçülmeyen konular: uydurmadan söyle, varsa NASA'nın genel bilgisini ver
+  // 8b) Topics the system does not measure: say so without making things up, give NASA's general information if available
   const unmeasured = unmeasuredText(s, has);
   if (unmeasured) return unmeasured;
-  // 9) Bir kişinin durumu
+  // 9) One person's status
   if (crew.length && has(/how|status|ok\b|okay|doing|critical|caution|warning|nominal|score|nasıl|durum|iyi mi|ne durumda|kritik|dikkat|skor/)) return whyText(s, crew[0], false);
-  // 10) Sadece bir ad ("Peki Kerem?"): o kişinin durumu
+  // 10) Only a name ("And Kerem?"): that person's status
   const FILLER = new Set(['and', 'what', 'about', 'how', 'now', 'then', 'so', 'peki', 'ya', 'ne', 'için', 've', 'mi', 'mı', 'olacak', 'bakalım', 'şimdi']);
   const rest = q
     .replace(/[^a-zçğıöşü\s]/g, ' ')
     .split(/\s+/)
     .filter((w) => w && !FILLER.has(w) && !crew.some((id) => w.startsWith(id)));
   if (crew.length && rest.length === 0) return whyText(s, crew[0], false);
-  // 11) Kişi adı geçiyor ama ölçüm tanınmadı: uydurma
+  // 11) A name is mentioned but no metric was recognized: do not make things up
   if (crew.length) {
     return sentences(
       'This metric is not in the data; I will not guess.',
@@ -574,6 +574,6 @@ function chatText(question: string, s: AstraState): string {
       DOCTOR,
     );
   }
-  // 12) Genel özet
+  // 12) General summary
   return summaryText(s);
 }

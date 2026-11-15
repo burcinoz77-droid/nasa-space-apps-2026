@@ -1,7 +1,7 @@
-// Parça 2 · Uçtan uca testler: gerçek simülasyon (Parça 1) + Katman 1, loop.ts ile aynı akış.
-// Plandaki "Bitti kriteri": Normal'de 5 dk yanlış alarm yok; her senaryo doğru olayı açar ve otonom
-// adım kayda düşer; senaryo bitince olaylar kendiliğinden çözülür.
-// Senaryo testleri, simülasyon senaryoları uygulamıyorsa (kitteki v0) kendiliğinden atlanır.
+// Part 2 · End-to-end tests: real simulation (Part 1) + Layer 1, same flow as loop.ts.
+// The plan's "Definition of done": no false alarm in 5 min of Nominal; each scenario raises the right incident and the autonomous
+// action is logged; when the scenario ends, the incidents resolve on their own.
+// Scenario tests are skipped automatically if the simulation does not apply scenarios (v0 in the kit).
 import { describe, expect, it } from 'vitest';
 import { CREW } from '../crew';
 import { createSimulation } from '../sim';
@@ -9,7 +9,7 @@ import type { AutoAction, DetectorOutput, Incident, LedgerEntry, ScenarioId } fr
 import { BASELINE_WINDOW } from './config';
 import { createDetector } from './index';
 
-const TICKS_5_MIN = Math.ceil((5 * 60) / 1.2); // 1,2 sn örneklemede 5 dakika = 250 ölçüm
+const TICKS_5_MIN = Math.ceil((5 * 60) / 1.2); // at 1.2 s sampling, 5 minutes = 250 readings
 
 function world(seed = 2026) {
   const sim = createSimulation(seed);
@@ -21,7 +21,7 @@ function world(seed = 2026) {
     for (let i = 0; i < n; i++) {
       const { ship, telemetry } = sim.tick();
       last = det.process(ship, telemetry);
-      for (const a of last.newActions) sim.onAutoAction(a); // loop.ts ile aynı
+      for (const a of last.newActions) sim.onAutoAction(a); // same as loop.ts
       ledger.push(...last.newLedger);
       actions.push(...last.newActions);
     }
@@ -30,7 +30,7 @@ function world(seed = 2026) {
   return { sim, det, run, ledger, actions, get last() { return last; } };
 }
 
-/** Simülasyon senaryoları uyguluyor mu? (Kitteki v0 uygulamaz; o zaman senaryo testleri atlanır.) */
+/** Does the simulation apply scenarios? (v0 in the kit does not; then the scenario tests are skipped.) */
 function simulationHasScenarios(): boolean {
   const sim = createSimulation(1);
   for (let i = 0; i < 5; i++) sim.tick();
@@ -40,9 +40,9 @@ function simulationHasScenarios(): boolean {
   return ppCO2 > 2.5;
 }
 
-describe('Uçtan uca · Normal gün', () => {
+describe('End to end · Nominal day', () => {
   for (const seed of [2026, 1, 7, 42, 99]) {
-    it(`seed ${seed}: 5 dakika boyunca hiç olay açılmaz, kimse dikkat/kritik olmaz`, () => {
+    it(`seed ${seed}: no incident is raised for 5 minutes, nobody reaches caution/warning`, () => {
       const w = world(seed);
       w.run(BASELINE_WINDOW);
       let worst = 0;
@@ -59,10 +59,10 @@ describe('Uçtan uca · Normal gün', () => {
 
 const SCENARIOS_READY = simulationHasScenarios();
 
-describe.skipIf(!SCENARIOS_READY)('Uçtan uca · senaryolar (Parça 1 simülasyonuyla)', () => {
+describe.skipIf(!SCENARIOS_READY)('End to end · scenarios (with the Part 1 simulation)', () => {
   const ids = (loc: 'KOKPIT' | 'GEZEGEN') => CREW.filter((c) => c.location === loc).map((c) => c.id);
 
-  /** Baseline + senaryo + Normal'e dönüş. */
+  /** Baseline + scenario + return to Nominal. */
   function play(id: ScenarioId, ticks = 160) {
     const w = world();
     w.run(BASELINE_WINDOW + 10);
@@ -76,7 +76,7 @@ describe.skipIf(!SCENARIOS_READY)('Uçtan uca · senaryolar (Parça 1 simülasyo
 
   const allResolved = (out: DetectorOutput) => out.incidents.every((i) => i.status === 'resolved');
 
-  it('Güneş fırtınası: Kokpit ve Gezegen için radyasyon kritik + sığınak; sonra çözülür', () => {
+  it('Solar particle event: radiation Warning + storm shelter for orbit and surface; then resolves', () => {
     const { w, opened, after } = play('SOLAR_STORM');
     const rad = opened.filter((i) => i.type === 'RADIATION');
     expect(rad.map((i) => i.crewIds).sort()).toEqual([ids('GEZEGEN'), ids('KOKPIT')].sort());
@@ -85,17 +85,17 @@ describe.skipIf(!SCENARIOS_READY)('Uçtan uca · senaryolar (Parça 1 simülasyo
     expect(allResolved(after)).toBe(true);
   });
 
-  it('CO₂ temizleyici arızası: CO2 kritik + havalandırma; CO₂ düşer ve olay çözülür', () => {
+  it('CO₂ scrubber failure: CO2 Warning + ventilation; CO₂ falls and the incident resolves', () => {
     const { w, opened, after } = play('CO2_SCRUBBER_FAIL');
     const co2 = opened.find((i) => i.type === 'CO2')!;
     expect(co2).toMatchObject({ level: 'critical', crewIds: ids('KOKPIT'), autoActions: ['INCREASE_VENTILATION'] });
-    // Havalandırma senaryo sürerken CO₂'yi düşürür: olay senaryo bitmeden çözülmüş olmalı
+    // Ventilation lowers CO₂ while the scenario is running: the incident must resolve before the scenario ends
     expect(co2.status).toBe('resolved');
     expect(w.ledger.some((e) => e.kind === 'AUTO_ACTION' && e.text.startsWith('Ventilation increased'))).toBe(true);
     expect(allResolved(after)).toBe(true);
   });
 
-  it('Mars 180. gün yükü: Elif\'te yorgunluk + zorunlu dinlenme; diğerlerinde yorgunluk olayı yok', () => {
+  it('Mars Day 180 workload: fatigue + mandatory crew rest for Elif; no fatigue incident for the others', () => {
     const { w, opened, after } = play('MARS_DAY_180');
     const fat = opened.filter((i) => i.type === 'FATIGUE');
     expect(fat.map((i) => i.crewIds)).toEqual([['elif']]);
@@ -105,7 +105,7 @@ describe.skipIf(!SCENARIOS_READY)('Uçtan uca · senaryolar (Parça 1 simülasyo
     expect(after.statuses.elif.restRequired).toBe(false);
   });
 
-  it('EVA aşırı efor: Mert\'te ısı yükü + zorunlu dinlenme; çekirdek sıcaklık düşer', () => {
+  it('EVA overexertion: heat load + mandatory crew rest for Mert; core temperature falls', () => {
     const { w, opened, after } = play('EVA_OVEREXERTION');
     const th = opened.find((i) => i.type === 'THERMAL')!;
     expect(th).toMatchObject({ crewIds: ['mert'], autoActions: ['MANDATORY_REST'] });
@@ -114,7 +114,7 @@ describe.skipIf(!SCENARIOS_READY)('Uçtan uca · senaryolar (Parça 1 simülasyo
     expect(allResolved(after)).toBe(true);
   });
 
-  it('senaryo kalibrasyon bitmeden başlarsa baseline erken donar, olay yine açılır', () => {
+  it('if a scenario starts before calibration ends, the baseline freezes early and the incident is still raised', () => {
     const w = world();
     w.run(12);
     w.sim.setScenario('SOLAR_STORM');

@@ -1,8 +1,8 @@
-// Parça 3 · Vücut haritasının bölgeleri: 3B astronot modeli, 2B yedek çizim ve Astronot Ekranı sekmeleri kullanır.
-//   Baş        = bilişsel ve göz (veri grubu 4)
-//   Göğüs      = kalp ve solunum (veri grubu 1 ve 2'nin solunum kısmı)
-//   Alt gövde  = metabolizma, ter ve vücut ısısı (veri grubu 3 ve 2'nin ısı/GSR kısmı) — EVA eforunda ilk sapan bölge
-//   Çevre      = radyasyon, CO₂, basınç, uyku (veri grubu 5); modelin altındaki zemin halkası
+// Part 3 · Body map regions: used by the 3D astronaut model, the 2D fallback drawing and the Astronaut View tabs.
+//   Head        = cognitive and eyes (data group 4)
+//   Chest       = heart and breathing (data group 1 and the respiratory part of 2)
+//   Lower body  = metabolism, sweat and body temperature (data group 3 and the temperature/GSR part of 2) — the first region to deviate during EVA exertion
+//   Environment = radiation, CO₂, pressure, sleep (data group 5); the ground ring under the model
 import { METRICS, type MetricKey } from '../metrics';
 import type { CrewStatus, Level } from '../types';
 import { scoreLevel, worstLevel } from './theme';
@@ -36,8 +36,8 @@ export const REGION_BY_ID = Object.fromEntries(REGIONS.map((r) => [r.id, r])) as
 const signalLevels = (status: CrewStatus, keys: MetricKey[]) => status.topSignals.filter((s) => keys.includes(s.key)).map((s) => s.level);
 
 /**
- * Bölgenin skoru ve seviyesi. Skor, bölgenin dayandığı Katman 1 alan skorlarının en düşüğü; seviye, bu skorun rengi
- * (theme.scoreLevel) ile bölgedeki en çok sapan ölçümlerin seviyesinden kötü olanı. Ekranda skor ve seviye hep tutarlı.
+ * The region's score and level. Score = the lowest of the Layer 1 domain scores the region is based on; level = the worse of
+ * that score's color (theme.scoreLevel) and the level of the most deviating metrics in the region. Score and level always agree on screen.
  */
 export function regionState(status: CrewStatus | undefined, id: RegionId): { level: Level | undefined; score: number | undefined } {
   if (!status) return { level: undefined, score: undefined };
@@ -46,7 +46,7 @@ export function regionState(status: CrewStatus | undefined, id: RegionId): { lev
   return { score, level: worstLevel(scoreLevel(score), ...signalLevels(status, REGION_BY_ID[id].metrics)) };
 }
 
-/** En kötü bölge (seçili bölge yoksa ayrıntı paneli bununla açılır). */
+/** The worst region (the detail panel opens with it if no region is selected). */
 export function worstRegion(status: CrewStatus | undefined): RegionId {
   const rank: Record<Level, number> = { normal: 0, caution: 1, critical: 2 };
   let best: RegionId = 'chest';

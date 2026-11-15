@@ -1,9 +1,9 @@
-// Parça 4 · ASTRA sohbet paneli. Mor renk = yapay zekânın sesi.
-// Hazır soru düğmeleri, yükleniyor animasyonu, kaynak (Gemini / Claude / Yedek mod) ve süre
-// etiketi, "Sayılar doğrulandı" rozeti, kullanılan araçlar, alttaki sorumluluk satırı ve
-// "Sohbeti sıfırla" düğmesi. Sohbet panel kapanınca ya da sayfa yenilenince kaybolmaz (src/ai/chatStore.ts).
-// Panel başlığından tutulup sürüklenebilir; yeri hatırlanır, başlığa çift tıklayınca sağ alt köşeye döner.
-// Sadece chat alanına yazar.
+// Part 4 · ASTRA chat panel. Purple = the voice of the AI.
+// Ready-made question buttons, loading animation, source (Gemini / Claude / Offline mode) and duration
+// label, "Numbers verified" badge, tools used, the disclaimer line at the bottom and the
+// "Reset chat" button. The chat is not lost when the panel closes or the page reloads (src/ai/chatStore.ts).
+// The panel can be dragged by its header; its position is remembered, double-clicking the header returns it to the bottom right.
+// Writes only to the chat field.
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { askAstra } from '../../ai/client';
 import { resetChat } from '../../ai/chatStore';
@@ -21,7 +21,7 @@ const PRESETS = [
   'How is bone loss?',
 ];
 
-// ---- Sürükleme: panelin sol üst köşesinin ekrandaki yeri (px). null = varsayılan sağ alt köşe.
+// ---- Dragging: on-screen position of the panel's top-left corner (px). null = default bottom-right corner.
 type Pos = { x: number; y: number };
 const POS_KEY = 'astra-panel-konum-v1';
 const MARGIN = 8;
@@ -40,11 +40,11 @@ function savePos(p: Pos | null) {
     if (p) globalThis.localStorage?.setItem(POS_KEY, JSON.stringify(p));
     else globalThis.localStorage?.removeItem(POS_KEY);
   } catch {
-    // depo kapalıysa konum sadece bu oturumda kalır
+    // if storage is disabled the position is kept only for this session
   }
 }
 
-/** Paneli ekranın içinde tutar (pencere küçülse de kaybolmasın). */
+/** Keeps the panel inside the screen (so it is not lost when the window shrinks). */
 function clampPos(p: Pos, el: HTMLElement | null): Pos {
   const w = el?.offsetWidth ?? 400;
   const h = el?.offsetHeight ?? 560;
@@ -58,7 +58,7 @@ export function AstraChatPanel() {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
   const [busy, setBusy] = useState(false);
-  const [waited, setWaited] = useState(0); // saniye; uzun bekleyişte kullanıcı neler olduğunu görsün
+  const [waited, setWaited] = useState(0); // seconds; during a long wait the user can see what is happening
   const chat = useAstra((s) => s.chat);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -66,7 +66,7 @@ export function AstraChatPanel() {
   const [pos, setPos] = useState<Pos | null>(loadPos);
   const drag = useRef<{ dx: number; dy: number; last: Pos | null } | null>(null);
 
-  // Pencere boyutu değişince panel ekran dışında kalmasın
+  // Keep the panel on screen when the window size changes
   useEffect(() => {
     const onResize = () => setPos((p) => (p ? clampPos(p, panelRef.current) : p));
     window.addEventListener('resize', onResize);
@@ -74,7 +74,7 @@ export function AstraChatPanel() {
   }, []);
 
   function startDrag(e: ReactPointerEvent<HTMLElement>) {
-    if (e.button !== 0 || (e.target as HTMLElement).closest('button')) return; // kapat düğmesi sürüklemez
+    if (e.button !== 0 || (e.target as HTMLElement).closest('button')) return; // the close button does not drag
     const rect = panelRef.current?.getBoundingClientRect();
     if (!rect) return;
     drag.current = { dx: e.clientX - rect.left, dy: e.clientY - rect.top, last: null };
@@ -90,7 +90,7 @@ export function AstraChatPanel() {
 
   function endDrag() {
     if (!drag.current) return;
-    if (drag.current.last) savePos(drag.current.last); // sadece gerçekten taşındıysa kaydet
+    if (drag.current.last) savePos(drag.current.last); // save only if it was actually moved
     drag.current = null;
   }
 

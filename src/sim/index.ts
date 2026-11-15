@@ -1,18 +1,18 @@
-// Parça 1 · Simülasyon motoru (dijital ikiz)
-// 6 astronot × 36 ölçüm, her tick'te bir. Gerçek sensör takıldığında değişen tek dosya budur.
+// Part 1 · Simulation engine (digital twin)
+// 6 astronauts × 36 metrics, one per tick. This is the only file that changes when real sensors are connected.
 //
-// Nasıl çalışır:
-//  1. Kişisel baseline: başlangıçta seed'li rastgeleyle her astronot için bir kez kurulur
-//     (parameters.ts NORMALS + kişisel fark + CREW_TRAITS kaymaları). Aynı seed = aynı mürettebat.
-//  2. Hedef: baseline + aktif senaryo etkileri (scenarios/*.json) + otonom adımlar.
-//  3. Doğal hareket: değer her tick'te hedefe yumuşakça yaklaşır: x += 0.25 × (hedef − x).
-//     Ekrana giden ölçüm = x + gaussian × sd × 0.3 (sensör gürültüsü; birikmez, yanlış alarm üretmez).
-//  4. Günlük ölçümler (uyku, PVT, BSI-18, PANAS ...) her tick değişmez; gürültüsüzdür ve
-//     sadece senaryo hedefini değiştirdiğinde yeni değere kayar.
-//  5. Toparlanma: değer kişisel normalinden UZAKLAŞIRKEN hızlı (0.25), normale DÖNERKEN yavaş değişir
-//     (canlı 0.025, günlük 0.01, zorunlu dinlenmede 0.12). Kriz bitince iz bir süre kalır, sağlık skoru
-//     kademeli toparlanır. Ortam ölçümleri (env.*) fiziksel olduğu için hızlı döner.
-//  6. Toplam doz birikir: doseCumulative_mSv += doseRate_uSv_h × (görev dk / 60) / 1000.
+// How it works:
+//  1. Personal baseline: built once per astronaut at start with seeded randomness
+//     (parameters.ts NORMALS + personal offset + CREW_TRAITS shifts). Same seed = same crew.
+//  2. Target: baseline + active scenario effects (scenarios/*.json) + autonomous actions.
+//  3. Natural movement: each tick the value eases towards the target: x += 0.25 × (target − x).
+//     The reading sent to the screen = x + gaussian × sd × 0.3 (sensor noise; does not accumulate, produces no false alarms).
+//  4. Daily metrics (sleep, PVT, BSI-18, PANAS ...) do not change every tick; they have no noise and
+//     only move to a new value when a scenario changes their target.
+//  5. Recovery: a value changes fast (0.25) while moving AWAY from its personal baseline, slowly while RETURNING
+//     (live 0.025, daily 0.01, during mandatory crew rest 0.12). After a crisis a trace remains for a while and the health score
+//     recovers gradually. Environmental metrics (env.*) are physical, so they return fast.
+//  6. Total dose accumulates: doseCumulative_mSv += doseRate_uSv_h × (mission min / 60) / 1000.
 import { CREW } from '../crew';
 import { METRICS, type MetricKey } from '../metrics';
 import type { AutoAction, CrewId, CrewMember, ScenarioId, ShipState, Simulation, Telemetry } from '../types';
@@ -24,25 +24,25 @@ type Values = Record<MetricKey, number>;
 
 interface CrewState {
   member: CrewMember;
-  baseline: Values; // kişisel normal (sabit)
-  x: Values; // gürültüsüz "gerçek" durum, hedefe yaklaşır
+  baseline: Values; // personal baseline (fixed)
+  x: Values; // noise-free "true" state, eases towards the target
   doseCumulative_mSv: number;
-  sheltered: boolean; // RADIATION_SHELTER uygulandı
-  resting: boolean; // MANDATORY_REST uygulandı
+  sheltered: boolean; // RADIATION_SHELTER applied
+  resting: boolean; // MANDATORY_REST applied
 }
 
 const DAILY = new Set<MetricKey>(METRICS.filter((m) => m.cadence === 'daily').map((m) => m.key));
 const KEYS = METRICS.map((m) => m.key);
-// Dinlenme verilince baseline'a dönen ölçümler (plan: nabız, solunum, laktat, çekirdek sıcaklık)
+// Metrics that return to baseline when crew rest is applied (plan: heart rate, breathing, lactate, core temperature)
 const REST_KEYS: MetricKey[] = ['cardio.hr_bpm', 'resp.rr_bpm', 'resp.minuteVent_L_min', 'biochem.sweatLactate_mM', 'resp.coreTemp_C'];
-const VENT_TARGET_mmHg = 2.0; // havalandırma artırılınca hedef ppCO₂ (plan, adım 7)
-const VENT_TICKS = 40; // bu hedefe kaç ölçümde iner
+const VENT_TARGET_mmHg = 2.0; // target ppCO₂ once ventilation is increased (plan, step 7)
+const VENT_TICKS = 40; // over how many readings it falls to this target
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
-/** Bu tick'te değer hedefe ne hızla yaklaşır: kötüleşirken hızlı, toparlanırken yavaş. */
+/** How fast the value approaches the target this tick: fast while worsening, slow while recovering. */
 function rateFor(c: CrewState, key: MetricKey, target: number, daily: boolean): number {
-  if (key.startsWith('env.')) return SIM.approachRate; // fiziksel ortam: hızlı
+  if (key.startsWith('env.')) return SIM.approachRate; // physical environment: fast
   const base = c.baseline[key];
   const recovering = Math.abs(target - base) < Math.abs(c.x[key] - base);
   if (!recovering) return SIM.approachRate;
@@ -50,15 +50,15 @@ function rateFor(c: CrewState, key: MetricKey, target: number, daily: boolean): 
   return daily ? PARAMS.recoveryRateDaily.value : PARAMS.recoveryRateLive.value;
 }
 
-/** Bir astronotun kişisel baseline'ı: konum normali + kişisel fark + hassasiyet kayması. */
+/** An astronaut's personal baseline: location baseline + personal offset + sensitivity shift. */
 export function makeBaseline(member: CrewMember, rand: () => number): Values {
   const eva = member.location === 'GEZEGEN';
   const offsets = CREW_TRAITS[member.id].offsets;
   const out = {} as Values;
   for (const key of KEYS) {
     const n = NORMALS[key];
-    const r = gaussian(rand); // her ölçüm için bir sayı çekilir (sıra sabit kalsın diye kaymalı ölçümde de)
-    // Kişisel hassasiyetle tanımlı ölçümde rastgele fark eklenmez: özellik demoda her zaman görünür
+    const r = gaussian(rand); // one number is drawn per metric (also for shifted metrics, so the order stays fixed)
+    // No random offset for a metric defined by a personal sensitivity: the trait is always visible in the demo
     const v = (eva ? n.eva : n.rest) + (key in offsets ? offsets[key]! : r * n.personSd);
     out[key] = clamp(v, n.min, n.max);
   }
@@ -67,9 +67,9 @@ export function makeBaseline(member: CrewMember, rand: () => number): Values {
 
 export function createSimulation(seed = 2026): Simulation {
   let rand = mulberry32(seed);
-  let tick = 0; // toplam tick
+  let tick = 0; // total ticks
   let scenario: ScenarioId = 'NORMAL';
-  let scenarioStart = 0; // senaryonun başladığı tick
+  let scenarioStart = 0; // tick at which the scenario started
   let ventilationStart: Record<'KOKPIT' | 'GEZEGEN', number | null> = { KOKPIT: null, GEZEGEN: null };
   let crew: CrewState[] = [];
 
@@ -79,7 +79,7 @@ export function createSimulation(seed = 2026): Simulation {
     scenario = 'NORMAL';
     scenarioStart = 0;
     ventilationStart = { KOKPIT: null, GEZEGEN: null };
-    // Sıra sabit: CREW sırası × METRICS sırası → aynı seed her zaman aynı baseline'ları üretir
+    // Fixed order: CREW order × METRICS order → the same seed always produces the same baselines
     crew = CREW.map((member) => {
       const baseline = makeBaseline(member, rand);
       return { member, baseline, x: { ...baseline }, doseCumulative_mSv: initialCumulativeDose(member.location), sheltered: false, resting: false };
@@ -87,14 +87,14 @@ export function createSimulation(seed = 2026): Simulation {
   }
   build();
 
-  /** Kabin CO₂'si normalden arıza tepesine ne kadar yükseldi: 0 → 1. */
+  /** How far cabin CO₂ has risen from nominal to the failure peak: 0 → 1. */
   function co2Excess(c: CrewState): number {
     const base = c.baseline['env.ppCO2_mmHg'];
     const span = PARAMS.cabinCO2FailurePeak.value - base;
     return clamp((c.x['env.ppCO2_mmHg'] - base) / span, 0, 1);
   }
 
-  /** Bu tick'teki hedef: baseline + senaryo etkileri + otonom adımlar. */
+  /** Target for this tick: baseline + scenario effects + autonomous actions. */
   function targetFor(c: CrewState, key: MetricKey, elapsed: number): number {
     const base = c.baseline[key];
     if (c.resting && REST_KEYS.includes(key)) return base;
@@ -113,7 +113,7 @@ export function createSimulation(seed = 2026): Simulation {
       }
     }
     if (key === 'env.doseRate_uSv_h') {
-      if (c.sheltered && !doseEffectActive) c.sheltered = false; // olay bitti, sığınaktan çıkıldı
+      if (c.sheltered && !doseEffectActive) c.sheltered = false; // event over, crew left the shelter
       if (c.sheltered) target *= PARAMS.shelterDoseFactor.value;
     }
     if (key === 'env.ppCO2_mmHg') {
@@ -145,7 +145,7 @@ export function createSimulation(seed = 2026): Simulation {
           const target = targetFor(c, key, elapsed);
           const rate = rateFor(c, key, target, DAILY.has(key));
           if (DAILY.has(key)) {
-            // Günlük ölçüm: gürültü yok, yeni hedefe yumuşakça kayar
+            // Daily metric: no noise, eases to the new target
             c.x[key] += rate * (target - c.x[key]);
             out[key] = c.x[key];
           } else {
@@ -174,7 +174,7 @@ export function createSimulation(seed = 2026): Simulation {
       scenario = id;
       scenarioStart = tick;
       const def = SCENARIOS[id];
-      // Senaryonun kendi seed'i: aynı senaryo her demoda aynı gürültüyle oynar
+      // The scenario's own seed: the same scenario plays with the same noise in every demo
       rand = mulberry32((seed ^ (def?.seed ?? 0)) >>> 0);
       ventilationStart = { KOKPIT: null, GEZEGEN: null };
       for (const c of crew) {
@@ -188,7 +188,7 @@ export function createSimulation(seed = 2026): Simulation {
       if (action.type === 'RADIATION_SHELTER') for (const c of targets) c.sheltered = true;
       if (action.type === 'MANDATORY_REST') for (const c of targets) c.resting = true;
       if (action.type === 'INCREASE_VENTILATION') {
-        // Aynı kabini paylaşanların hepsi etkilenir
+        // Everyone sharing the same cabin is affected
         for (const c of targets) if (ventilationStart[c.member.location] === null) ventilationStart[c.member.location] = tick;
       }
     },

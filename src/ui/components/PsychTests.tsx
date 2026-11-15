@@ -1,6 +1,6 @@
-// Parça 4 · Astronot Ekranı "Testler" sekmesi: psikolojik durum, ASTRA'nın test önerileri, üç resmi test ve geçmiş.
-// Test soruları instruments.ts'teki resmi maddelerdir (NASA-TLX, Samn-Perelli) ve PVT-B Basner vd. 2011'e göre çalışır.
-// Bu sekme uyarı açmaz. PVT-B sonucu telemetriye yazılır; uyarı gerekiyorsa onu Katman 1 açar.
+// Part 4 · Astronaut View "Tests" tab: psychological state, ASTRA's test recommendations, three official tests and history.
+// The test questions are the official items in instruments.ts (NASA-TLX, Samn-Perelli) and PVT-B works per Basner et al. 2011.
+// This tab raises no alerts. The PVT-B result is written to telemetry; if an alert is needed, Layer 1 raises it.
 import { useEffect, useRef, useState } from 'react';
 import { shortName } from '../../ai/labels';
 import { dueTests, psychState, type DueTest } from '../../psych/analysis';
@@ -14,7 +14,7 @@ import { LevelBadge } from './LevelBadge';
 
 type Active = { kind: TestKind; demo?: boolean } | null;
 
-/** Astronot Ekranı key={crewId} ile çağırır: başka astronota geçince açık test kapanır (sonuç yanlış kişiye yazılmaz). */
+/** The Astronaut View calls this with key={crewId}: switching to another astronaut closes an open test (the result is not written to the wrong person). */
 export function PsychTestsPanel({ crewId }: { crewId: CrewId }) {
   const [active, setActive] = useState<Active>(null);
   const [saved, setSaved] = useState<string | null>(null);
@@ -78,7 +78,7 @@ export function PsychTestsPanel({ crewId }: { crewId: CrewId }) {
   );
 }
 
-// ---------------------------------------------------------------- Psikolojik durum
+// ---------------------------------------------------------------- Psychological state
 function StateCard({ ps }: { ps: ReturnType<typeof psychState> }) {
   return (
     <div className="rounded-2xl border border-space-border bg-white/[0.02] p-4">
@@ -111,7 +111,7 @@ function StateCard({ ps }: { ps: ReturnType<typeof psychState> }) {
   );
 }
 
-// ---------------------------------------------------------------- ASTRA'nın önerileri
+// ---------------------------------------------------------------- ASTRA's recommendations
 function DueCard({ due, onStart, disabled }: { due: DueTest[]; onStart: (k: TestKind) => void; disabled: boolean }) {
   return (
     <div className="rounded-2xl border border-ai/30 bg-ai/5 p-4">
@@ -264,7 +264,7 @@ function PvtRunner({ demo, onDone, onCancel }: { demo: boolean; onDone: (s: PvtS
     clearAll();
     onDone(scorePvt(r.current.rts, r.current.falseStarts), durationS);
   };
-  // Uyaranlar arası 1–4 sn: tepkiden sonra 1 sn gösterim + 0–3 sn rastgele bekleme (Basner vd. 2011)
+  // 1–4 s between stimuli: 1 s display after the reaction + 0–3 s random wait (Basner et al. 2011)
   const randomWait = (min: number) => min + Math.random() * (PVT.maxDelayMs - PVT.minDelayMs);
   const schedule = (delay: number) => {
     if (elapsedS() >= durationS) return finish();
@@ -295,7 +295,7 @@ function PvtRunner({ demo, onDone, onCancel }: { demo: boolean; onDone: (s: PvtS
     const c = r.current;
     if (c.phase === 'stim') return record(performance.now() - c.stimAt);
     if (c.phase === 'wait') {
-      // Uyarandan önce basma: erken basma sayılır, deneme yeniden başlar
+      // Press before the stimulus: counts as a false start, the trial restarts
       window.clearTimeout(c.timer);
       c.falseStarts++;
       go('early');
@@ -311,7 +311,7 @@ function PvtRunner({ demo, onDone, onCancel }: { demo: boolean; onDone: (s: PvtS
     schedule(randomWait(PVT.minDelayMs));
   };
 
-  // Boşluk tuşu ile tepki; sekme değişirse test geçersiz olur
+  // Reaction with the space bar; the test is invalid if the tab changes
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || e.repeat) return;
@@ -334,7 +334,7 @@ function PvtRunner({ demo, onDone, onCancel }: { demo: boolean; onDone: (s: PvtS
       document.removeEventListener('visibilitychange', onHide);
       clearAll();
     };
-    // respond ve clearAll ref üzerinden çalışır; bir kez bağlanır
+    // respond and clearAll work through a ref; bound once
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -408,7 +408,7 @@ function PvtRunner({ demo, onDone, onCancel }: { demo: boolean; onDone: (s: PvtS
   );
 }
 
-// ---------------------------------------------------------------- ortak parçalar
+// ---------------------------------------------------------------- shared pieces
 function FormHead({ kind }: { kind: TestKind }) {
   const info = TEST_INFO[kind];
   return (

@@ -1,10 +1,10 @@
-// Parça 1 · EVA aşırı efor sinematiği (tam ekran, ~25 sn, her an "Atla" ile kapanır).
+// Part 1 · EVA overexertion cinematic (full screen, ~25 s, can be closed with "Skip" at any time).
 //
-// Isı yükü dakikalar içinde birikir; sinematik süresince simülasyon hızlandırılır, bitince eski hızına döner.
-//   1. Görev   : Mars yüzeyi, Mert habitat güneş panelini taşıyor; nabız yükseliyor.
-//   2. Isı     : giysi ısıyı atamıyor, çekirdek sıcaklık canlı yükseliyor. → Katman 1 ISI olayı + zorunlu dinlenme
-//   3. Tepki   : otonom adım "zorunlu dinlenme": Mert paneli bırakıp habitata yürür, değerler düşer.
-//   4. Kapanış : Kokpit'e döner.
+// Heat load builds up over minutes; the simulation is sped up during the cinematic and returns to its previous speed afterwards.
+//   1. Task     : Mars surface, Mert is carrying the habitat solar panel; heart rate is rising.
+//   2. Heat     : the suit cannot reject the heat, core temperature rises live. → Layer 1 THERMAL incident + mandatory crew rest
+//   3. Response : autonomous action "mandatory crew rest": Mert puts down the panel and walks to the habitat, values fall.
+//   4. Close    : back to Mission Status.
 import { useEffect, useState } from 'react';
 import { ABSOLUTE_LIMITS } from '../../engine/config';
 import { controls } from '../../loop';
@@ -24,8 +24,8 @@ const LIMITS: Record<Phase, [number, number]> = {
 };
 const FAST_TICK_MS = 300;
 const REST_TICK_MS = 200;
-const CAUTION = ABSOLUTE_LIMITS['resp.coreTemp_C']!.caution; // 38,5
-const CRITICAL = ABSOLUTE_LIMITS['resp.coreTemp_C']!.critical; // 39,0
+const CAUTION = ABSOLUTE_LIMITS['resp.coreTemp_C']!.caution; // 38.5
+const CRITICAL = ABSOLUTE_LIMITS['resp.coreTemp_C']!.critical; // 39.0
 const REST = 37.4;
 const T_MIN = 36.5;
 const T_MAX = 40.5;
@@ -36,7 +36,7 @@ export function EvaShow({ onClose }: { onClose: () => void }) {
   const rr = useAstra((s) => s.telemetry.mert?.resp.rr_bpm ?? 16);
   const lactate = useAstra((s) => s.telemetry.mert?.biochem.sweatLactate_mM ?? 8);
   const incident = useAstra((s) => s.incidents.find((i) => i.type === 'THERMAL' && i.status !== 'resolved'));
-  // Dinlenme verilince Mert hemen soğur ve olay kapanabilir; sinematik bu anı sonuna kadar hatırlar.
+  // Once crew rest is applied Mert cools quickly and the incident may close; the cinematic remembers this moment until the end.
   const [rested, setRested] = useState(false);
   const [peak, setPeak] = useState<'caution' | 'critical' | null>(null);
   if (incident?.autoActions.includes('MANDATORY_REST') && !rested) setRested(true);
@@ -70,7 +70,7 @@ export function EvaShow({ onClose }: { onClose: () => void }) {
       label="EVA overexertion cinematic"
       credit="Data: ARES-1 simulation (live, accelerated for the demo) · Heat: Stahn et al. 2017, Sci Rep · Threshold assumed"
     >
-      {/* Mars yüzeyi */}
+      {/* Mars surface */}
       <div className="absolute inset-x-0 bottom-0" style={{ height: '38vh', background: 'linear-gradient(to bottom, #9a3b22 0%, #6b2414 45%, #2a0c06 100%)' }} />
       <div className="absolute inset-x-0" style={{ bottom: '38vh', height: '22vh', background: 'linear-gradient(to top, rgba(217,119,87,0.35), transparent)' }} />
 
@@ -87,7 +87,7 @@ export function EvaShow({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      {/* Güneş paneli: önce Mert'in yanında, dinlenmede yerde kalır */}
+      {/* Solar panel: first next to Mert, stays on the ground during rest */}
       <div
         className="absolute"
         style={{ left: '12vw', bottom: '30vh', transform: `rotate(${walking ? -4 : -18}deg)`, transformOrigin: 'bottom right', transition: 'transform 1s' }}
@@ -117,7 +117,7 @@ export function EvaShow({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      {/* Canlı değerler */}
+      {/* Live values */}
       <div className="absolute flex gap-8" style={{ right: '5vw', top: '18vh', height: '56vh' }}>
         <Thermo temp={temp} level={level} />
         <div className="flex flex-col justify-end gap-5 font-mono">
@@ -186,7 +186,7 @@ function Big({ label, value, unit, color }: { label: string; value: string; unit
   );
 }
 
-/** Nabızla atan kalp: bir atım süresi = 60 / nabız. */
+/** Heart beating at the heart rate: one beat = 60 / heart rate. */
 function Heart({ hr }: { hr: number }) {
   const period = 60 / Math.max(40, hr);
   return (
@@ -197,7 +197,7 @@ function Heart({ hr }: { hr: number }) {
   );
 }
 
-/** Dikey çekirdek sıcaklık termometresi: dinlenme, dikkat ve kritik çizgileri. */
+/** Vertical core temperature thermometer: rest, caution and warning lines. */
 function Thermo({ temp, level }: { temp: number; level: string }) {
   const pct = (v: number) => `${100 - Math.max(0, Math.min(100, ((v - T_MIN) / (T_MAX - T_MIN)) * 100))}%`;
   return (
@@ -241,7 +241,7 @@ function Thermo({ temp, level }: { temp: number; level: string }) {
   );
 }
 
-/** Astronotun üstünde yükselen ısı dalgaları; güç 0–1. */
+/** Heat waves rising above the astronaut; strength 0–1. */
 function HeatWaves({ strength }: { strength: number }) {
   return (
     <svg width="160" height="80" viewBox="0 0 160 80" className="pointer-events-none" style={{ marginBottom: -30, opacity: strength, transition: 'opacity .8s' }}>

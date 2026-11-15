@@ -1,64 +1,64 @@
-// Parça 4 · Güvenlik süzgeci. Modelin cevabı gösterilmeden önce client.ts checkAnswer() çağırır;
-// güvensizse yedek cevap gösterilir, sebep ve orijinal cevap konsola yazılır.
+// Part 4 · Safety filter. client.ts calls checkAnswer() before the model's answer is shown;
+// if unsafe, an offline answer is shown and the reason and original answer are logged to the console.
 //
-// Tasarım: SADECE gerçekten tehlikeli üç şeyi engeller, geri kalan her şey serbesttir.
-//   1) İlaç ya da doz önerisi:        "400 mg verin", "ağrı kesici alsın", "dozu alın"
-//   2) Kesin teşhis:                  "Kerem'de hipoksi var", "kesinlikle kalp krizi geçiriyor"
-//   3) Kesin dışlama (yanlış güven):  "kalp krizi değil", "aritmi yok"
-// Kelimenin geçmesi tek başına sorun değildir: "kesin bir teşhis olmayıp", "İlaç öneremem",
-// "... ile uyumlu olabilir", "teşhis yerine geçmez" gibi cümleler her zaman geçer.
-// Yeni bir yanlış engelleme görülürse cümleyi ai.test.ts'teki "geçmeli" listesine ekleyin.
+// Design: blocks ONLY three genuinely dangerous things; everything else is allowed.
+//   1) Medication or dose advice:      "give 400 mg", "he should take a painkiller", "take the dose"
+//   2) Definitive diagnosis:           "Kerem has hypoxia", "he is definitely having a heart attack"
+//   3) Definitive exclusion (false reassurance): "not a heart attack", "no arrhythmia"
+// The word appearing is not a problem by itself: "this is not a definitive diagnosis", "I cannot recommend medication",
+// "... may be consistent with", "does not replace a diagnosis" and similar sentences always pass.
+// If a new false block shows up, add the sentence to the "should pass" list in ai.test.ts.
 
-const W = '[a-zçğıöşü]'; // Türkçe harf (ek sınırı için)
+const W = '[a-zçğıöşü]'; // Turkish letters (for suffix boundaries)
 
-/** İlaç ve tıbbi uygulama adları. */
+/** Medication and medical procedure names. */
 const MEDICATION = new RegExp(
   `(ilaç|ilac|tablet|kapsül|hap(?!${W})|antibiyotik|ibuprofen|parasetamol|aspirin|ağrı kesici|ateş düşürücü|enjeksiyon|iğne(?!${W})|serum|medication|medicine|drug(?!${W})|drugs|pill|pills|capsule|antibiotic|paracetamol|acetaminophen|painkiller|pain reliever|injection|iv fluids)`,
 );
 
 /**
- * Öneri ya da talimat bildiren fiiller, tam kelime olarak ("verin", "alsın", "kullanılmalı").
- * Açık liste: "için", "alınan", "önerilir" gibi sık kelimeler yanlışlıkla yakalanmasın.
+ * Verbs that express advice or an instruction, as whole words ("give", "should take", "must be used").
+ * Explicit list, so common words like "for", "taken", "is recommended" are not caught by mistake.
  */
 const ADVISE = new RegExp(
   `(?<!${W})(verin|versin|verilsin|verilmeli|verilmelidir|verilebilir|verebilirsiniz|vermelisiniz|alın|alsın|alınmalı|alınmalıdır|alınabilir|almalı|almalıdır|alabilir|kullanın|kullansın|kullanılmalı|kullanılmalıdır|kullanılabilir|kullanmalı|kullanabilir|içsin|içmeli|içirin|içirilmeli|uygulayın|uygulansın|uygulanmalı|uygulanabilir|başlayın|başlansın|başlanmalı|başlanabilir|öneriyorum|önerebilirim|öneririz|give|should take|take|administer|should be given|should receive|start|prescribe|i recommend|recommend taking|use)(?!${W})`,
 );
 
-/** İlaç cümlesini güvenli yapan olumsuzluk ya da reddetme. */
+/** Negation or refusal that makes a medication sentence safe. */
 const MED_REFUSAL = /(öneremem|önermem|öneremiyorum|önermiyorum|veremem|söyleyemem|yetkim yok|yetkili değil|vermeyin|kullanmayın|almayın|içmeyin|önerilmez|uygun değil|cannot recommend|can't recommend|can not recommend|do not recommend|don't recommend|not able to recommend|unable to recommend|cannot advise|not authorized|do not take|don't take|should not)/;
 
-/** Durum ve hastalık adları. */
+/** Condition and disease names. */
 const CONDITION =
   '(aritmi|ritim bozukluğu|kalp krizi|enfarktüs|hipoksi|hiperkapni|hipertermi|ısı çarpması|dehidratasyon|anksiyete|depresyon|enfeksiyon|radyasyon hastalığı|akut radyasyon sendromu|sendrom|arrhythmia|heart attack|myocardial infarction|infarction|hypoxia|hypercapnia|hyperthermia|heat stroke|dehydration|anxiety|depression|infection|radiation sickness|acute radiation syndrome|syndrome)';
 
-/** "X var / X geçiriyor / X tespit edildi" — soru biçimi ("geçiriyor mu") hariç. */
+/** "has X / is having X / X was detected" — excluding the question form ("is he having"). */
 const DEFINITE_CLAIM = new RegExp(
   `${CONDITION}${W}*\\s+(var|vardır|geçiriyor|geçirmektedir|yaşıyor|yaşamaktadır|tespit edildi|teşhis edildi|kesinleşti)(?!${W})(?!\\s+m[ıiuü](?!${W}))`,
 );
 
-/** İngilizce kesin iddia: "has hypoxia", "is suffering from", "hypoxia is present / confirmed". */
+/** English definitive claim: "has hypoxia", "is suffering from", "hypoxia is present / confirmed". */
 const DEFINITE_CLAIM_EN = new RegExp(
   `((has|is having|is suffering from|suffers from|is experiencing)\\s+(an?\\s+)?${CONDITION})|(${CONDITION}\\s+(is present|is confirmed|has been confirmed|has been detected|was detected))`,
 );
 
-/** İngilizce kesin dışlama: "not a heart attack", "no arrhythmia", "is not having a stroke". */
+/** English definitive exclusion: "not a heart attack", "no arrhythmia", "is not having a stroke". */
 const DEFINITE_EXCLUSION_EN = new RegExp(`((is not|isn't|not|no|is not having|isn't having)\\s+(an?\\s+)?${LIFE_THREATENING_EN()})`);
 function LIFE_THREATENING_EN() {
   return '(heart attack|infarction|arrhythmia|stroke)';
 }
 
-/** Hayati durumlar: bunlar için kesin dışlama ("kalp krizi değil") yanlış güven verir. */
+/** Life-threatening conditions: a definitive exclusion for these ("not a heart attack") gives false reassurance. */
 const LIFE_THREATENING = '(kalp krizi|enfarktüs|aritmi|ritim bozukluğu|inme|felç|heart attack|infarction|arrhythmia|stroke)';
 
-/** "kalp krizi değil / aritmi yok / kalp krizi geçirmiyor" — sadece hayati durumlar için. */
+/** "not a heart attack / no arrhythmia / is not having a heart attack" — only for life-threatening conditions. */
 const DEFINITE_EXCLUSION = new RegExp(
   `${LIFE_THREATENING}${W}*\\s+(yok|yoktur|değil|değildir|geçirmiyor|geçirmemektedir)(?!${W})(?!\\s+m[ıiuü](?!${W}))`,
 );
 
-/** Kesinlik sözcükleri; bir durum adıyla aynı cümlede geçerse kesin iddiadır. */
+/** Certainty words; in the same sentence as a condition name they make a definitive claim. */
 const CERTAINTY = /(kesinlikle|şüphesiz|hiç şüphe yok|tanısı konuldu|teşhis edildi|kesin olarak|definitely|certainly|undoubtedly|without doubt|has been diagnosed|is diagnosed|diagnosed with)/;
 
-/** Cümleyi ihtimal ya da reddetme hâline getiren ifadeler. */
+/** Phrases that turn a sentence into a possibility or a refusal. */
 const SOFTENER =
   /(olabilir(?!sin)|olası|olasılı|ihtimal|düşündür|uyumlu|işaret edebilir|akla getir|şüphe(?!siz)|değerlendirilmeli|söyleyemem|doğrulayamam|koyamam|bilemem|dışlayamam|kesin değil|teşhis yerine geçmez|emin olamam|may |might|could|possible|possibly|likely|consistent with|suggest|raises the possibility|cannot confirm|can't confirm|cannot say|cannot rule out|can't rule out|not certain|not a diagnosis|should be evaluated|unable to confirm)/;
 
@@ -70,7 +70,7 @@ export interface SafetyResult {
 export function checkAnswer(text: string): SafetyResult {
   const lower = text.toLowerCase();
 
-  // Doz sayısı ya da doz talimatı: her zaman engellenir
+  // A dose number or dose instruction: always blocked
   const dose =
     lower.match(new RegExp(`\\d\\s*(mg|mcg|miligram|mikrogram|milligrams?|micrograms?|ünite|units?)(?!${W})`)) ??
     lower.match(/doz(?:u|unu)?\s+(?:al|ver|uygula|artır)/) ??

@@ -1,11 +1,11 @@
-// Parça 4 · Psikolojik testler: NASA'nın ve havacılık yorgunluk çalışmalarının kullandığı, ücretsiz ve
-// izin gerektirmeyen üç ölçek. Soruları yapay zekâ YAZMAZ ve değiştirmez: aşağıdaki resmi maddeler aynen kullanılır.
-// Türkçe metinler ekibin çevirisidir; resmi (doğrulanmış) Türkçe sürüm değildir. İngilizce asılları yanında durur.
+// Part 4 · Psychological tests: three free scales that need no permission, used by NASA and in aviation fatigue
+// studies. The AI does NOT write or change the questions: the official items below are used verbatim.
+// The items are the official English originals.
 //
-// Kullanılmayanlar ve nedeni:
-//   PANAS  -> APA telifi (ekip kararıyla kullanılmadı)
-//   BSI-18 -> ticari ölçek (Pearson), maddeleri kullanılamaz
-//   NASA Cognition bataryası -> lisanslı
+// Not used, and why:
+//   PANAS  -> APA copyright (not used, by team decision)
+//   BSI-18 -> commercial scale (Pearson), its items cannot be used
+//   NASA Cognition battery -> licensed
 
 export interface TestSource {
   ad: string;
@@ -48,15 +48,15 @@ export const TEST_INFO: Record<TestKind, { ad: string; kisa: string; sure: strin
   },
 };
 
-// ---------------------------------------------------------------- Lisanslı ölçeklerin simüle puanları
-// Simülasyondaki (Parça 1) PANAS ve BSI-18 puanları gerçek ölçüm değildir; soruları kullanılmaz, sadece puan simüle edilir.
-// İki ölçek de lisanslıdır; gerçek sistemde bu puanları toplamak için lisans gerekir. ASTRA ve Testler sekmesi bunu belirtir.
+// ---------------------------------------------------------------- Simulated scores of licensed scales
+// The PANAS and BSI-18 scores in the simulation (Part 1) are not real measurements; their items are not used, only the score is simulated.
+// Both scales are licensed; a real system needs a license to collect these scores. ASTRA and the Tests tab say so.
 export const LICENSED_SIM_KEYS: readonly string[] = ['cog.panasPositive', 'cog.panasNegative', 'cog.bsi18_gsi'];
 export const LICENSED_NOTE = 'PANAS and BSI-18 scores are simulated; a real system needs licensed scales.';
 export const LICENSED_NOTE_LONG = `${LICENSED_NOTE.slice(0, -1)} (PANAS: APA copyright, BSI-18: Pearson commercial scale).`;
 
-// ---------------------------------------------------------------- Samn-Perelli (7 basamak)
-// Maddeler: Samn & Perelli 1982. Uç ifadeler PMC9286802'de, tüm basamaklar havacılık çalışmalarında aynen geçer.
+// ---------------------------------------------------------------- Samn-Perelli (7 steps)
+// Items: Samn & Perelli 1982. The end-point wording is in PMC9286802; all steps appear verbatim in aviation studies.
 export const SP_LEVELS: { puan: number; tr: string; en: string }[] = [
   { puan: 1, tr: 'Fully alert, wide awake', en: 'Fully alert, wide awake' },
   { puan: 2, tr: 'Very lively, responsive, but not at peak', en: 'Very lively, responsive, but not at peak' },
@@ -68,9 +68,9 @@ export const SP_LEVELS: { puan: number; tr: string; en: string }[] = [
 ];
 export const SP_PROMPT = 'Choose the statement that best describes how you feel right now.';
 
-// ---------------------------------------------------------------- NASA-TLX (6 alt ölçek)
-// Maddeler: NASA Ames TLX kâğıt-kalem formu (Hart & Staveland 1988). Her alt ölçek 0–100, 5'er adım (21 çentik).
-// Performans alt ölçeğinde 0 = mükemmel, 100 = başarısız; yani tüm alt ölçeklerde yüksek puan = daha yüksek yük.
+// ---------------------------------------------------------------- NASA-TLX (6 subscales)
+// Items: NASA Ames TLX paper-and-pencil form (Hart & Staveland 1988). Each subscale 0–100 in steps of 5 (21 tick marks).
+// On the Performance subscale 0 = perfect, 100 = failure; so on all subscales a higher score = higher load.
 export type TlxKey = 'zihinsel' | 'fiziksel' | 'zamansal' | 'performans' | 'efor' | 'engellenme';
 
 export const TLX_ITEMS: { key: TlxKey; ad: string; en: string; soru: string; soruEn: string; alt: string; ust: string }[] = [
@@ -110,12 +110,12 @@ export const TLX_PROMPT = 'Think about the task you just finished and mark each 
 
 // ---------------------------------------------------------------- PVT-B (Basner et al. 2011)
 export const PVT = {
-  durationS: 180, // 3 dakika
-  demoDurationS: 30, // kısa deneme: sonucu Katman 1'e GİTMEZ (geçerli PVT-B değil)
-  minDelayMs: 1000, // uyaranlar arası 1–4 sn (1 sn'lik tepki gösterimi dahil)
+  durationS: 180, // 3 minutes
+  demoDurationS: 30, // short trial: the result does NOT go to Layer 1 (not a valid PVT-B)
+  minDelayMs: 1000, // 1–4 s between stimuli (including the 1 s reaction display)
   maxDelayMs: 4000,
   feedbackMs: 1000,
-  lapseMs: 355, // PVT-B dikkat kaybı eşiği (standart 10 dk PVT'de 500 ms)
-  falseStartMs: 100, // 100 ms'den kısa tepki ya da uyarandan önce basma = erken basma
-  timeoutMs: 30_000, // 30 sn tepki yoksa dikkat kaybı sayılır
+  lapseMs: 355, // PVT-B lapse threshold (500 ms in the standard 10-min PVT)
+  falseStartMs: 100, // a reaction shorter than 100 ms or a press before the stimulus = false start
+  timeoutMs: 30_000, // no reaction for 30 s counts as a lapse
 } as const;

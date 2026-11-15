@@ -1,8 +1,8 @@
-// Parça 4 · Olası durum taraması (kesin teşhis DEĞİL). Bir astronotun hangi ölçümlerinin kişisel
-// normalinden saptığına bakar ve bu sapmaların birlikte hangi durumla UYUMLU OLABİLECEĞİNİ söyler.
-// Her sonuç: dayanak sinyaller (güncel değer + kişisel normal), olasılık (düşük / orta; asla "kesin"),
-// kaynak ve önerilen kontrol. ASTRA bunu assess_possible_conditions aracıyla okur ve ihtimal diliyle anlatır.
-// Uyarı açmaz, Katman 1'in kararlarını değiştirmez.
+// Part 4 · Possible-condition screening (NOT a definitive diagnosis). Looks at which of an astronaut's metrics
+// deviate from their personal baseline and says which condition these deviations together MAY BE CONSISTENT WITH.
+// Each result: supporting signals (current value + personal baseline), likelihood (low / medium; never "certain"),
+// source and recommended check. ASTRA reads this with the assess_possible_conditions tool and words it as a possibility.
+// Raises no alerts and does not change Layer 1's decisions.
 import { METRIC_BY_KEY, readMetric, type MetricKey } from '../metrics';
 import type { AstraState } from '../store';
 import type { CrewId } from '../types';
@@ -14,7 +14,7 @@ type Dir = 'high' | 'low';
 interface Sign {
   key: MetricKey;
   dir: Dir;
-  /** Mutlak eşik: aşılırsa kişisel normale bakmadan sapma sayılır. */
+  /** Absolute threshold: if exceeded, counts as a deviation regardless of the personal baseline. */
   abs?: number;
 }
 
@@ -24,9 +24,9 @@ export interface ConditionRule {
   kaynak: string;
   oneri: string;
   isaretler: Sign[];
-  /** Bu kuralın tetiklenmesi için gereken en az sapmış işaret sayısı. */
+  /** Minimum number of deviating signs needed to trigger this rule. */
   enAz: number;
-  /** Bu işaret sapmadan kural tetiklenmez. */
+  /** The rule does not trigger unless this sign deviates. */
   zorunlu?: MetricKey;
 }
 
@@ -157,12 +157,12 @@ export const CONDITION_RULES: ConditionRule[] = [
   },
 ];
 
-/** Bu z değerinin üstü sapma sayılır. Tek ölçümlük gürültüyü elemek için 2,5. */
+/** A z value above this counts as a deviation. 2.5 to filter out single-reading noise. */
 const Z_LIMIT = 2.5;
 
 /**
- * Sapma tabanları (plan: "Sd tabanları", Katman 1 ile aynı). Günlük ölçümlerde sapma 0 çıkar ve
- * z sonsuza gider; taban bunu önler. Tabloda olmayan ölçüm için ortalamanın %3'ü.
+ * Deviation floors (plan: "SD floors", same as Layer 1). For daily readings the standard deviation is 0 and
+ * z goes to infinity; the floor prevents this. For metrics not in the table, 3% of the mean.
  */
 const SD_FLOOR: Partial<Record<MetricKey, number>> = {
   'cardio.hr_bpm': 3,
@@ -200,7 +200,7 @@ export interface Deviation {
   text: string;
 }
 
-/** Ölçüm kişisel normalinden riskli yöne sapmış mı? */
+/** Has the metric deviated from its personal baseline in the risky direction? */
 function deviation(s: AstraState, id: CrewId, sign: Sign): Deviation | undefined {
   const t = s.telemetry[id];
   if (!t) return undefined;
@@ -226,8 +226,8 @@ export interface PossibleCondition {
 }
 
 /**
- * Bir astronot için olası durumlar (en fazla 3, en güçlü dayanaklı önce).
- * Kişisel normal henüz kurulmadıysa (ilk 30 ölçüm) boş döner.
+ * Possible conditions for an astronaut (at most 3, best-supported first).
+ * Returns empty if the personal baseline is not built yet (first 30 readings).
  */
 export function possibleConditions(s: AstraState, id: CrewId): PossibleCondition[] {
   if (!baselineReady() || !s.telemetry[id]) return [];

@@ -1,8 +1,8 @@
-// Parça 4 · Modele gönderilecek kısa veri özeti (yaklaşık 3.000 token altında kalsın).
-// Kural: durumu normal olan kişi için 8 ana ölçüm; durumu normal olmayan, soruda adı
-// geçen ya da olayda etkilenen kişi için tüm ölçümler. Model bilmediği sayıyı yazamaz;
-// bu yüzden cevapta geçebilecek sabitler (kariyer doz limiti, CO₂ sınırları, gecikme)
-// de buraya konur. Değerler ekranda gösterildiği gibi yuvarlanır.
+// Part 4 · Short data summary sent to the model (keep it under about 3,000 tokens).
+// Rule: 8 key metrics for a person with Nominal status; all metrics for a person who is not Nominal,
+// is named in the question or is affected by the incident. The model cannot write a number it does not know,
+// so constants that may appear in an answer (career dose limit, CO₂ limits, delay)
+// are included here too. Values are rounded the same way as on screen.
 import { CREW } from '../crew';
 import { METRICS, METRIC_BY_KEY, readMetric, type MetricKey } from '../metrics';
 import { PARAMS } from '../sim/parameters';
@@ -14,7 +14,7 @@ import { ACTION_TR, crewInText, delayText, INCIDENT_TR, LEVEL_TR, SCENARIO_TR, s
 import { testSummary } from './testdata';
 import { LICENSED_NOTE_LONG } from '../psych/instruments';
 
-/** Normal durumdaki kişi için gönderilen 8 ana ölçüm. */
+/** The 8 key metrics sent for a person with Nominal status. */
 export const KEY_METRICS: MetricKey[] = [
   'cardio.hr_bpm',
   'cardio.spo2_pct',
@@ -26,24 +26,24 @@ export const KEY_METRICS: MetricKey[] = [
   'env.sleepLastNight_h',
 ];
 
-/** Model için güvenli üst sınır: JSON uzunluğu / 4 ≈ token. */
+/** Safe upper limit for the model: JSON length / 4 ≈ tokens. */
 export const MAX_CONTEXT_TOKENS = 3000;
 
 const round = (v: number, d: number) => Number(v.toFixed(d));
 
-/** PARAMS'tan değer okur; anahtar o dalda yoksa plandaki (kaynaklı) değere düşer. */
+/** Reads a value from PARAMS; if the key is missing on this branch, falls back to the plan's (sourced) value. */
 function param(key: string, fallback: number): number {
   return (PARAMS as Record<string, { value: number } | undefined>)[key]?.value ?? fallback;
 }
 
 export interface ContextOptions {
-  /** Sohbet sorusu: adı geçen kişilerin tüm ölçümleri eklenir. */
+  /** Chat question: all metrics of the people named are added. */
   question?: string;
-  /** Olay açıklaması: olaydaki kişilerin tüm ölçümleri ve olayın ayrıntısı eklenir. */
+  /** Incident explanation: all metrics of the people in the incident and the incident details are added. */
   incident?: Incident;
   /**
-   * Kısa özet: herkes için 8 ana ölçüm (+ sorunlu kişilerin en çok sapan sinyalleri).
-   * Sohbette kullanılır; ayrıntıyı model araçlarla (api/astra.ts) kendisi çeker.
+   * Short summary: 8 key metrics for everyone (+ the most deviating signals of people with issues).
+   * Used in chat; the model pulls the details itself with tools (api/astra.ts).
    */
   compact?: boolean;
 }
@@ -126,7 +126,7 @@ export function buildContext(s: AstraState, opts: ContextOptions = {}): Record<s
             tekYon: delayText(delay),
             tekYon_dk: round(delay / 60, 1),
             gidisDonus_dk: round((delay * 2) / 60, 1),
-            // NASA Mars Relay Network: tek yön 3-22,4 dk, gidiş-dönüş 6-44 dk
+            // NASA Mars Relay Network: one-way 3-22.4 min, round trip 6-44 min
             olasiAralik: `one way ${round(delayMin, 0)}-${round(delayMax, 1)} min, round trip ${Math.round(delayMin * 2)}-${Math.floor(delayMax * 2)} min`,
           }
         : undefined,
@@ -137,32 +137,32 @@ export function buildContext(s: AstraState, opts: ContextOptions = {}): Record<s
       issCo2Medyani_mmHg: param('cabinCO2Median', 1.9), // OSDR EDA
       ortamPerformansAraligi: '20–25 °C, humidity 30–60%', // OCHMO-TB-002
       gurultuSiniri_dBA: { calisma16sa: param('noiseWorkLimit', 72), uyku8sa: param('noiseSleepLimit', 62) }, // ISS
-      // Kemik sistemde ölçülmez; NASA HRP ortalamasından genel tahmin
-      lisansNotu: LICENSED_NOTE_LONG, // PANAS ve BSI-18 simüle
+      // Bone is not measured in the system; general estimate from the NASA HRP average
+      lisansNotu: LICENSED_NOTE_LONG, // PANAS and BSI-18 are simulated
       tahminiKemikKaybi: `${boneLossEstimate(s.ship?.missionDay ?? 180)} (NASA: 1–1.5% per month; an estimate, not a measurement)`,
     },
     murettebat: CREW.map((m) => crewSummary(s, m.id, isDetailed(m.id), keysOnly)),
-    // Psikolojik testler (Samn-Perelli, NASA-TLX, PVT-B): kısa özet; ayrıntı get_test_results aracında
+    // Psychological tests (Samn-Perelli, NASA-TLX, PVT-B): short summary; details in the get_test_results tool
     psikolojikTestler: testSummary(s),
     acikOlaylar: openIncidents.map(incidentSummary),
     ...(opts.incident
       ? {
           olayId: opts.incident.id,
           aciklanacakOlay: incidentSummary(opts.incident),
-          // Olaydaki kişiler için veriye dayalı olası durumlar (kesin değil)
+          // Data-based possible conditions for the people in the incident (not definitive)
           olasiDurumlar: Object.fromEntries(opts.incident.crewIds.map((id) => [shortName(id), possibleConditions(s, id).slice(0, 2).map((c) => ({ durum: c.durum, olasilik: c.olasilik }))])),
         }
       : {}),
   });
 
   if (opts.compact) return make(true);
-  // Önce tam hâli dene; çok uzunsa ayrıntılı kişileri de 8 ölçüme indir.
+  // Try the full version first; if too long, reduce the detailed people to 8 metrics as well.
   const full = make(false);
   if (estimateTokens(full) <= MAX_CONTEXT_TOKENS) return full;
   return make(true);
 }
 
-/** Kaba token tahmini (plan: JSON.stringify(ctx).length / 4). */
+/** Rough token estimate (plan: JSON.stringify(ctx).length / 4). */
 export function estimateTokens(ctx: unknown): number {
   return Math.ceil(JSON.stringify(ctx).length / 4);
 }

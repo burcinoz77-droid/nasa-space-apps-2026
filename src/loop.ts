@@ -1,5 +1,5 @@
-// Ana döngü: Simülasyon (Parça 1) -> Katman 1 (Parça 2) -> ortak durum -> ekranlar.
-// Bu dosya parçaları birbirine bağlar; değiştirmeden önce ekibe haber verin.
+// Main loop: Simulation (Part 1) -> Layer 1 (Part 2) -> shared state -> screens.
+// This file connects the parts; tell the team before changing it.
 import { createDetector } from './engine';
 import { applyTestResults, useTests } from './psych/store';
 import { createSimulation } from './sim';
@@ -20,9 +20,9 @@ let timer: ReturnType<typeof setInterval> | undefined;
 
 function step() {
   const { ship, telemetry } = sim.tick();
-  applyTestResults(telemetry); // Parça 4: astronotun yaptığı PVT-B sonucu simüle PVT değerinin yerine geçer
+  applyTestResults(telemetry); // Part 4: the PVT-B result an astronaut takes replaces the simulated PVT value
   const out = detector.process(ship, telemetry);
-  for (const action of out.newActions) sim.onAutoAction(action); // güvenli adımın fiziksel etkisi
+  for (const action of out.newActions) sim.onAutoAction(action); // physical effect of the safe action
   useAstra.getState().applyTick(ship, telemetry, out);
 }
 

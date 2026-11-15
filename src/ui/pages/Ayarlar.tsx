@@ -1,5 +1,5 @@
-// Parça 1 · Ayarlar = demo kontrol paneli: senaryo tetikleyicileri, örnekleme hızı, sıfırlama.
-// Renkler theme.ts'ten: fırtına ve yük amber, kritik senaryolar kırmızı çerçeve, stabilize yeşil.
+// Part 1 · Settings = demo control panel: scenario triggers, sampling rate, reset.
+// Colors from theme.ts: storm and workload amber, warning scenarios with a red border, stabilize green.
 import { controls } from '../../loop';
 import { SCENARIOS } from '../../sim/scenario';
 import { PARAMS, SIM, type Param } from '../../sim/parameters';
@@ -14,8 +14,8 @@ const EMPTY: Telemetry[] = [];
 interface ScenarioButton {
   id: ScenarioId;
   label: string;
-  who: string; // kimi etkiler
-  what: string; // ne olur
+  who: string; // who it affects
+  what: string; // what happens
   color: string;
 }
 

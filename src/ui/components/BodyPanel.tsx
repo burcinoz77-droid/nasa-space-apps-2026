@@ -1,6 +1,6 @@
-// Parça 3 · Astronot Ekranı'nın vücut paneli: 3B astronot (yoksa 2B yedek çizim), bölge seçici ve seçili bölgenin
-// ayrıntısı. İmleç bir bölgenin üstüne gelince risk kutusu çıkar (seviye, skor, bölgedeki en çok sapan ölçüm);
-// tıklayınca aşağıda o bölgenin bütün ölçümleri açılır.
+// Part 3 · Body panel of the Astronaut View: 3D astronaut (otherwise the 2D fallback drawing), region selector and the details
+// of the selected region. When the cursor hovers over a region a risk box appears (level, score, most deviating metric in the region);
+// clicking opens all metrics of that region below.
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { METRIC_BY_KEY, readMetric } from '../../metrics';
 import { useAstra } from '../../store';
@@ -26,7 +26,7 @@ function hasWebGL(): boolean {
   }
 }
 
-/** Bölgedeki en çok sapan ölçüm (Katman 1'in en çok sapan 3 ölçümünden). */
+/** The most deviating metric in the region (from Layer 1's 3 most deviating metrics). */
 function topSignalIn(status: CrewStatus | undefined, region: RegionId): MetricScore | undefined {
   const keys = REGION_BY_ID[region].metrics;
   return status?.topSignals.find((s) => keys.includes(s.key));
@@ -72,7 +72,7 @@ export function BodyPanel({
         </div>
       </div>
 
-      {/* Bölge seçici: klavyeyle ve 3B olmadan da çalışır */}
+      {/* Region selector: works with the keyboard and without 3D too */}
       <div className="grid grid-cols-4 gap-1.5" role="tablist" aria-label="Body region">
         {REGIONS.map((r) => {
           const s = regionState(status, r.id);
@@ -102,13 +102,13 @@ export function BodyPanel({
   );
 }
 
-/** İmleç bölgenin üstündeyken çıkan risk kutusu. */
+/** Risk box shown while the cursor is over the region. */
 function RiskTip({ hover, status, t }: { hover: HoverInfo; status: CrewStatus | undefined; t: Telemetry | undefined }) {
   const r = REGION_BY_ID[hover.region];
   const s = regionState(status, hover.region);
   const c = s.level ? LEVEL_COLOR[s.level] : COLORS.offline;
   const sig = topSignalIn(status, hover.region);
-  // Kutu imlecin sağına açılır; sığmazsa soluna. Kenarlardan taşmaz.
+  // The box opens to the right of the cursor; to the left if it does not fit. It does not overflow the edges.
   const W = 232;
   const left = hover.x + 16 + W <= hover.w - 8 ? hover.x + 16 : Math.max(8, hover.x - 16 - W);
   const top = Math.max(8, Math.min(hover.y - 24, hover.h - 150));
@@ -148,7 +148,7 @@ function RiskTip({ hover, status, t }: { hover: HoverInfo; status: CrewStatus | 
   );
 }
 
-/** Seçili bölgenin bütün ölçümleri. */
+/** All metrics of the selected region. */
 function RegionDetail({
   crewId,
   region,

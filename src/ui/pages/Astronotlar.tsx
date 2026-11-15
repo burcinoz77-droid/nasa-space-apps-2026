@@ -1,6 +1,6 @@
-// Parça 3 · Astronotlar: iki ekip başlığı (ekip ortalamasıyla) ve altı kart.
-// Kart: konum, birim, rol, kişisel hassasiyet, sağlık skoru, seviye, nabız mini grafiği.
-// Karta tıklayınca o kişinin Astronot Ekranı açılır (seçili kişi App.tsx'te tutulur).
+// Part 3 · Crew: two crew headers (with the crew average) and six cards.
+// Card: location, unit, role, personal sensitivity, health score, level, heart rate mini chart.
+// Clicking a card opens that person's Astronaut View (the selected person is kept in App.tsx).
 import { useShallow } from 'zustand/react/shallow';
 import { CREW } from '../../crew';
 import { useAstra } from '../../store';

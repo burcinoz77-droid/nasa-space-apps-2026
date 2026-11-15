@@ -1,8 +1,8 @@
-// Parça 1 · Özgün astronot çizimi (SVG, telifsiz). Sinematiklerde mürettebatı gösterir.
-//   stripe : kollardaki kimlik şeridi rengi (her astronota ayrı)
-//   glow   : verilirse giysi o renkte parlar (uyarı durumu)
-//   breath : bir nefesin süresi (sn); göğüs bu ritimle inip kalkar
-//   fog    : 0–1, kask camındaki buğu (CO₂ birikimi)
+// Part 1 · Original astronaut drawing (SVG, copyright-free). Shows the crew in the cinematics.
+//   stripe : color of the ID stripe on the arms (different for each astronaut)
+//   glow   : if given, the suit glows in that color (alert state)
+//   breath : duration of one breath (s); the chest rises and falls at this rhythm
+//   fog    : 0–1, fog on the helmet visor (CO₂ build-up)
 import { useId } from 'react';
 
 export function Astronaut({ stripe, glow, breath = 4.3, fog = 0, height = 150 }: { stripe: string; glow?: string; breath?: number; fog?: number; height?: number }) {
@@ -23,7 +23,7 @@ export function Astronaut({ stripe, glow, breath = 4.3, fog = 0, height = 150 }:
         </radialGradient>
       </defs>
 
-      {/* Bacaklar ve botlar */}
+      {/* Legs and boots */}
       {[-1, 1].map((s) => (
         <g key={s} transform={`scale(${s},1)`}>
           <path d="M3 34 L22 34 L23 86 L5 86 Z" fill={suit} stroke="#94a3b8" strokeWidth="0.8" />
@@ -33,10 +33,10 @@ export function Astronaut({ stripe, glow, breath = 4.3, fog = 0, height = 150 }:
         </g>
       ))}
 
-      {/* Sırt çantası (gövdenin arkasında) */}
+      {/* Backpack (behind the torso) */}
       <rect x="-30" y="-30" width="60" height="50" rx="10" fill="#cbd5e1" />
 
-      {/* Kollar */}
+      {/* Arms */}
       {[-1, 1].map((s) => (
         <g key={s} transform={`scale(${s},1)`}>
           <path d="M22 -22 Q36 -20 38 -2 L40 26 L28 28 L26 0 Z" fill={suit} stroke="#94a3b8" strokeWidth="0.8" />
@@ -45,19 +45,19 @@ export function Astronaut({ stripe, glow, breath = 4.3, fog = 0, height = 150 }:
         </g>
       ))}
 
-      {/* Gövde: nefesle inip kalkar */}
+      {/* Torso: rises and falls with breathing */}
       <g style={{ transformBox: 'view-box', transformOrigin: '0px 34px', animation: `astro-breathe ${breath}s ease-in-out infinite` }}>
         <path d="M-24 -24 Q0 -32 24 -24 L24 36 Q0 42 -24 36 Z" fill={suit} stroke="#94a3b8" strokeWidth="0.8" />
-        {/* Göğüs kontrol ünitesi */}
+        {/* Chest display and control module */}
         <rect x="-13" y="-6" width="26" height="16" rx="3" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="0.8" />
         <circle cx="-6" cy="2" r="2.4" fill="#475569" />
         <circle cx="1" cy="2" r="2.4" fill="#475569" />
         <rect x="6" y="-1" width="4" height="6" rx="1" fill={stripe} />
-        {/* Bel şeridi */}
+        {/* Waist stripe */}
         <rect x="-24" y="22" width="48" height="4" fill="#94a3b8" />
       </g>
 
-      {/* Kask */}
+      {/* Helmet */}
       <circle cx="0" cy="-40" r="23" fill="#f8fafc" stroke="#94a3b8" strokeWidth="1" />
       <ellipse cx="0" cy="-39" rx="17" ry="15" fill={`url(#visor-${id})`} />
       <ellipse cx="0" cy="-39" rx="17" ry="15" fill="#e2e8f0" opacity={Math.min(0.85, fog * 0.85)} style={{ transition: 'opacity .8s' }} />

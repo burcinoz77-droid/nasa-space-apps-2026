@@ -1,4 +1,4 @@
-// Tohumlu (seed) rastgele sayı üreteci: aynı seed = her demoda aynı veri.
+// Seeded random number generator: same seed = same data in every demo.
 export function mulberry32(seed: number) {
   let a = seed >>> 0;
   return function next(): number {
@@ -10,7 +10,7 @@ export function mulberry32(seed: number) {
   };
 }
 
-/** Ortalaması 0, standart sapması 1 olan normal dağılımlı sayı (Box-Muller). */
+/** Normally distributed number with mean 0 and standard deviation 1 (Box-Muller). */
 export function gaussian(rand: () => number): number {
   const u = Math.max(rand(), 1e-12);
   const v = rand();

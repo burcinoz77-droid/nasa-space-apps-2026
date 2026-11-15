@@ -1,11 +1,11 @@
-// Parça 1 · Kask vizörü (HUD): astronotun gözünün önünde ne gördüğü, canlı veriyle.
-// Açmak: window.dispatchEvent(new CustomEvent(VISOR_EVENT, { detail: crewId }))  (Astronot Ekranı'ndaki düğme)
-//   Sakin an : bilgiler kenarlarda, tek renk; görüşün ortası boş.
-//   Olay     : o astronotu içeren Katman 1 olayı varsa kenarlar olay renginde parlar, ilgili değer büyür,
-//              ortada tek cümlelik uyarı + otomatik adım + sesli karar ("onayla" gerçekten olayı onaylar).
-// Gezegen ekibi: kask vizörü, Mars yüzeyi. Kokpit ekibi: AR gözlük, gemi içi.
-// Kendiliğinden açılma: gezegen ekibinden birinde KRİTİK olay açılınca vizör o kişinin gözünden açılır.
-// Sinematik oynuyorsa bitince açılır; jüri demo turu sırasında açılmaz.
+// Part 1 · Helmet visor (HUD): what the astronaut sees in front of their eyes, with live data.
+// To open: window.dispatchEvent(new CustomEvent(VISOR_EVENT, { detail: crewId }))  (the button on the Astronaut View)
+//   Quiet    : information at the edges, single color; the center of the view is clear.
+//   Incident : if there is a Layer 1 incident involving that astronaut, the edges glow in the incident color, the relevant value grows,
+//              and in the center a one-sentence alert + automatic action + voice decision ("acknowledge" really acknowledges the incident).
+// Surface crew: helmet visor, Mars surface. Orbit crew: AR glasses, inside the spacecraft.
+// Auto-open: when a WARNING incident is raised for someone in the surface crew, the visor opens from that person's view.
+// If a cinematic is playing it opens when it ends; it does not open during the jury demo tour.
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { CREW_BY_ID } from '../../crew';
 import { ACTION_LABELS, INCIDENT_LABELS } from '../../engine';
@@ -28,18 +28,18 @@ export function VisorHud() {
   useEffect(() => {
     const open = (e: Event) => {
       const id = (e as CustomEvent<CrewId>).detail;
-      if (CREW_BY_ID[id]?.location === 'GEZEGEN') setCrewId(id); // kask yalnız uzay yürüyüşünde
+      if (CREW_BY_ID[id]?.location === 'GEZEGEN') setCrewId(id); // a helmet only on EVA
     };
     window.addEventListener(VISOR_EVENT, open);
     return () => window.removeEventListener(VISOR_EVENT, open);
   }, []);
 
-  // Kendiliğinden açılma
+  // Auto-open
   const seen = useRef(new Set<string>());
   const pending = useRef<CrewId | null>(null);
   useEffect(() => {
     const unsub = useAstra.subscribe((s) => {
-      if (s.incidents.length === 0) seen.current.clear(); // simülasyon sıfırlandı
+      if (s.incidents.length === 0) seen.current.clear(); // simulation was reset
       for (const i of s.incidents) {
         if (i.status !== 'open' || i.level !== 'critical' || seen.current.has(i.id)) continue;
         seen.current.add(i.id);
@@ -86,7 +86,7 @@ function Visor({ crewId, onClose }: { crewId: CrewId; onClose: () => void }) {
   useCue(Boolean(alert && alert.status === 'open'), alarm);
 
   const status = useAstra((s) => s.statuses[crewId]);
-  // Sapan değerler: olayın sinyalleri ve kişinin en çok sapan ölçümleri (Katman 1)
+  // Deviating values: the incident's signals and the person's most deviating metrics (Layer 1)
   const levelOf = (k: MetricKey): Level => {
     const hits = [...(alert?.signals ?? []), ...(status?.topSignals ?? [])].filter((s) => s.key === k);
     return hits.reduce<Level>((w, s) => (LEVEL_RANK[s.level] > LEVEL_RANK[w] ? s.level : w), 'normal');
@@ -102,7 +102,7 @@ function Visor({ crewId, onClose }: { crewId: CrewId; onClose: () => void }) {
       style={{ fontFamily: 'Inter, sans-serif', background: surface ? MARS_BG : CABIN_BG, animation: 'visor-in .6s ease' }}
     >
       {surface ? <MarsHorizon /> : <CabinLines />}
-      {/* Vizör kenarı */}
+      {/* Visor edge */}
       <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 72% 78% at 50% 50%, transparent 62%, rgba(2,6,23,0.55) 82%, rgba(2,6,23,0.97) 100%)' }} />
       {edge && (
         <div
@@ -111,7 +111,7 @@ function Visor({ crewId, onClose }: { crewId: CrewId; onClose: () => void }) {
         />
       )}
 
-      {/* Üst: yön şeridi */}
+      {/* Top: heading strip */}
       <div className="absolute flex flex-col items-center gap-1.5" style={{ left: '50%', top: '5vh', transform: 'translateX(-50%)', fontFamily: MONO, color: HUD, textShadow: GLOW }}>
         <div className="flex gap-8 text-sm opacity-85">
           {['K', '30', '60', 'D', '120', '150', 'G'].map((d) => (
@@ -130,13 +130,13 @@ function Visor({ crewId, onClose }: { crewId: CrewId; onClose: () => void }) {
         )}
       </div>
 
-      {/* Sol üst: kimlik ve gün */}
+      {/* Top left: identity and day */}
       <Corner side="left" top="13vh" label={surface ? `HELMET VISOR · ${member.unit}` : `AR GLASSES · ${member.unit}`}>
         <span className="text-2xl font-bold">{member.name.replace('Dr. ', '')}</span>
         <span className="text-sm opacity-85">Mission Day {ship?.missionDay ?? '—'}</span>
       </Corner>
 
-      {/* Sağ üst: Dünya ve ASTRA */}
+      {/* Top right: Earth comm and ASTRA */}
       <Corner side="right" top="13vh" label="COMM WITH EARTH">
         <span className="text-lg font-bold">
           delay {Math.floor(delay / 60)} min {Math.round(delay % 60)} s
@@ -146,7 +146,7 @@ function Visor({ crewId, onClose }: { crewId: CrewId; onClose: () => void }) {
         </span>
       </Corner>
 
-      {/* Sol: beden */}
+      {/* Left: body */}
       <div className="absolute flex flex-col gap-5" style={{ left: '7.5vw', top: '36vh' }}>
         <Reading label="HEART RATE" value={fmt(t?.cardio.hr_bpm ?? 0, 0)} unit="bpm" level={levelOf('cardio.hr_bpm')} />
         <Reading label="CORE TEMP" value={fmt(t?.resp.coreTemp_C ?? 0, 1)} unit="°C" level={levelOf('resp.coreTemp_C')} />
@@ -154,7 +154,7 @@ function Visor({ crewId, onClose }: { crewId: CrewId; onClose: () => void }) {
         <Reading label="BREATHING" value={fmt(t?.resp.rr_bpm ?? 0, 0)} unit="/min" level={levelOf('resp.rr_bpm')} />
       </div>
 
-      {/* Sağ: ortam */}
+      {/* Right: environment */}
       <div className="absolute flex flex-col items-end gap-5" style={{ right: '7.5vw', top: '36vh' }}>
         <Reading right small label="RADIATION" value={fmt(t?.env.doseRate_uSv_h ?? 0, 1)} unit="µSv/h" level={levelOf('env.doseRate_uSv_h')} />
         <Reading right small label={surface ? 'SUIT PRESSURE' : 'CABIN PRESSURE'} value={fmt(t?.env.pressure_kPa ?? 0, 1)} unit="kPa" level={levelOf('env.pressure_kPa')} />

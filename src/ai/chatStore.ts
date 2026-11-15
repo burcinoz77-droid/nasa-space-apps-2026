@@ -1,6 +1,6 @@
-// Parça 4 · Sohbetin kalıcılığı: panel kapatılıp açılınca ya da sayfa yenilenince aynı sohbet devam eder.
-// Sohbet ortak durumun chat alanında (Katman 2'nin alanı) durur; bu dosya onu tarayıcıda (localStorage) saklar.
-// "Sohbeti sıfırla" düğmesi resetChat() çağırır. Not: "Simülasyonu sıfırla" sohbeti de temizler.
+// Part 4 · Chat persistence: the same chat continues when the panel is closed and reopened or the page is reloaded.
+// The chat lives in the chat field of the shared state (Layer 2's field); this file saves it in the browser (localStorage).
+// The "Reset chat" button calls resetChat(). Note: "Reset simulation" clears the chat too.
 import { useAstra } from '../store';
 import type { ChatMessage } from '../types';
 import { clearAstraCache } from './client';
@@ -8,7 +8,7 @@ import { clearAstraCache } from './client';
 const STORAGE_KEY = 'astra-sohbet-v1';
 const MAX_SAVED = 50;
 
-/** Tarayıcı deposu; yoksa ya da kapalıysa (gizli mod, test ortamı) undefined. */
+/** Browser storage; undefined if missing or disabled (private mode, test environment). */
 function storage(): Storage | undefined {
   try {
     const ls = (globalThis as { localStorage?: Storage }).localStorage;
@@ -31,26 +31,26 @@ export function startChatPersistence() {
       useAstra.setState({ chat: saved.slice(-MAX_SAVED) });
     }
   } catch {
-    // bozuk kayıt: yok say
+    // corrupt record: ignore
   }
   useAstra.subscribe((s, prev) => {
     if (s.chat === prev.chat) return;
     try {
       ls.setItem(STORAGE_KEY, JSON.stringify(s.chat.slice(-MAX_SAVED)));
     } catch {
-      // depo dolu ya da kapalı: sohbet yine bellekte devam eder
+      // storage full or disabled: the chat still continues in memory
     }
   });
 }
 startChatPersistence();
 
-/** Sohbeti temizler: ekrandaki mesajlar, kayıtlı sohbet ve aynı soru önbelleği. */
+/** Clears the chat: on-screen messages, the saved chat and the same-question cache. */
 export function resetChat() {
   useAstra.setState({ chat: [] });
   clearAstraCache();
   try {
     storage()?.removeItem(STORAGE_KEY);
   } catch {
-    // önemli değil
+    // not important
   }
 }

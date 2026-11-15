@@ -1,6 +1,6 @@
-// Parça 3 · Astronot Ekranı: seçili astronotun 5 veri grubundaki tüm ölçümleri.
-// Solda 2B vücut haritası, sağda sağlık kartı ve stres faktörleri, altta sekmeler
-// (Genel bakış / Sağlık / Performans / Çevre). Her sayının yanında birimi ve kaynak rozeti var.
+// Part 3 · Astronaut View: all metrics of the selected astronaut in the 5 data groups.
+// 2D body map on the left, health card and stress factors on the right, tabs at the bottom
+// (Overview / Health / Performance / Environment). Every number has its unit and a source badge next to it.
 import { type ReactNode, useMemo, useRef, useState } from 'react';
 import { CREW, CREW_BY_ID } from '../../crew';
 import { GROUP_NAMES, METRIC_BY_KEY, METRICS, readMetric, type MetricInfo, type MetricKey } from '../../metrics';
@@ -37,7 +37,7 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
   const statuses = useAstra((s) => s.statuses);
   const incidents = useAstra((s) => s.incidents);
   const [tab, setTab] = useState<TabId | 'testler'>('genel');
-  // Psikolojik testler (Parça 4): ASTRA'nın önerdiği testler ve test sonuçlarına göre psikolojik durum
+  // Psychological tests (Part 4): tests recommended by ASTRA and the psychological state from the test results
   const tests = useTests((s) => s);
   const astra = useAstra((s) => s);
   const due = dueTests(crewId, astra, tests);
@@ -59,11 +59,11 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
     return domainLevel(st, 'env');
   };
 
-  const eva = member.location === 'GEZEGEN'; // uzay yürüyüşünde, kask giyiyor
+  const eva = member.location === 'GEZEGEN'; // on EVA, wearing a helmet
 
   return (
     <div className="space-y-4">
-      {/* Astronot hap düğmeleri */}
+      {/* Astronaut pill buttons */}
       <div className="flex flex-wrap gap-2" role="tablist" aria-label="Select astronaut">
         {CREW.map((m) => {
           const l = statuses[m.id]?.level;
@@ -92,7 +92,7 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
         })}
       </div>
 
-      {/* Kişi başlığı */}
+      {/* Person header */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-space-border bg-space-panel px-4 py-3">
         <span
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-mono text-lg font-bold"
@@ -116,7 +116,7 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
             {member.role} · {member.unit} · {LOCATION_LONG[member.location]} · {member.sensitivity}
           </div>
         </div>
-        {/* Kask vizörü: sadece uzay yürüyüşündeki (kask giyen) astronotlarda */}
+        {/* Helmet visor: only for astronauts on EVA (wearing a helmet) */}
         {eva && (
           <button
             onClick={() => window.dispatchEvent(new CustomEvent(VISOR_EVENT, { detail: crewId }))}
@@ -184,7 +184,7 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
         </div>
       </div>
 
-      {/* Sekmeler (vücut panelindeki "sekmede aç" buraya kaydırır; yapışkan olay bandının altında kalsın diye pay bırakılır) */}
+      {/* Tabs ("open in tab" on the body panel scrolls here; leaves room so it stays below the sticky incident banner) */}
       <div ref={tabsRef} className="scroll-mt-48">
         <Card>
           <div className="mb-3 flex flex-wrap gap-1 rounded-xl bg-white/5 p-1" role="tablist" aria-label="Metric groups">
@@ -241,7 +241,7 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
   );
 }
 
-// ---------- Sağlık kartı ----------
+// ---------- Health card ----------
 function Vital({ crewId, t, st, k, label }: { crewId: CrewId; t: Telemetry | undefined; st: CrewStatus | undefined; k: MetricKey; label: string }) {
   const l = signalLevel(st, k);
   return (
@@ -259,7 +259,7 @@ function Vital({ crewId, t, st, k, label }: { crewId: CrewId; t: Telemetry | und
   );
 }
 
-/** Resmi normal aralık: değer aralıktaysa ✓ (uyarı verilmez), dışındaysa ! (kişisel normalden sapma değerlendirilir). */
+/** Official reference range: ✓ if the value is in range (no alert), ! if outside (deviation from the personal baseline is evaluated). */
 function RangeNote({ crewId, k, value, block }: { crewId: CrewId; k: MetricKey; value: number | undefined; block?: boolean }) {
   const r = normalRangeFor(k, CREW_BY_ID[crewId].location);
   if (!r || value === undefined) return null;
@@ -313,7 +313,7 @@ function HealthCard({ crewId, t, st }: { crewId: CrewId; t: Telemetry | undefine
   );
 }
 
-// ---------- Stres faktörleri ----------
+// ---------- Stress factors ----------
 function FactorCard({ title, level, children }: { title: string; level: Level | undefined; children: ReactNode }) {
   const c = level ? LEVEL_COLOR[level] : COLORS.offline;
   return (
@@ -334,7 +334,7 @@ function FactorCard({ title, level, children }: { title: string; level: Level | 
   );
 }
 
-/** Ölçekli çubuk: değer, eşik çizgileri. */
+/** Scaled bar: value, threshold lines. */
 function Bar({
   value,
   max,
@@ -485,7 +485,7 @@ function PvtCard({ crewId, t, st }: { crewId: CrewId; t: Telemetry | undefined; 
   );
 }
 
-/** PVT değeri astronotun yaptığı PVT-B testinden mi geliyor, simülasyondan mı? */
+/** Does the PVT value come from the PVT-B test the astronaut took, or from the simulation? */
 function PvtSourceNote({ crewId }: { crewId: CrewId }) {
   const tick = useTests((s) => s.tick);
   const pvt = useTests(() => activePvt(crewId));
@@ -496,7 +496,7 @@ function PvtSourceNote({ crewId }: { crewId: CrewId }) {
   );
 }
 
-// ---------- Sekmeler ----------
+// ---------- Tabs ----------
 function Overview({ crewId, st }: { crewId: CrewId; st: CrewStatus | undefined }) {
   const hist = useAstra((s) => s.history[crewId] ?? EMPTY);
   if (!st || !st.topSignals.length) return <p className="text-sm text-slate-400">Building personal baseline; the most deviating metrics will appear shortly.</p>;

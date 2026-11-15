@@ -1,5 +1,5 @@
-// ARES-1 mürettebatı: altı kurgusal astronot. Görev unvanları gerçek mürettebat unvanlarıdır
-// (Komutan, Uçuş Mühendisi, Görev Uzmanı, Sağlık Sorumlusu). Gerçek bir astronotun adı ve sağlık verisi kullanılmaz.
+// ARES-1 crew: six fictional astronauts. The mission titles are real crew titles
+// (Commander, Flight Engineer, Mission Specialist, Crew Medical Officer). No real astronaut's name or health data is used.
 import type { CrewId, CrewMember } from './types';
 
 export const CREW: CrewMember[] = [

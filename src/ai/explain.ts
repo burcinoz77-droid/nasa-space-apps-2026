@@ -1,6 +1,6 @@
-// Parça 4 · Olay açıklaması: Katman 1'in açtığı bir olay için ASTRA'ya BİR KEZ sorar ve
-// sonucu ortak durumun explanations alanına yazar. Katman 2 başka hiçbir alana yazmaz.
-// <AstraExplanation /> bunu çağırır; aynı olay iki ekranda gösterilse de istek tek gider.
+// Part 4 · Incident explanation: asks ASTRA ONCE about an incident raised by Layer 1 and
+// writes the result to the explanations field of the shared state. Layer 2 writes to no other field.
+// <AstraExplanation /> calls this; even if the same incident is shown on two screens, only one request is sent.
 import { METRIC_BY_KEY } from '../metrics';
 import { useAstra } from '../store';
 import type { Incident } from '../types';
@@ -10,7 +10,7 @@ import { ACTION_TR, LEVEL_TR, shortName, valueText } from './labels';
 
 const inflight = new Set<string>();
 
-/** Modele giden olay sorusu: başlık, kişiler, sinyaller (değer + kişisel normal), otonom adım. */
+/** Incident question sent to the model: title, people, signals (value + personal baseline), autonomous action. */
 export function incidentQuestion(inc: Incident): string {
   const signals = inc.signals
     .slice(0, 3)
@@ -29,7 +29,7 @@ export function incidentQuestion(inc: Incident): string {
     .slice(0, 590);
 }
 
-/** Bir olayın açıklamasını ister; zaten varsa ya da istek yoldaysa hiçbir şey yapmaz. */
+/** Requests an explanation for an incident; does nothing if one already exists or a request is in flight. */
 export function requestExplanation(incidentId: string): void {
   const s = useAstra.getState();
   if (s.explanations[incidentId] || inflight.has(incidentId)) return;
@@ -38,7 +38,7 @@ export function requestExplanation(incidentId: string): void {
   inflight.add(incidentId);
   askAstra({ mode: 'incident', question: incidentQuestion(inc), context: buildContext(s, { incident: inc }) })
     .then((answer) => {
-      // Bu arada "Simülasyonu sıfırla" basıldıysa eski olaya açıklama yazma.
+      // If "Reset simulation" was pressed in the meantime, do not write an explanation for the old incident.
       if (useAstra.getState().incidents.some((i) => i.id === incidentId)) useAstra.getState().setExplanation(incidentId, answer);
     })
     .finally(() => inflight.delete(incidentId));

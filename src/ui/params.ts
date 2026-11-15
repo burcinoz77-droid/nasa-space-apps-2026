@@ -1,9 +1,9 @@
-// Parça 3 · Sadece arayüzde kullanılan, kaynaklı sabitler. Biçim PARAMS ile aynı (src/sim/parameters.ts);
-// Parça 1 isterse bunları PARAMS'a taşıyabilir, SourceBadge ikisini de okur.
+// Part 3 · Sourced constants used only in the UI. Same format as PARAMS (src/sim/parameters.ts);
+// Part 1 can move them into PARAMS if wanted, SourceBadge reads both.
 import type { Param } from '../sim/parameters';
 
 export const UI_PARAMS = {
-  // Kokpit'teki görev ilerleme halkası: konjonksiyon sınıfı Mars görevi ~180 gün gidiş + ~540 gün Mars + ~180 gün dönüş
+  // Mission progress ring on Mission Status: conjunction-class Mars mission ~180 days out + ~540 days at Mars + ~180 days back
   missionDurationDays: {
     label: 'Total mission duration (conjunction-class Mars mission)',
     value: 900,

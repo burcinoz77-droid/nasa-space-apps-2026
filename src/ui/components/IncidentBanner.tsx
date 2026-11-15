@@ -1,11 +1,11 @@
-// Parça 3 · Olay deneyimi (demonun kalbi). Uyarıyı her zaman Katman 1 açar; bu bileşen sadece gösterir.
-//  - Açık KRİTİK olay: ekranın üstünde kırmızı bant. Başlık, etkilenen kişiler, uygulanan otonom adım ve "Onayla"
-//    yapışkandır (sayfa kaysa da görünür). Hemen altında sinyaller (değer + birim + kişisel normal) ve
-//    Parça 4'ün mor ASTRA açıklaması durur; bunlar sayfayla birlikte kayar, böylece tablette ekranı kapatmaz.
-//  - Onaylanmış kritik olay: ince kırmızı şerit (sinyaller normale dönene kadar izleniyor).
-//  - Açık DİKKAT olayı: amber tek satır bildirim, istenirse ayrıntı.
-//  - Senaryonun gemi olayı (ship.activeEvents, örn. "CO₂ temizleyici durdu"): mavi bilgi satırı. Senaryo başlar başlamaz
-//    görünür; Katman 1'in olayı ise sapma kişisel baseline'a göre 3 ölçüm sürünce açılır.
+// Part 3 · Incident experience (the heart of the demo). Layer 1 always raises the alert; this component only displays it.
+//  - Open WARNING incident: red banner at the top of the screen. The title, affected people, the autonomous action applied and "Acknowledge"
+//    are sticky (visible even when the page scrolls). Right below are the signals (value + unit + personal baseline) and
+//    Part 4's purple ASTRA explanation; these scroll with the page, so they do not cover the screen on a tablet.
+//  - Acknowledged Warning incident: thin red strip (monitored until the signals return to baseline).
+//  - Open CAUTION incident: single amber notification line, details on request.
+//  - The scenario's vehicle event (ship.activeEvents, e.g. "CO₂ scrubber stopped"): blue advisory line. Visible as soon as
+//    the scenario starts; Layer 1's incident is raised once the deviation from the personal baseline lasts 3 readings.
 import { useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { ACTION_LABELS, INCIDENT_LABELS } from '../../engine';
@@ -23,9 +23,9 @@ const time = (ms: number) => new Date(ms).toLocaleTimeString('en-GB', { hour: '2
 export function IncidentBanner({ onOpenCrew }: { onOpenCrew?: (id: CrewId) => void }) {
   const active = useAstra(useShallow((s) => s.incidents.filter((i) => i.status !== 'resolved')));
   const events = useAstra(useShallow((s) => (s.ship && s.ship.scenario !== 'NORMAL' ? s.ship.activeEvents : [])));
-  const [pick, setPick] = useState<string | null>(null); // birden çok kritik olay varsa hangisi gösteriliyor
-  const [expanded, setExpanded] = useState<string | null>(null); // ayrıntısı açılan dikkat bildirimi
-  const [compact, setCompact] = useState<Set<string>>(() => new Set()); // ayrıntısı gizlenen kritik olaylar
+  const [pick, setPick] = useState<string | null>(null); // which incident is shown if there is more than one Warning incident
+  const [expanded, setExpanded] = useState<string | null>(null); // caution notification whose details are open
+  const [compact, setCompact] = useState<Set<string>>(() => new Set()); // Warning incidents whose details are hidden
 
   const { critOpen, critAck, cautionOpen } = useMemo(
     () => ({
@@ -48,7 +48,7 @@ export function IncidentBanner({ onOpenCrew }: { onOpenCrew?: (id: CrewId) => vo
       return next;
     });
 
-  // Fragment: yapışkan kısmın kapsayıcısı doğrudan <main> olmalı, yoksa sayfa kayınca yapışmaz.
+  // Fragment: the container of the sticky part must be <main> directly, otherwise it does not stick when the page scrolls.
   return (
     <>
       <div className="sticky top-0 z-30 -mx-5 space-y-2 bg-space-bg/90 px-5 pt-1 pb-2 backdrop-blur" aria-live="assertive">
@@ -151,7 +151,7 @@ function SignalChip({ s, crewId }: { s: MetricScore; crewId?: CrewId }) {
   );
 }
 
-/** Kritik olayın yapışkan üst kısmı: ne oldu, kimde, sistem ne yaptı, onay. */
+/** Sticky top part of a Warning incident: what happened, to whom, what the system did, acknowledgement. */
 function CriticalHeader({
   inc,
   others,
@@ -234,7 +234,7 @@ function CriticalHeader({
   );
 }
 
-/** Olayın ayrıntısı: sinyaller ve ASTRA açıklaması. Yapışkan değildir, sayfayla kayar. */
+/** Incident details: signals and ASTRA explanation. Not sticky, scrolls with the page. */
 function Details({ inc, onOpenCrew, withPeople = false }: { inc: Incident; onOpenCrew?: (id: CrewId) => void; withPeople?: boolean }) {
   const c = LEVEL_COLOR[inc.level];
   const single = inc.crewIds.length === 1 ? inc.crewIds[0] : undefined;

@@ -1,6 +1,6 @@
-// Parça 2 testleri: Katman 1 dedektörü. Çalıştırma: npm run test
-// Bu dosyadaki testler simülasyondan bağımsızdır: sentetik ölçümle (fake) dedektörü sınar.
-// Gerçek simülasyon ve senaryolarla testler: scenarios.test.ts
+// Part 2 tests: Layer 1 detector. Run with: npm run test
+// The tests in this file are independent of the simulation: they exercise the detector with synthetic (fake) readings.
+// Tests with the real simulation and scenarios: scenarios.test.ts
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CREW, CREW_IDS } from '../crew';
 import type { MetricKey } from '../metrics';
@@ -10,11 +10,11 @@ import type { CrewId, Detector, DetectorOutput, ShipState, Telemetry } from '../
 import { BASELINE_WINDOW, RESOLVE_AFTER } from './config';
 import { createDetector, scoreDomains } from './index';
 
-// ---------- Sentetik veri ----------
+// ---------- Synthetic data ----------
 type Overrides = Partial<Record<CrewId | 'KOKPIT' | 'GEZEGEN', Partial<Record<MetricKey, number>>>>;
 
 function normalTelemetry(id: CrewId, eva: boolean, t: number, rand: () => number): Telemetry {
-  const j = (sd: number) => gaussian(rand) * sd; // küçük sensör gürültüsü
+  const j = (sd: number) => gaussian(rand) * sd; // small sensor noise
   return {
     crewId: id,
     t,
@@ -45,7 +45,7 @@ function setMetric(t: Telemetry, key: MetricKey, value: number) {
   (t[g] as unknown as Record<string, number>)[f] = value;
 }
 
-/** Dedektörü ölçüm ölçüm besleyen küçük sürücü. */
+/** Small driver that feeds the detector reading by reading. */
 function harness() {
   const det: Detector = createDetector();
   const rand = mulberry32(42);
@@ -77,9 +77,9 @@ function harness() {
 
 const KOKPIT_IDS = CREW.filter((c) => c.location === 'KOKPIT').map((c) => c.id);
 
-// ---------- Testler ----------
-describe('Katman 1 · kişisel baseline', () => {
-  it('her astronot için bir durum üretir', () => {
+// ---------- Tests ----------
+describe('Layer 1 · personal baseline', () => {
+  it('produces a status for every astronaut', () => {
     const sim = createSimulation(1);
     const det = createDetector();
     const { ship, telemetry } = sim.tick();
@@ -87,30 +87,30 @@ describe('Katman 1 · kişisel baseline', () => {
     expect(Object.keys(out.statuses)).toHaveLength(6);
   });
 
-  it(`baseline ilk ${BASELINE_WINDOW} ölçümde kurulur, sonra donar ve anomaliyle kirlenmez`, () => {
+  it(`the baseline is built over the first ${BASELINE_WINDOW} readings, then frozen and not contaminated by the anomaly`, () => {
     const h = harness();
     const before = h.run(BASELINE_WINDOW - 1);
-    // Kalibrasyon sürerken z-skoru yok: herkes %100, seviye normal
+    // No z-score during calibration: everyone 100%, level nominal
     expect(Object.values(before.statuses).every((s) => s.healthScore === 100 && s.level === 'normal')).toBe(true);
     expect(h.ledger().some((e) => e.text.includes('baselines built'))).toBe(false);
 
-    h.step(); // 30. ölçüm
+    h.step(); // reading 30
     expect(h.ledger().filter((e) => e.text.includes('baselines built'))).toHaveLength(1);
 
-    // 31. ölçümden itibaren Elif'in nabzı +30 bpm: z hesaplanır, ama baseline ortalaması değişmez
+    // From reading 31 Elif's heart rate is +30 bpm: z is computed, but the baseline mean does not change
     const out = h.run(20, { elif: { 'cardio.hr_bpm': 98 } });
     const hr = out.statuses.elif.topSignals.find((s) => s.key === 'cardio.hr_bpm')!;
     expect(hr).toBeDefined();
     expect(hr.mean).toBeGreaterThan(66);
-    expect(hr.mean).toBeLessThan(70); // donmuş: 20 ölçümlük anomali ortalamayı kirletmedi
+    expect(hr.mean).toBeLessThan(70); // frozen: the 20-reading anomaly did not contaminate the mean
     expect(hr.z).toBeGreaterThan(3);
     expect(hr.level).toBe('critical');
   });
 
-  it('günlük ölçümlerde sd = 0 iken z sonsuza gitmez (sd tabanı)', () => {
+  it('for daily metrics with sd = 0, z does not go to infinity (SD floor)', () => {
     const h = harness();
     h.run(BASELINE_WINDOW);
-    // Uyku 6,1 → 5,5 sa: taban 0,4 sa ile z = −1,5 → normal kalmalı
+    // Sleep 6.1 → 5.5 h: with a 0.4 h floor z = −1.5 → must stay nominal
     const out = h.run(5, { elif: { 'env.sleepLastNight_h': 5.5 } });
     const all = out.statuses.elif.topSignals;
     expect(all.every((s) => Number.isFinite(s.z))).toBe(true);
@@ -118,14 +118,14 @@ describe('Katman 1 · kişisel baseline', () => {
   });
 });
 
-describe('Katman 1 · erken uyarı (ardışık ölçüm kuralı)', () => {
+describe('Layer 1 · early warning (consecutive-reading rule)', () => {
   let h: ReturnType<typeof harness>;
   beforeEach(() => {
     h = harness();
     h.run(BASELINE_WINDOW);
   });
 
-  it('tek bir sıçrama olay açmaz (iki ardışık da açmaz)', () => {
+  it('a single spike does not raise an incident (nor do two consecutive ones)', () => {
     h.step({ KOKPIT: { 'env.doseRate_uSv_h': 2000 } });
     h.run(5);
     h.run(2, { KOKPIT: { 'env.doseRate_uSv_h': 2000 } });
@@ -135,9 +135,9 @@ describe('Katman 1 · erken uyarı (ardışık ölçüm kuralı)', () => {
     expect(Object.values(out.statuses).every((s) => s.level === 'normal')).toBe(true);
   });
 
-  it('3 ardışık sıçrama olay açar: radyasyon kritik + sığınak (Kokpit ekibi)', () => {
+  it('3 consecutive spikes raise an incident: radiation Warning + storm shelter (orbit crew)', () => {
     h.run(2, { KOKPIT: { 'env.doseRate_uSv_h': 2000 } });
-    expect(h.step().incidents).toHaveLength(0); // arada normal ölçüm: sayaç sıfırlanır
+    expect(h.step().incidents).toHaveLength(0); // a nominal reading in between: the counter resets
     const out = h.run(3, { KOKPIT: { 'env.doseRate_uSv_h': 2000 } });
     expect(out.incidents).toHaveLength(1);
     const inc = out.incidents[0];
@@ -153,7 +153,7 @@ describe('Katman 1 · erken uyarı (ardışık ölçüm kuralı)', () => {
     expect(out.statuses.mert.level).toBe('normal');
   });
 
-  it('ppCO₂ 3,1 mmHg kritik: CO2 olayı + havalandırma artırılır', () => {
+  it('ppCO₂ 3.1 mmHg Warning: CO2 incident + ventilation increased', () => {
     const out = h.run(3, { KOKPIT: { 'env.ppCO2_mmHg': 3.1 } });
     const inc = out.incidents.find((i) => i.type === 'CO2')!;
     expect(inc).toBeDefined();
@@ -163,7 +163,7 @@ describe('Katman 1 · erken uyarı (ardışık ölçüm kuralı)', () => {
     expect(h.ledger().find((e) => e.kind === 'AUTO_ACTION')!.text).toContain('Ventilation increased');
   });
 
-  it('aynı olay ikinci kez açılmaz, otonom adım olay başına bir kez', () => {
+  it('the same incident is not raised twice, the autonomous action happens once per incident', () => {
     h.run(25, { KOKPIT: { 'env.ppCO2_mmHg': 3.1 } });
     const out = h.step({ KOKPIT: { 'env.ppCO2_mmHg': 3.1 } });
     expect(out.incidents.filter((i) => i.type === 'CO2')).toHaveLength(1);
@@ -171,7 +171,7 @@ describe('Katman 1 · erken uyarı (ardışık ölçüm kuralı)', () => {
     expect(h.ledger().filter((e) => e.kind === 'INCIDENT_OPENED')).toHaveLength(1);
   });
 
-  it('dikkat → kritik: aynı olay yükselir, havalandırma sadece kritikte', () => {
+  it('caution → warning: the same incident escalates, ventilation only at Warning', () => {
     const caution = h.run(3, { KOKPIT: { 'env.ppCO2_mmHg': 2.5 } });
     const id = caution.incidents[0].id;
     expect(caution.incidents[0].level).toBe('caution');
@@ -182,9 +182,9 @@ describe('Katman 1 · erken uyarı (ardışık ölçüm kuralı)', () => {
     expect(h.actions().map((a) => a.type)).toEqual(['INCREASE_VENTILATION']);
   });
 
-  it(`sinyaller ${RESOLVE_AFTER} ölçüm normal kalınca olay çözülür ve kayda düşer`, () => {
+  it(`the incident resolves and is logged once the signals stay nominal for ${RESOLVE_AFTER} readings`, () => {
     h.run(3, { KOKPIT: { 'env.ppCO2_mmHg': 3.1 } });
-    // Seviye 3 ölçümde iner (histerezis), sonra 10 ölçüm normal sayılır
+    // The level drops after 3 readings (hysteresis), then 10 readings count as nominal
     let out = h.run(3 + RESOLVE_AFTER - 2);
     expect(out.incidents[0].status).toBe('open');
     out = h.run(1);
@@ -194,7 +194,7 @@ describe('Katman 1 · erken uyarı (ardışık ölçüm kuralı)', () => {
     expect(resolved[0].text).toMatch(/^Resolved/);
   });
 
-  it('resmi normal aralıktaki değer uyarı vermez: EtCO₂ 44 mmHg (normal 35–45) sorun değil, 48 mmHg sorun', () => {
+  it('a value within the official reference range raises no alert: EtCO₂ 44 mmHg (reference 35–45) is fine, 48 mmHg is not', () => {
     const inRange = h.run(6, { KOKPIT: { 'resp.etco2_mmHg': 44 } });
     expect(inRange.statuses.elif.level).toBe('normal');
     expect(inRange.statuses.elif.domainScores.resp).toBe(100);
@@ -202,7 +202,7 @@ describe('Katman 1 · erken uyarı (ardışık ölçüm kuralı)', () => {
     expect(out.statuses.elif.level).not.toBe('normal');
   });
 
-  it('mürettebat onayı: olay "acknowledged" olur, kayda ACK düşer, ikinci onay boş döner', () => {
+  it('crew acknowledgement: the incident becomes "acknowledged", ACK is logged, a second acknowledgement returns empty', () => {
     const out = h.run(3, { KOKPIT: { 'env.ppCO2_mmHg': 3.1 } });
     const id = out.incidents[0].id;
     const ack = h.det.acknowledge(id);
@@ -212,7 +212,7 @@ describe('Katman 1 · erken uyarı (ardışık ölçüm kuralı)', () => {
     expect(h.step({ KOKPIT: { 'env.ppCO2_mmHg': 3.1 } }).incidents[0].status).toBe('acknowledged');
   });
 
-  it('onaylanmış dikkat olayı kritikleşirse yeniden onay ister', () => {
+  it('an acknowledged caution incident that escalates to Warning needs acknowledging again', () => {
     const out = h.run(3, { KOKPIT: { 'env.ppCO2_mmHg': 2.5 } });
     h.det.acknowledge(out.incidents[0].id);
     const crit = h.run(3, { KOKPIT: { 'env.ppCO2_mmHg': 3.2 } });
@@ -220,22 +220,22 @@ describe('Katman 1 · erken uyarı (ardışık ölçüm kuralı)', () => {
   });
 });
 
-describe('Katman 1 · olay kuralları', () => {
+describe('Layer 1 · incident rules', () => {
   let h: ReturnType<typeof harness>;
   beforeEach(() => {
     h = harness();
     h.run(BASELINE_WINDOW);
   });
 
-  it('mutlak eşikler baseline kurulmadan da çalışır (ilk ölçümlerde CO₂)', () => {
+  it('absolute thresholds work before the baseline is built (CO₂ in the first readings)', () => {
     const fresh = harness();
     const out = fresh.run(4, { KOKPIT: { 'env.ppCO2_mmHg': 3.3 } });
     expect(out.incidents.map((i) => [i.type, i.level])).toEqual([['CO2', 'critical']]);
   });
 
-  it('yorgunluk: 5 sinyalden 3\'ü dikkatte → FATIGUE + zorunlu dinlenme, restRequired', () => {
+  it('fatigue: 3 of 5 signals at caution → FATIGUE + mandatory crew rest, restRequired', () => {
     const two = h.run(4, { elif: { 'env.sleepLastNight_h': 5.1, 'cog.pvtMeanRt_ms': 300 } });
-    expect(two.incidents).toHaveLength(0); // 2 sinyal yetmez
+    expect(two.incidents).toHaveLength(0); // 2 signals are not enough
     const out = h.run(3, { elif: { 'env.sleepLastNight_h': 5.1, 'cog.pvtMeanRt_ms': 300, 'cog.bsi18_gsi': 10 } });
     const inc = out.incidents.find((i) => i.type === 'FATIGUE')!;
     expect(inc).toMatchObject({ level: 'caution', crewIds: ['elif'], autoActions: ['MANDATORY_REST'] });
@@ -244,7 +244,7 @@ describe('Katman 1 · olay kuralları', () => {
     expect(out.statuses.kerem.restRequired).toBe(false);
   });
 
-  it('zorunlu dinlenme olay çözülünce kalkar', () => {
+  it('mandatory crew rest is lifted when the incident resolves', () => {
     h.run(3, { mert: { 'resp.coreTemp_C': 38.6 } });
     let out = h.step({ mert: { 'resp.coreTemp_C': 38.6 } });
     expect(out.incidents[0]).toMatchObject({ type: 'THERMAL', level: 'caution', autoActions: ['MANDATORY_REST'] });
@@ -254,7 +254,7 @@ describe('Katman 1 · olay kuralları', () => {
     expect(out.statuses.mert.restRequired).toBe(false);
   });
 
-  it('SpO₂ < 94 dikkat, < 90 kritik; HYPOXIA otonom adım açmaz (karar insanın)', () => {
+  it('SpO₂ < 94 caution, < 90 warning; HYPOXIA raises no autonomous action (the decision is human)', () => {
     const c = h.run(3, { deniz: { 'cardio.spo2_pct': 92 } });
     expect(c.incidents[0]).toMatchObject({ type: 'HYPOXIA', level: 'caution' });
     const k = h.run(3, { deniz: { 'cardio.spo2_pct': 88 } });
@@ -263,7 +263,7 @@ describe('Katman 1 · olay kuralları', () => {
     expect(h.actions()).toHaveLength(0);
   });
 
-  it('EKG ritmi 3 ölçüm "irregular" → CARDIO dikkat, teşhis koymayan başlık', () => {
+  it('ECG rhythm "irregular" for 3 readings → CARDIO caution, title makes no diagnosis', () => {
     h.run(2, {}, { zeynep: 'irregular' });
     expect(h.step().incidents).toHaveLength(0);
     const out = h.run(3, {}, { zeynep: 'irregular' });
@@ -271,51 +271,51 @@ describe('Katman 1 · olay kuralları', () => {
     expect(out.incidents[0].title).toBe('Zeynep: irregular beats on ECG, medical check recommended');
   });
 
-  it('STRESS: GSR + ter kortizolü + PANAS olumsuz üçü birden dikkatteyse', () => {
+  it('STRESS: if GSR + sweat cortisol + PANAS negative are all at caution', () => {
     const two = h.run(4, { kerem: { 'resp.gsr_uS': 5.8, 'biochem.sweatCortisol_ng_mL': 53 } });
     expect(two.incidents).toHaveLength(0);
     const out = h.run(3, { kerem: { 'resp.gsr_uS': 5.8, 'biochem.sweatCortisol_ng_mL': 53, 'cog.panasNegative': 24 } });
     expect(out.incidents.map((i) => i.type)).toEqual(['STRESS']);
   });
 
-  it('MULTI: aynı kişide 2 vücut alanı kritik → kritik; çevre alanı sayılmaz', () => {
+  it('MULTI: 2 body domains at Warning in the same person → Warning; the environmental domain does not count', () => {
     const env = h.run(3, { mert: { 'cardio.hr_bpm': 125, 'env.doseRate_uSv_h': 900 } });
-    expect(env.incidents.map((i) => i.type)).toEqual(['RADIATION']); // kalp + çevre: MULTI yok
+    expect(env.incidents.map((i) => i.type)).toEqual(['RADIATION']); // cardio + environment: no MULTI
     const out = h.run(3, { mert: { 'cardio.hr_bpm': 125, 'resp.rr_bpm': 32 } });
     const multi = out.incidents.find((i) => i.type === 'MULTI')!;
     expect(multi).toMatchObject({ level: 'critical', crewIds: ['mert'] });
     expect(multi.title).toBe('Mert: simultaneous warning-level deviation in cardiovascular and respiratory-metabolic domains');
   });
 
-  it('toplam doz ≥ 480 mSv dikkat (kariyer limitinin %80\'i), sığınak açmaz', () => {
+  it('total dose ≥ 480 mSv caution (80% of the career limit), no storm shelter', () => {
     const out = h.run(3, { emir: { 'env.doseCumulative_mSv': 485 } });
     expect(out.incidents[0]).toMatchObject({ type: 'RADIATION', level: 'caution', crewIds: ['emir'], autoActions: [] });
     expect(out.incidents[0].title).toContain('600 mSv');
   });
 
-  it('reset her şeyi sıfırlar', () => {
+  it('reset clears everything', () => {
     h.run(3, { KOKPIT: { 'env.ppCO2_mmHg': 3.1 } });
     h.det.reset();
     const out = h.step();
     expect(out.incidents).toHaveLength(0);
-    expect(out.statuses.elif.healthScore).toBe(100); // yeniden kalibrasyonda
+    expect(out.statuses.elif.healthScore).toBe(100); // on recalibration
   });
 });
 
-describe('Katman 1 · sağlık skoru', () => {
-  it('alan skoru = 100 − 12 × Σ max(0, riskZ − 1); healthScore = 5 alanın ortalaması', () => {
+describe('Layer 1 · health score', () => {
+  it('domain score = 100 − 12 × Σ max(0, riskZ − 1); healthScore = mean of the 5 domains', () => {
     const riskZ = { 'cardio.hr_bpm': 4, 'resp.rr_bpm': 0.5 } as Record<MetricKey, number>;
     const { domainScores, healthScore } = scoreDomains(riskZ);
     expect(domainScores).toEqual({ cardio: 64, resp: 100, biochem: 100, cog: 100, env: 100 });
-    expect(healthScore).toBe(93); // (64 + 4 × 100) / 5 = 92,8
+    expect(healthScore).toBe(93); // (64 + 4 × 100) / 5 = 92.8
   });
 
-  it('skor 0–100 arasına kırpılır', () => {
+  it('the score is clamped to 0–100', () => {
     const { domainScores } = scoreDomains({ 'env.doseRate_uSv_h': 400 } as Record<MetricKey, number>);
     expect(domainScores.env).toBe(0);
   });
 
-  it('normal veride herkes yüksek skorda, topSignals 3 ölçüm', () => {
+  it('with nominal data everyone has a high score, topSignals has 3 metrics', () => {
     const h = harness();
     const out = h.run(BASELINE_WINDOW + 40);
     for (const id of CREW_IDS) {

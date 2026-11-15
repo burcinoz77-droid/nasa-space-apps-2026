@@ -1,9 +1,9 @@
-// Parça 4 · ASTRA'nın veri hafızası. Ortak durumu (useAstra) SADECE okur, kendi içinde tutar:
-//  1) Kişisel normal: her astronot × her ölçüm için ilk 30 ölçümün ortalaması ve sapması (sonra donar).
-//     Katman 1 de aynı yöntemi kullanır; ASTRA kendi kopyasını tutar çünkü 36 ölçümün hepsine ihtiyaç duyar.
-//  2) Uzun geçmiş: her 5 ölçümde bir kayıt, en fazla 72 kayıt (yaklaşık 60 saat görev süresi).
-// Ekranlardaki 120 ölçümlük kısa geçmişten (store.history) daha geriyi hatırlar.
-// "Simülasyonu sıfırla" ile ortak durum boşalınca hafıza da sıfırlanır.
+// Part 4 · ASTRA's data memory. ONLY reads the shared state (useAstra) and keeps internally:
+//  1) Personal baseline: mean and deviation of the first 30 readings for each astronaut × each metric (then frozen).
+//     Layer 1 uses the same method; ASTRA keeps its own copy because it needs all 36 metrics.
+//  2) Long history: one record every 5 readings, at most 72 records (about 60 hours of mission time).
+// It remembers further back than the 120-reading short history on the screens (store.history).
+// When "Reset simulation" empties the shared state, the memory is reset too.
 import { CREW } from '../crew';
 import { METRICS, readMetric, type MetricKey } from '../metrics';
 import { SIM } from '../sim/parameters';
@@ -14,7 +14,7 @@ export const BASELINE_TICKS = 30;
 export const SAMPLE_EVERY = 5;
 export const MAX_SAMPLES = 72;
 
-/** Bir ölçüm = kaç dakika görev süresi (demo hızlandırması). */
+/** One reading = how many minutes of mission time (demo time compression). */
 export const MISSION_MIN_PER_TICK = (SIM as { missionMinutesPerTick?: number }).missionMinutesPerTick ?? 10;
 
 interface Stat {
@@ -50,7 +50,7 @@ function record(s: ReturnType<typeof useAstra.getState>) {
       const v = readMetric(t, m.key);
       values[m.key] = v;
       if (tick <= BASELINE_TICKS) {
-        // Welford: tek geçişte ortalama ve sapma
+        // Welford: mean and deviation in a single pass
         const st = (stats[m.key] ??= { n: 0, mean: 0, m2: 0 });
         st.n++;
         const d = v - st.mean;
@@ -67,7 +67,7 @@ function record(s: ReturnType<typeof useAstra.getState>) {
 }
 
 let started = false;
-/** Hafızayı başlatır (bir kez). src/ai modülleri yüklenince kendiliğinden çağrılır. */
+/** Starts the memory (once). Called automatically when the src/ai modules load. */
 export function startMemory() {
   if (started) return;
   started = true;
@@ -81,30 +81,30 @@ export function startMemory() {
 }
 startMemory();
 
-/** Kişisel normal hazır mı (ilk 30 ölçüm doldu mu)? */
+/** Is the personal baseline ready (are the first 30 readings in)? */
 export function baselineReady(): boolean {
   return tick >= BASELINE_TICKS;
 }
 
-/** Bir ölçümün kişisel normali: ortalama ve sapma. Hazır değilse undefined. */
+/** Personal baseline of a metric: mean and deviation. undefined if not ready. */
 export function personalNormal(id: CrewId, key: MetricKey): { mean: number; sd: number } | undefined {
   const st = baseline[id]?.[key];
   if (!st || st.n < 5) return undefined;
   return { mean: st.mean, sd: st.n > 1 ? Math.sqrt(st.m2 / (st.n - 1)) : 0 };
 }
 
-/** Uzun geçmişten bir ölçümün değerleri (eskiden yeniye). */
+/** Values of a metric from the long history (oldest to newest). */
 export function longHistory(id: CrewId, key: MetricKey): number[] {
   return samples.map((x) => x.values[id]?.[key]).filter((v): v is number => typeof v === 'number');
 }
 
-/** Uzun geçmişin kapsadığı görev süresi (saat). */
+/** Mission time covered by the long history (hours). */
 export function longHistorySpanHours(): number {
   if (samples.length < 2) return 0;
   return ((samples[samples.length - 1].tick - samples[0].tick) * MISSION_MIN_PER_TICK) / 60;
 }
 
-/** Testler için. */
+/** For tests. */
 export function resetMemory() {
   reset();
 }

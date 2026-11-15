@@ -1,6 +1,6 @@
-// Parça 4 · Katman 2'nin ortak Türkçe etiketleri ve küçük yardımcıları.
-// Hem modele giden veri özeti (context.ts) hem yedek mod (fallback.ts) hem de
-// ASTRA bileşenleri bunları kullanır; böylece ekranda ve cevaplarda aynı kelimeler geçer.
+// Part 4 · Layer 2's shared labels and small helpers.
+// Used by the data summary sent to the model (context.ts), offline mode (fallback.ts) and the
+// ASTRA components, so the same words appear on screen and in answers.
 import { CREW_BY_ID } from '../crew';
 import { METRIC_BY_KEY, type MetricKey } from '../metrics';
 import { fmt } from '../ui/theme';
@@ -34,21 +34,21 @@ export const INCIDENT_TR: Record<IncidentType, string> = {
   MULTI: 'Multi-system deviation',
 };
 
-/** Otonom adımın "yapıldı" hâli (olay açıklamalarında). */
+/** "Done" form of an autonomous action (in incident explanations). */
 export const ACTION_DONE_TR: Record<AutoActionType, string> = {
   RADIATION_SHELTER: 'Storm shelter ingress started automatically',
   INCREASE_VENTILATION: 'Ventilation increased automatically',
   MANDATORY_REST: 'Mandatory crew rest applied automatically',
 };
 
-/** Otonom adımın kısa adı (veri özetinde). */
+/** Short name of an autonomous action (in the data summary). */
 export const ACTION_TR: Record<AutoActionType, string> = {
   RADIATION_SHELTER: 'moving to the storm shelter',
   INCREASE_VENTILATION: 'increasing ventilation',
   MANDATORY_REST: 'mandatory crew rest',
 };
 
-/** Araç adlarının ekranda görünen Türkçe karşılığı (api/astra.ts'teki TOOLS). */
+/** On-screen names of the tools (TOOLS in api/astra.ts). */
 export const TOOL_TR: Record<string, string> = {
   get_crew_member: 'Astronaut details',
   get_metric_trend: 'Metric trend',
@@ -62,7 +62,7 @@ export const TOOL_TR: Record<string, string> = {
   compare_crew_tests: 'Crew test comparison',
 };
 
-/** "Ölçüm gidişi · Kerem, CO₂" */
+/** "Metric trend · Kerem, CO₂" */
 export function toolLabel(tool: { ad: string; girdi?: Record<string, unknown> }): string {
   const args = Object.values(tool.girdi ?? {})
     .filter((v) => v !== undefined && v !== '')
@@ -70,7 +70,7 @@ export function toolLabel(tool: { ad: string; girdi?: Record<string, unknown> })
   return `${TOOL_TR[tool.ad] ?? tool.ad}${args.length ? ` · ${args.join(', ')}` : ''}`;
 }
 
-/** 'kerem' -> 'Kerem'. Mürettebata ilk adıyla hitap edilir (Emir Çelik -> Emir). */
+/** 'kerem' -> 'Kerem'. Crew members are addressed by first name (Emir Çelik -> Emir). */
 export function shortName(id: CrewId): string {
   return id.charAt(0).toUpperCase() + id.slice(1);
 }
@@ -79,13 +79,13 @@ export function fullName(id: CrewId): string {
   return CREW_BY_ID[id]?.name ?? shortName(id);
 }
 
-/** Sorudaki astronot adlarını bulur: "Kerem'in nabzı" -> ['kerem']. */
+/** Finds astronaut names in a question: "Kerem's heart rate" -> ['kerem']. */
 export function crewInText(text: string): CrewId[] {
   const q = text.toLowerCase();
   return (Object.keys(CREW_BY_ID) as CrewId[]).filter((id) => new RegExp(`(^|[^a-zçğıöşü])${id}`).test(q));
 }
 
-/** Bir ölçümü birimiyle ekrandaki biçimde yazar: 36,8 °C · %98 · 25/100 · 3 adet. */
+/** Writes a metric with its unit in the on-screen format: 36.8 °C · 98% · 25/100 · 3 count. */
 export function valueText(key: MetricKey, value: number): string {
   const m = METRIC_BY_KEY[key];
   if (!m) return fmt(value, 1);
@@ -95,7 +95,7 @@ export function valueText(key: MetricKey, value: number): string {
   return `${v} ${m.unit}`;
 }
 
-/** Saniyeyi "12 dk 30 sn" biçimine çevirir. */
+/** Converts seconds to the "12 min 30 s" format. */
 export function delayText(seconds: number): string {
   const total = Math.round(seconds);
   const min = Math.floor(total / 60);

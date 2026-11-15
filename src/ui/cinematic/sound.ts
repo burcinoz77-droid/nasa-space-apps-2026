@@ -1,9 +1,9 @@
-// Parça 1 · Sinematik sesleri. Hepsi Web Audio ile kodda üretilir: dosya yok, telif yok.
-//   alarm()          : iki tonlu uyarı (olay açıldı)
-//   chime()          : yumuşak yükselen iki nota (ASTRA'nın güvenli adımı uygulandı)
-//   useHeartbeat()   : canlı nabızla "küt-küt" kalp atışı
-//   useCue()         : koşul ilk kez doğru olduğunda bir sesi bir kez çalar
-// Ses kapatılabilir (Stage'deki 🔊 düğmesi); tercih tarayıcıda hatırlanır.
+// Part 1 · Cinematic sounds. All generated in code with Web Audio: no files, no copyright.
+//   alarm()          : two-tone alert (incident raised)
+//   chime()          : two soft rising notes (ASTRA's safe action applied)
+//   useHeartbeat()   : "lub-dub" heartbeat at the live heart rate
+//   useCue()         : plays a sound once, the first time a condition becomes true
+// Sound can be muted (the 🔊 button in Stage); the preference is remembered in the browser.
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 
 const KEY = 'astra-sound-muted';
@@ -24,7 +24,7 @@ export function setMuted(m: boolean) {
   try {
     localStorage.setItem(KEY, m ? '1' : '0');
   } catch {
-    /* depolama yoksa sadece bu oturum için */
+    /* without storage, only for this session */
   }
   listeners.forEach((l) => l());
 }
@@ -50,7 +50,7 @@ function audio(): AudioContext | null {
   }
 }
 
-/** Tek bir ton: frekans, başlangıç, süre, ses yüksekliği, dalga biçimi. */
+/** A single tone: frequency, start, duration, volume, waveform. */
 function tone(a: AudioContext, freq: number, at: number, dur: number, vol: number, type: OscillatorType = 'sine', slideTo?: number) {
   const o = a.createOscillator();
   const g = a.createGain();
@@ -91,11 +91,11 @@ export function whoosh() {
 
 function beat(a: AudioContext) {
   const t = a.currentTime;
-  tone(a, 62, t, 0.16, 0.5, 'sine', 40); // küt
-  tone(a, 55, t + 0.18, 0.14, 0.35, 'sine', 38); // küt
+  tone(a, 62, t, 0.16, 0.5, 'sine', 40); // lub
+  tone(a, 55, t + 0.18, 0.14, 0.35, 'sine', 38); // dub
 }
 
-/** active iken canlı nabızla kalp atışı çalar. Nabız değiştikçe ritim de değişir. */
+/** While active, plays a heartbeat at the live heart rate. The rhythm changes as the heart rate changes. */
 export function useHeartbeat(active: boolean, bpm: number) {
   const bpmRef = useRef(bpm);
   useEffect(() => {
@@ -114,7 +114,7 @@ export function useHeartbeat(active: boolean, bpm: number) {
   }, [active]);
 }
 
-/** when ilk kez true olduğunda play'i bir kez çalar. */
+/** Plays play once, the first time when becomes true. */
 export function useCue(when: boolean, play: () => void) {
   const done = useRef(false);
   useEffect(() => {

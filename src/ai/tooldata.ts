@@ -1,6 +1,6 @@
-// Parça 4 · Araçların (tool calling) okuduğu anlık veri kopyası. Sohbet isteğiyle birlikte sunucuya
-// gider; api/astra.ts'teki araçlar SADECE bunu okur (değiştiremez, uyarı açamaz).
-// Modele doğrudan gitmez: model hangi parçaya ihtiyaç duyarsa aracı çağırıp o parçayı alır.
+// Part 4 · Data snapshot read by the tools (tool calling). Sent to the server with the chat request;
+// the tools in api/astra.ts ONLY read it (they cannot change it or raise alerts).
+// It is not sent to the model directly: the model calls a tool to get the part it needs.
 import { CREW } from '../crew';
 import { GROUP_NAMES, METRICS, readMetric } from '../metrics';
 import type { AstraState } from '../store';
@@ -12,7 +12,7 @@ import { longHistory, longHistorySpanHours, MISSION_MIN_PER_TICK, personalNormal
 import { buildTestData } from './testdata';
 import { LICENSED_NOTE, LICENSED_SIM_KEYS } from '../psych/instruments';
 
-/** Geçmişten kaç ölçümde bir örnek alınır ve en fazla kaç nokta gönderilir. */
+/** Sample every how many readings from the history, and the maximum number of points sent. */
 const TREND_STRIDE = 6;
 const TREND_POINTS = 10;
 
@@ -67,7 +67,7 @@ export function buildToolData(s: AstraState) {
     }),
   );
 
-  // Canlı ölçümlerin son değerleri (eskiden yeniye), her TREND_STRIDE ölçümde bir örnek.
+  // Latest values of the live readings (oldest to newest), one sample every TREND_STRIDE readings.
   const gecmis = Object.fromEntries(
     CREW.map((m) => {
       const h = s.history[m.id] ?? [];
@@ -81,7 +81,7 @@ export function buildToolData(s: AstraState) {
     }),
   );
 
-  // Uzun dönem: ASTRA hafızasından (src/ai/memory.ts) eşit aralıklı en fazla 12 nokta + özet.
+  // Long term: at most 12 evenly spaced points + summary from ASTRA's memory (src/ai/memory.ts).
   const uzunGecmis = Object.fromEntries(
     CREW.map((m) => [
       m.id,

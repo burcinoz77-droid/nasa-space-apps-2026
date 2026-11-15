@@ -1,7 +1,7 @@
-// Uygulama iskeleti: yan menü + üst bar + olay bandı + sayfa (Sahibi: Parça 3).
-// Sayfa sahipleri: Kokpit/Astronot Ekranı/Astronotlar = Parça 3,
-// Raporlar = Parça 2, Ayarlar = Parça 1, Görevler ve ASTRA sohbet paneli = Parça 4.
-// Seçili astronot burada tutulur: Kokpit ve Astronotlar'dan tıklanınca Astronot Ekranı o kişiyle açılır.
+// App shell: side menu + top bar + incident banner + page (Owner: Part 3).
+// Page owners: Mission Status/Astronaut View/Crew = Part 3,
+// Reports = Part 2, Settings = Part 1, Tasks and the ASTRA chat panel = Part 4.
+// The selected astronaut is kept here: clicking from Mission Status or Crew opens the Astronaut View for that person.
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { CREW, CREW_BY_ID } from './crew';
@@ -48,8 +48,8 @@ const PAGES: { id: PageId; label: string; icon: () => ReactNode; subtitle: strin
   { id: 'ayarlar', label: 'Settings', icon: IconSettings, subtitle: 'Scenarios, sampling rate, data sources' },
 ];
 
-// Üst bardaki senaryo hapları (kısa adlar); tam adlar loop.ts → SCENARIO_NAMES
-// (dar ekranda, 1024 px tablet, kısa ad gösterilir)
+// Scenario pills in the top bar (short names); full names in loop.ts → SCENARIO_NAMES
+// (on narrow screens, 1024 px tablet, the short name is shown)
 const SCENARIO_PILLS: { id: ScenarioId; label: string; short?: string }[] = [
   { id: 'NORMAL', label: 'Nominal day', short: 'Nominal' },
   { id: 'SOLAR_STORM', label: 'Solar particle event' },
@@ -58,7 +58,7 @@ const SCENARIO_PILLS: { id: ScenarioId; label: string; short?: string }[] = [
   { id: 'EVA_OVEREXERTION', label: 'EVA overexertion', short: 'EVA' },
 ];
 
-// Konsolu kullanan kişi (profil kartı). Mürettebattan biri; gerçek bir kişi değildir.
+// The person using the console (profile card). One of the crew; not a real person.
 const CONSOLE_USER: CrewId = 'elif';
 const EMPTY: Telemetry[] = [];
 
@@ -67,7 +67,7 @@ export default function App() {
   const [crew, setCrew] = useState<CrewId>(CREW[0].id);
   const hasCritical = useAstra((s) => s.incidents.some((i) => i.level === 'critical' && i.status === 'open'));
 
-  // Parça 1: jüri demo turu sayfayı Kokpit'e alabilsin
+  // Part 1: lets the jury demo tour switch the page to Mission Status
   useEffect(() => {
     const go = (e: Event) => {
       const id = (e as CustomEvent<string>).detail;
@@ -103,7 +103,7 @@ export default function App() {
         </main>
       </div>
       <AstraChatPanel />
-      {/* Parça 1: senaryo değişince o senaryonun tam ekran sinematiği (Atla ile kapanır) */}
+      {/* Part 1: when the scenario changes, that scenario's full-screen cinematic (closed with Skip) */}
       <ScenarioCinematics />
       <DemoTour />
       <VisorHud />
@@ -111,7 +111,7 @@ export default function App() {
   );
 }
 
-// ---------- Yan menü ----------
+// ---------- Side menu ----------
 function Sidebar({ page, onPage }: { page: PageId; onPage: (p: PageId) => void }) {
   const delay = useAstra((s) => s.ship?.commDelayOneWay_s);
   const openCount = useAstra((s) => s.incidents.filter((i) => i.status !== 'resolved').length);
@@ -170,7 +170,7 @@ function Sidebar({ page, onPage }: { page: PageId; onPage: (p: PageId) => void }
   );
 }
 
-// ---------- Üst bar ----------
+// ---------- Top bar ----------
 function TopBar({ onBell }: { onBell: () => void }) {
   const { scenario, day, open, critical } = useAstra(
     useShallow((s) => {
@@ -231,7 +231,7 @@ function TopBar({ onBell }: { onBell: () => void }) {
   );
 }
 
-/** Senaryo seçimi: gerçek görev konsolunda olmayacağı için küçük, sönük bir "Simülasyon ▾" menüsünde durur. */
+/** Scenario selection: sits in a small, muted "Simulation ▾" menu since it would not exist on a real mission console. */
 function ScenarioMenu({ scenario }: { scenario: ScenarioId | undefined }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -294,7 +294,7 @@ function ScenarioMenu({ scenario }: { scenario: ScenarioId | undefined }) {
   );
 }
 
-/** Canlı saat ayrı bileşen: her saniye sadece bu kısım yeniden çizilir. */
+/** Live clock as a separate component: only this part re-renders every second. */
 function Clock({ day, calibration }: { day: number | undefined; calibration?: string }) {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {

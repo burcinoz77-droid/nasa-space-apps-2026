@@ -1,8 +1,8 @@
-// Parça 1 · Jüri demo turu (≈2 dk, tek tuş). Sunumda tıklama ve bekleme derdi olmasın diye.
-//   Açılış : proje kartı; bu sırada simülasyon sıfırlanır ve kişisel normaller hızla öğrenilir (gerçek ilerleme).
-//   Krizler: Güneş fırtınası → CO₂ arızası → EVA. Her biri kendi sinematiğiyle oynar, sonra Kokpit'te kısa duruş.
-//   Kapanış: ana mesaj; senaryo "Tüm mürettebatı stabilize et"e döner.
-// "Turu bitir" ile her an durur. Demo videosu da bununla tek seferde kaydedilebilir.
+// Part 1 · Jury demo tour (≈2 min, one button). So there is no clicking and waiting during the presentation.
+//   Opening: project card; meanwhile the simulation is reset and the personal baselines are learned quickly (real progress).
+//   Crises : solar particle event → CO₂ scrubber failure → EVA. Each plays with its own cinematic, then a short pause on Mission Status.
+//   Closing: main message; the scenario returns to "Stabilize all crew".
+// "End tour" stops it at any time. The demo video can also be recorded in one take with this.
 import { type ReactNode, useEffect, useState } from 'react';
 import { controls, SCENARIO_NAMES } from '../../loop';
 import { PARAMS, SIM } from '../../sim/parameters';
@@ -60,7 +60,7 @@ async function run(signal: AbortSignal, setStage: (s: Stage) => void) {
   const nav = (page: string) => window.dispatchEvent(new CustomEvent(NAVIGATE_EVENT, { detail: page }));
   runtime.tourActive = true;
   try {
-    // Açılış: sıfırla, kişisel normalleri hızlı öğren
+    // Opening: reset, learn the personal baselines quickly
     setStage({ kind: 'intro' });
     controls.reset();
     controls.setSpeed(CALIBRATION_TICK_MS);
@@ -120,7 +120,7 @@ function waitFor(event: string, maxMs: number, signal: AbortSignal) {
   });
 }
 
-// ---------- Ekranlar ----------
+// ---------- Screens ----------
 
 function StopButton({ onStop }: { onStop: () => void }) {
   return (

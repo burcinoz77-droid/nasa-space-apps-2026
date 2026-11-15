@@ -1,4 +1,4 @@
-// Parça 3 · Yan menü ve üst bar simgeleri (çizgi simgeler, currentColor ile boyanır).
+// Part 3 · Side menu and top bar icons (line icons, painted with currentColor).
 import type { ReactNode } from 'react';
 
 function Svg({ children, size = 20 }: { children: ReactNode; size?: number }) {
@@ -112,7 +112,7 @@ export function IconReset() {
   );
 }
 
-/** Orbitalis logosu: gezegen + eğik yörünge + gemi. NASA ya da başka bir kurumun logosu değildir. */
+/** Orbitalis logo: planet + tilted orbit + spacecraft. Not the logo of NASA or any other organization. */
 export function OrbitalisMark({ size = 36 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden>

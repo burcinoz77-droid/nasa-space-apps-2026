@@ -1,6 +1,6 @@
-// Parça 4 · Test planı ve psikolojik durum. ASTRA'nın test önerileri ve analizleri buradaki KURALLARDAN gelir;
-// sayıları kod hesaplar, dil modeli sadece açıklar. Kaynağı olmayan eşikler "varsayım" diye işaretlidir.
-// Uyarı (olay) AÇMAZ: uyarıyı yalnızca Katman 1 açar. PVT sonucu telemetriye yazıldığı için Katman 1 onu değerlendirir.
+// Part 4 · Test plan and psychological state. ASTRA's test recommendations and analyses come from the RULES here;
+// code computes the numbers, the language model only explains them. Thresholds without a source are marked "assumption".
+// Does NOT raise alerts (incidents): only Layer 1 raises alerts. The PVT result is written to telemetry, so Layer 1 evaluates it.
 import { shortName } from '../ai/labels';
 import { CREW_BY_ID } from '../crew';
 import { useAstra, type AstraState } from '../store';
@@ -10,16 +10,16 @@ import { LICENSED_NOTE, TEST_INFO, TEST_SOURCES, TLX_ITEMS, type TestKind, type 
 import { spLabel, tlxHighest } from './scoring';
 import { activePvt, DAY_TICKS, missionAgo, resultsOf, useTests, type PvtResult, type SpResult, type TestResult, type TlxResult } from './store';
 
-/** ISS'te Reaction Self Test uçuş boyunca 4 günde bir yapıldı (Jones vd. 2022). Rutin plan bu sıklıkta. */
+/** On the ISS the Reaction Self Test was done every 4 days throughout the flight (Jones et al. 2022). The routine plan uses this frequency. */
 export const ROUTINE_TICKS = 4 * DAY_TICKS;
-/** Tetiklenen öneri: son 24 görev saatinde yapılmadıysa (varsayım). */
+/** Triggered recommendation: if not done in the last 24 mission hours (assumption). */
 export const RECENT_TICKS = DAY_TICKS;
-/** Jones vd. 2022: 6 saatten kısa uyku, ISS'te daha yavaş tepki, daha çok stres ve iş yüküyle ilişkili. */
+/** Jones et al. 2022: sleep shorter than 6 hours is associated with slower reactions, more stress and higher workload on the ISS. */
 export const SHORT_SLEEP_H = 6;
-/** Samn-Perelli: 5–6 dikkat, 7 kritik (varsayım; ölçek ifadelerine göre: 5 "orta derecede yorgun", 7 "etkili çalışamıyor"). */
+/** Samn-Perelli: 5–6 caution, 7 warning (assumption; based on the scale wording: 5 "moderately tired", 7 "unable to function effectively"). */
 export const SP_CAUTION = 5;
 export const SP_CRITICAL = 7;
-/** NASA-TLX'in resmi bir "yüksek" eşiği yok. Varsayım: 0–100 ölçeğinin üst yarısı (≥ 50) dikkat. */
+/** NASA-TLX has no official "high" threshold. Assumption: the upper half of the 0–100 scale (≥ 50) is caution. */
 export const TLX_CAUTION = 50;
 
 export interface DueTest {
@@ -31,7 +31,7 @@ export interface DueTest {
 
 export interface PsychFactor {
   ad: string;
-  kisa: string; // cümle içinde: "yorgunluk", "iş yükü" ...
+  kisa: string; // within a sentence: "fatigue", "workload" ...
   deger: string;
   seviye: Level;
   not?: string;
@@ -42,7 +42,7 @@ export interface PsychState {
   seviye: Level;
   ozet: string;
   etkenler: PsychFactor[];
-  guncelTest: boolean; // son 4 görev gününde en az bir test var mı
+  guncelTest: boolean; // is there at least one test in the last 4 mission days
 }
 
 const COG_KEYS: MetricKey[] = ['cog.pvtMeanRt_ms', 'cog.pvtLapses', 'cog.bsi18_gsi', 'cog.panasPositive', 'cog.panasNegative', 'cog.speechStrainIndex'];
@@ -51,14 +51,14 @@ function lastTick(crewId: CrewId, kind: TestKind, results: TestResult[]): number
   return resultsOf(crewId, kind, results)[0]?.tick;
 }
 
-/** Katman 1'in bilişsel ölçümlerde sapma görüp görmediği. */
+/** Whether Layer 1 sees a deviation in the cognitive metrics. */
 function cogFlag(a: AstraState, crewId: CrewId): boolean {
   const st = a.statuses[crewId];
   if (!st) return false;
   return st.topSignals.some((s) => COG_KEYS.includes(s.key) && s.level !== 'normal') || (scoreLevel(st.domainScores.cog) ?? 'normal') !== 'normal';
 }
 
-/** ASTRA'nın bu kişi için önerdiği testler (en önemlisi önce). */
+/** Tests ASTRA recommends for this person (most important first). */
 export function dueTests(crewId: CrewId, a: AstraState = useAstra.getState(), ts = useTests.getState()): DueTest[] {
   const out: DueTest[] = [];
   const t = a.telemetry[crewId];
@@ -143,7 +143,7 @@ function pvtFactor(a: AstraState, crewId: CrewId, pvt: PvtResult | undefined, no
   };
 }
 
-/** Bir astronotun test sonuçlarına ve Katman 1'in bilişsel alanına göre psikolojik durumu. */
+/** An astronaut's psychological state from their test results and Layer 1's cognitive domain. */
 export function psychState(crewId: CrewId, a: AstraState = useAstra.getState(), ts = useTests.getState()): PsychState {
   const now = ts.tick;
   const [sp, spPrev] = resultsOf(crewId, 'SP', ts.results);
@@ -173,7 +173,7 @@ export function psychState(crewId: CrewId, a: AstraState = useAstra.getState(), 
   return { seviye, ozet, etkenler, guncelTest };
 }
 
-/** Ekip karşılaştırması: son 4 görev günündeki en son sonuçlar. */
+/** Crew comparison: the latest results in the last 4 mission days. */
 export function crewComparison(ids: CrewId[], ts = useTests.getState()) {
   const fresh = <T extends TestResult>(r: T | undefined) => (r && ts.tick - r.tick < ROUTINE_TICKS ? r : undefined);
   const rows = ids.map((id) => ({

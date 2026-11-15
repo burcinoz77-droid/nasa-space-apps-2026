@@ -1,6 +1,6 @@
-// Parça 4 · Tarayıcı tarafı: /api/astra'ya sorar; cevap gelmezse yedek moda geçer.
-// Katman 2 sadece OKUR: bu klasör telemetriye, olaylara ya da otonom adımlara yazamaz.
-// Sıra: önbellek -> sunucu -> güvenlik süzgeci -> sayı doğrulama. Hata olursa yedek mod.
+// Part 4 · Browser side: asks /api/astra; if no answer arrives, switches to offline mode.
+// Layer 2 only READS: this folder cannot write to telemetry, incidents or autonomous actions.
+// Order: cache -> server -> safety filter -> number verification. On any error, offline mode.
 import { useAstra } from '../store';
 import type { AstraAnswer, AstraRequest } from '../types';
 import { fallbackAnswer } from './fallback';
@@ -10,13 +10,13 @@ import { checkAnswer } from './safety';
 import { buildToolData } from './tooldata';
 import { verifyNumbers } from './verify';
 
-const TIMEOUT_MS = 58_000; // sunucu en fazla 55 sn içinde ya cevap ya hata döner (api/astra.ts)
+const TIMEOUT_MS = 58_000; // the server returns either an answer or an error within 55 s at most (api/astra.ts)
 const cache = new Map<string, { at: number; answer: AstraAnswer }>();
-const CACHE_MS = 60_000; // aynı soru 60 sn içinde tekrar gelirse kotayı harcama
+const CACHE_MS = 60_000; // if the same question comes again within 60 s, do not spend quota
 
 /**
- * Sohbetteki son 10 mesaj (devam soruları için: "Peki Kerem?"). Panel yeni soruyu
- * askAstra'dan önce sohbete eklediği için son mesaj sorunun kendisiyse çıkarılır.
+ * The last 10 chat messages (for follow-ups: "And Kerem?"). The panel adds the new question to the chat
+ * before askAstra, so if the last message is the question itself it is removed.
  */
 function recentHistory(question: string): { role: 'user' | 'astra'; text: string }[] {
   const chat = useAstra.getState().chat;
@@ -25,7 +25,7 @@ function recentHistory(question: string): { role: 'user' | 'astra'; text: string
   return previous.slice(-10).map((m) => ({ role: m.role, text: m.text.slice(0, 500) }));
 }
 
-/** ASTRA'ya sorar; cevabın altında gösterilecek kaynak linklerini de ekler. */
+/** Asks ASTRA; also attaches the source links shown under the answer. */
 export async function askAstra(req: AstraRequest): Promise<AstraAnswer> {
   const answer = await askAstraInner(req);
   return answer.sources ? answer : { ...answer, sources: answerSources(req.question, answer.text) };
@@ -45,7 +45,7 @@ async function askAstraInner(req: AstraRequest): Promise<AstraAnswer> {
     const res = await fetch('/api/astra', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      // Sohbette araçların okuyacağı anlık veri kopyası da gider (araçlar sunucuda çalışır).
+      // In chat, the data snapshot for the tools is sent too (the tools run on the server).
       body: JSON.stringify(req.mode === 'chat' ? { ...req, history, toolData: buildToolData(useAstra.getState()) } : req),
       signal: controller.signal,
     }).finally(() => clearTimeout(timer));
@@ -62,7 +62,7 @@ async function askAstraInner(req: AstraRequest): Promise<AstraAnswer> {
     const text = (data.text ?? '').trim();
     if (!text) throw new Error('empty answer');
 
-    // Güvenlik süzgeci: teşhis, ilaç ya da doz içeren cevap gösterilmez.
+    // Safety filter: an answer containing a diagnosis, medication or dose is not shown.
     const safety = checkAnswer(text);
     if (!safety.safe) {
       console.warn(`[ASTRA] Safety filter blocked the answer (${safety.reason}); showing the fallback answer.\n${text}`);
@@ -72,11 +72,11 @@ async function askAstraInner(req: AstraRequest): Promise<AstraAnswer> {
     const answer: AstraAnswer = {
       text,
       source: data.source,
-      // Araç sonuçlarındaki sayılar da "veride var" sayılır: model onları araçla okudu.
+      // Numbers in tool results also count as "in the data": the model read them with a tool.
       verified: verifyNumbers(text, req.context, `${req.question} ${data.toolOutput ?? ''}`),
       latencyMs: elapsed(),
       ...(data.tools?.length ? { tools: data.tools.map(toolLabel) } : {}),
-      // lookup_reference ile okunan konuların kaynakları önce gelir
+      // sources of topics read with lookup_reference come first
       sources: answerSources(
         req.question,
         text,
@@ -91,7 +91,7 @@ async function askAstraInner(req: AstraRequest): Promise<AstraAnswer> {
   }
 }
 
-/** Testler ve "Simülasyonu sıfırla" için. */
+/** For tests and "Reset simulation". */
 export function clearAstraCache() {
   cache.clear();
 }

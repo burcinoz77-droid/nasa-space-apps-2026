@@ -1,12 +1,12 @@
-// Parça 4 · Testler için ortak yardımcılar: gerçek simülasyon + Katman 1 ile ortak durumu doldurur.
-// Uygulama bu dosyayı kullanmaz; sadece src/ai/*.test.ts içe aktarır.
+// Part 4 · Shared helpers for tests: fills the shared state with the real simulation + Layer 1.
+// The app does not use this file; only src/ai/*.test.ts imports it.
 import { CREW_IDS } from '../crew';
 import { createDetector } from '../engine';
 import { createSimulation } from '../sim';
 import { useAstra, type AstraState } from '../store';
 import type { CrewId, Incident, IncidentType, MetricScore, ScenarioId } from '../types';
 
-/** Simülasyonu ve dedektörü n ölçüm çalıştırıp ortak duruma yazar. */
+/** Runs the simulation and detector for n readings and writes to the shared state. */
 export function runSimulation(ticks = 5, scenario?: ScenarioId, scenarioTicks = 0, seed = 7): AstraState {
   useAstra.getState().clearAll();
   const sim = createSimulation(seed);
@@ -38,7 +38,7 @@ export const QUESTIONS = [
   "What is Deniz's bone density?",
 ] as const;
 
-/** Plandaki test tablosunun "beklenen davranış" sütunu, kontrol edilebilir biçimde. */
+/** The "expected behavior" column of the plan's test table, in a checkable form. */
 export const EXPECTED: { behaviour: string; check: RegExp }[] = [
   { behaviour: 'People on mandatory crew rest or with low cognitive scores, with values', check: /rest|cognitive/i },
   { behaviour: "Kerem's most deviating signals, with real values", check: /kerem/i },
@@ -56,7 +56,7 @@ export function countSentences(text: string): number {
   return (text.match(/[.!?…](?=\s|$)/g) ?? []).length || 1;
 }
 
-/** Kerem'i CO₂ olayıyla kritik yapar; Elif'e zorunlu dinlenme verir (Katman 1 henüz v0 iken test için). */
+/** Puts Kerem at Warning level with a CO₂ incident; places Elif on mandatory crew rest (for testing while Layer 1 was still v0). */
 export function makeDemoState(): AstraState {
   const s = runSimulation(5);
   const kerem = s.statuses.kerem!;

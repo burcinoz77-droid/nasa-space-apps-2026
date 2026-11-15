@@ -1,5 +1,5 @@
-// Parça 3 · 2B vücut haritası: 3B model yüklenirken ya da tarayıcıda WebGL yoksa gösterilen yedek çizim.
-// Bölgeler 3B modelle aynı: baş, göğüs (kollar dahil), alt gövde (karın ve bacaklar), çevre halkası.
+// Part 3 · 2D body map: the fallback drawing shown while the 3D model loads or if the browser has no WebGL.
+// Same regions as the 3D model: head, chest (including arms), lower body (abdomen and legs), environment ring.
 import type { KeyboardEvent } from 'react';
 import type { CrewStatus, Level } from '../../types';
 import { REGION_BY_ID, regionState, type RegionId } from '../bodyRegions';

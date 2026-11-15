@@ -1,13 +1,13 @@
-// Parça 1 · Sinematik sahne makinesi ve ortak sabitler.
+// Part 1 · Cinematic scene machine and shared constants.
 import { useEffect, useRef, useState } from 'react';
 
-/** Sinematiği tekrar oynatmak için: window.dispatchEvent(new CustomEvent(CINEMATIC_EVENT, { detail: scenarioId })) */
+/** To replay a cinematic: window.dispatchEvent(new CustomEvent(CINEMATIC_EVENT, { detail: scenarioId })) */
 export const CINEMATIC_EVENT = 'astra:cinematic';
 
 /**
- * Sahne makinesi. Her sahnenin [en az, en çok] süresi (ms) var: en az süre dolunca veri koşulu
- * (ready) sağlanmışsa ya da en çok süre dolmuşsa sıradaki sahneye geçilir. Sonra 'outro' ve kapanış.
- * Böylece sinematik canlı veriyle ilerler ama veri gecikse de takılmaz.
+ * Scene machine. Each scene has a [min, max] duration (ms): once the minimum has passed, it moves to the next scene
+ * if the data condition (ready) is met, or when the maximum has passed. Then 'outro' and close.
+ * This way the cinematic advances with live data but does not get stuck if the data is late.
  */
 export function usePhases<P extends string>(order: readonly P[], limits: Record<P, [number, number]>, ready: (p: P) => boolean, onClose: () => void): P | 'outro' {
   const [index, setIndex] = useState(0);
@@ -42,14 +42,14 @@ export function fmtMinSec(s: number): string {
   return `${m} min ${r} s`;
 }
 
-/** Jüri demo turunu başlatır: window.dispatchEvent(new Event(DEMO_EVENT)) */
+/** Starts the jury demo tour: window.dispatchEvent(new Event(DEMO_EVENT)) */
 export const DEMO_EVENT = 'astra:demo';
-/** Bir sinematik kapandığında yayınlanır (demo turu sıradakine geçmek için dinler). */
+/** Dispatched when a cinematic closes (the demo tour listens to move to the next one). */
 export const CINEMATIC_END_EVENT = 'astra:cinematic-end';
-/** Sayfa değiştirme isteği: detail = sayfa id ('kokpit' gibi). App.tsx dinler. */
+/** Page change request: detail = page id (like 'kokpit'). App.tsx listens. */
 export const NAVIGATE_EVENT = 'astra:navigate';
-/** Kask vizörünü açar: detail = astronot id. */
+/** Opens the helmet visor: detail = astronaut id. */
 export const VISOR_EVENT = 'astra:visor';
 
-/** Sinematik ve demo turunun o anki durumu (vizörün kendiliğinden açılması bunlara göre bekler). */
+/** Current state of the cinematics and the demo tour (the visor's auto-open waits based on these). */
 export const runtime = { cinematicPlaying: false, tourActive: false };

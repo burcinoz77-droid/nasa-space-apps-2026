@@ -1,7 +1,7 @@
-// Parça 4 · ASTRA'nın kaynaklı bilgi tabanı (bağlam). Model "neden önemli?" ya da "sınır ne?"
-// sorularında lookup_reference aracıyla buradan okur ve kaynağı belirtir.
-// Sayılar planın "Veri ve kaynaklar" tablosundan ve src/sim/parameters.ts'ten gelir; yeni sayı uydurulmaz.
-// "Varsayım" yazanların NASA ya da hakemli bir kaynağı yoktur.
+// Part 4 · ASTRA's sourced knowledge base (context). For "why does it matter?" or "what is the limit?"
+// questions the model reads from here with the lookup_reference tool and cites the source.
+// Numbers come from the plan's "Data and sources" table and src/sim/parameters.ts; no new numbers are made up.
+// Entries marked "Assumption" have no NASA or peer-reviewed source.
 import { LICENSED_NOTE_LONG, TEST_SOURCES } from '../psych/instruments';
 import { PARAMS } from '../sim/parameters';
 
@@ -19,13 +19,13 @@ export interface ReferenceTopic {
 
 type ParamLike = { value: number; source?: string; url?: string };
 
-/** PARAMS'tan kaynak adı ve linki; anahtar yoksa verilen kaynak adı kullanılır. */
+/** Source name and link from PARAMS; if the key is missing, the given source name is used. */
 function src(key: string, fallback: string): Pick<Fact, 'kaynak' | 'url'> {
   const p = (PARAMS as Record<string, ParamLike | undefined>)[key];
   return { kaynak: p?.source ?? fallback, ...(p?.url ? { url: p.url } : {}) };
 }
 
-/** Test kaynağını bilgi tabanı biçimine çevirir. */
+/** Converts a test source into the knowledge-base format. */
 function fromTest(t: { ad: string; url: string }): Pick<Fact, 'kaynak' | 'url'> {
   return { kaynak: t.ad, url: t.url };
 }
@@ -35,11 +35,11 @@ function val(key: string, fallback: number): string {
   return v.toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
-/** NASA HRP: 4–6 aylık görevlerde ağırlık taşıyan kemikler ayda ortalama %1–1,5 yoğunluk kaybeder. */
+/** NASA HRP: on 4–6 month missions, weight-bearing bones lose on average 1–1.5% density per month. */
 export const BONE_LOSS_PER_MONTH = { min: 1, max: 1.5 };
 const BONE_SRC = { kaynak: 'NASA HRP, risk of bone changes', url: 'https://www.nasa.gov/reference/risk-of-spaceflight-induced-bone-changes/' };
 
-/** Görev gününe göre kaba kemik yoğunluğu kaybı tahmini, örneğin 180. gün için "%6–9". Ölçüm değildir. */
+/** Rough bone density loss estimate by mission day, e.g. "6–9%" for day 180. Not a measurement. */
 export function boneLossEstimate(missionDay: number): string {
   const months = missionDay / 30.4;
   const lo = Math.round(months * BONE_LOSS_PER_MONTH.min);

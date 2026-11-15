@@ -1,17 +1,17 @@
-// Parça 4 · Test puanlama. Puanları KOD hesaplar (dil modeli hesaplamaz).
+// Part 4 · Test scoring. CODE computes the scores (the language model does not).
 import { PVT, SP_LEVELS, TLX_ITEMS, type TlxKey } from './instruments';
 
 export type TlxRatings = Record<TlxKey, number>;
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
 
-/** Raw TLX: altı alt ölçeğin ağırlıksız ortalaması, 0–100 (Hart 2006). */
+/** Raw TLX: unweighted mean of the six subscales, 0–100 (Hart 2006). */
 export function rawTlx(r: TlxRatings): number {
   const values = TLX_ITEMS.map((i) => r[i.key]);
   return round1(values.reduce((a, b) => a + b, 0) / values.length);
 }
 
-/** En yüksek puanlı alt ölçek: iş yükünün en çok nereden geldiği. */
+/** Highest-scoring subscale: where most of the workload comes from. */
 export function tlxHighest(r: TlxRatings): { key: TlxKey; ad: string; puan: number } {
   const top = TLX_ITEMS.reduce((best, i) => (r[i.key] > r[best.key] ? i : best), TLX_ITEMS[0]);
   return { key: top.key, ad: top.ad, puan: r[top.key] };
@@ -22,15 +22,15 @@ export function spLabel(puan: number): string {
 }
 
 export interface PvtScore {
-  meanRt_ms: number; // geçerli tepkilerin ortalaması (dikkat kayıpları dahil, erken basmalar hariç)
+  meanRt_ms: number; // mean of valid reactions (lapses included, false starts excluded)
   medianRt_ms: number;
-  lapses: number; // tepki >= 355 ms (yanıtsız kalan 30 sn de dahil)
-  falseStarts: number; // uyarandan önce ya da 100 ms'den kısa tepki
-  responses: number; // geçerli tepki sayısı
-  speed: number; // ortalama tepki hızı, 1/sn (Basner: uykusuzluğa en duyarlı PVT çıktısı)
+  lapses: number; // reaction >= 355 ms (including an unanswered 30 s)
+  falseStarts: number; // before the stimulus or a reaction shorter than 100 ms
+  responses: number; // number of valid reactions
+  speed: number; // mean response speed, 1/s (Basner: the PVT outcome most sensitive to sleep loss)
 }
 
-/** rts: uyarana verilen tepki süreleri (ms). falseStarts: uyarandan önce basma sayısı. */
+/** rts: reaction times to the stimulus (ms). falseStarts: number of presses before the stimulus. */
 export function scorePvt(rts: number[], falseStartsBefore: number): PvtScore {
   const tooFast = rts.filter((rt) => rt < PVT.falseStartMs).length;
   const valid = rts.filter((rt) => rt >= PVT.falseStartMs);

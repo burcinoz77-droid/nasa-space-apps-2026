@@ -1,4 +1,4 @@
-// Parça 4 · Psikolojik testler: puanlama, Katman 1'e giden PVT-B, test planı, psikolojik durum ve ASTRA araçları.
+// Part 4 · Psychological tests: scoring, PVT-B sent to Layer 1, test plan, psychological state and ASTRA tools.
 import { beforeEach, describe, expect, it } from 'vitest';
 import { runTool } from '../../api/astra';
 import { buildContext } from '../ai/context';
@@ -23,8 +23,8 @@ const ask = (question: string) => fallbackAnswer({ mode: 'chat', question, conte
 
 beforeEach(() => useTests.getState().clear());
 
-describe('psych/instruments · resmi maddeler', () => {
-  it('Samn-Perelli 7 basamak, NASA-TLX 6 alt ölçek; İngilizce asılları yanında', () => {
+describe('psych/instruments · official items', () => {
+  it('Samn-Perelli 7 steps, NASA-TLX 6 subscales; official English items', () => {
     expect(SP_LEVELS.map((l) => l.puan)).toEqual([1, 2, 3, 4, 5, 6, 7]);
     expect(SP_LEVELS[0].en).toBe('Fully alert, wide awake');
     expect(SP_LEVELS[6].en).toBe('Completely exhausted, unable to function effectively');
@@ -33,7 +33,7 @@ describe('psych/instruments · resmi maddeler', () => {
     expect(TLX_ITEMS.find((i) => i.key === 'performans')!.alt).toBe('Perfect');
   });
 
-  it('PVT-B parametreleri Basner vd. 2011 ile aynı', () => {
+  it('PVT-B parameters match Basner et al. 2011', () => {
     expect(PVT.durationS).toBe(180);
     expect([PVT.minDelayMs, PVT.maxDelayMs]).toEqual([1000, 4000]);
     expect(PVT.lapseMs).toBe(355);
@@ -41,27 +41,27 @@ describe('psych/instruments · resmi maddeler', () => {
   });
 });
 
-describe('psych/scoring · puanları kod hesaplar', () => {
-  it('Raw TLX = altı alt ölçeğin ortalaması; en yüksek alt ölçek bulunur', () => {
+describe('psych/scoring · code computes the scores', () => {
+  it('Raw TLX = mean of the six subscales; the highest subscale is found', () => {
     expect(rawTlx(RATINGS)).toBe(48.3);
     expect(tlxHighest(RATINGS)).toMatchObject({ key: 'zihinsel', puan: 70 });
   });
 
-  it('PVT: 355 ms ve üzeri dikkat kaybı, 100 ms altı erken basma, 30 sn yanıtsız da dikkat kaybı', () => {
+  it('PVT: 355 ms and above is a lapse, under 100 ms a false start, 30 s without a response is also a lapse', () => {
     const s = scorePvt([250, 300, 354, 355, 400, 80, PVT.timeoutMs], 2);
     expect(s.responses).toBe(6);
     expect(s.lapses).toBe(3);
     expect(s.falseStarts).toBe(3);
-    expect(s.medianRt_ms).toBe(355); // (354 + 355) / 2, yuvarlanmış
+    expect(s.medianRt_ms).toBe(355); // (354 + 355) / 2, rounded
     expect(s.meanRt_ms).toBe(Math.round((250 + 300 + 354 + 355 + 400 + 30000) / 6));
   });
 });
 
-describe('psych/store · PVT-B sonucu Katman 1\'e gider', () => {
+describe('psych/store · the PVT-B result goes to Layer 1', () => {
   const pvt = (meanRt_ms: number, lapses: number, demo = false) =>
     useTests.getState().add({ kind: 'PVT', meanRt_ms, medianRt_ms: meanRt_ms, lapses, falseStarts: 0, responses: 50, speed: 1000 / meanRt_ms, demo, durationS: demo ? 30 : 180 }, 'elif');
 
-  it('ölçülen değer simüle değerin yerine geçer, 1 görev günü sonra simülasyon devam eder', () => {
+  it('the measured value replaces the simulated value, the simulation continues after 1 mission day', () => {
     pvt(420, 7);
     const t = createSimulation(3).tick().telemetry;
     applyTestResults(t);
@@ -74,12 +74,12 @@ describe('psych/store · PVT-B sonucu Katman 1\'e gider', () => {
     expect(PVT_HOLD_TICKS).toBe(DAY_TICKS);
   });
 
-  it('30 sn deneme Katman 1\'e gitmez', () => {
+  it('a 30 s trial does not go to Layer 1', () => {
     pvt(500, 10, true);
     expect(activePvt('elif')).toBeUndefined();
   });
 
-  it('yavaş bir PVT-B sonucu Katman 1\'de bilişsel sinyal olarak görünür', () => {
+  it('a slow PVT-B result shows up as a cognitive signal in Layer 1', () => {
     useAstra.getState().clearAll();
     const sim = createSimulation(7);
     const det = createDetector();
@@ -89,7 +89,7 @@ describe('psych/store · PVT-B sonucu Katman 1\'e gider', () => {
       const out = det.process(ship, telemetry);
       useAstra.getState().applyTick(ship, telemetry, out);
     };
-    for (let i = 0; i < 35; i++) step(); // kişisel baseline (30 ölçüm) kurulsun
+    for (let i = 0; i < 35; i++) step(); // let the personal baseline (30 readings) build
     pvt(520, 12);
     for (let i = 0; i < 5; i++) step();
     const st = useAstra.getState().statuses.elif!;
@@ -99,8 +99,8 @@ describe('psych/store · PVT-B sonucu Katman 1\'e gider', () => {
   });
 });
 
-describe('psych/analysis · ASTRA test planı ve psikolojik durum', () => {
-  it('hiç test yoksa üçü de "ilk ölçüm" olarak önerilir; yapılınca listeden çıkar', () => {
+describe('psych/analysis · ASTRA test plan and psychological state', () => {
+  it('with no tests, all three are recommended as "first measurement"; removed from the list once taken', () => {
     const s = runSimulation(3);
     const id = (['elif', 'kerem', 'zeynep', 'emir', 'deniz', 'mert'] as CrewId[]).find((x) => s.telemetry[x]!.env.sleepLastNight_h >= 6 && x !== 'mert')!;
     expect(dueTests(id).map((d) => d.kind).sort()).toEqual(['PVT', 'SP', 'TLX']);
@@ -110,7 +110,7 @@ describe('psych/analysis · ASTRA test planı ve psikolojik durum', () => {
     expect(dueTests(id).find((d) => d.kind === 'SP')?.neden).toMatch(/4 mission days/);
   });
 
-  it('kısa uykuda yorgunluk ve PVT-B öncelikli (Jones vd. 2022)', () => {
+  it('with short sleep, fatigue and PVT-B have priority (Jones et al. 2022)', () => {
     const s = runSimulation(3);
     useAstra.setState({ telemetry: { ...s.telemetry, elif: { ...s.telemetry.elif!, env: { ...s.telemetry.elif!.env, sleepLastNight_h: 5.2 } } } });
     const due = dueTests('elif');
@@ -119,7 +119,7 @@ describe('psych/analysis · ASTRA test planı ve psikolojik durum', () => {
     expect(due[0].kaynak?.url).toContain('PMC8919197');
   });
 
-  it('test sonuçları psikolojik durumu günceller; varsayım eşikler işaretli', () => {
+  it('test results update the psychological state; assumption thresholds are marked', () => {
     runSimulation(3);
     expect(psychState('deniz').guncelTest).toBe(false);
     useTests.getState().add({ kind: 'SP', puan: 6 }, 'deniz');
@@ -137,7 +137,7 @@ describe('psych/analysis · ASTRA test planı ve psikolojik durum', () => {
   });
 });
 
-describe('ASTRA · test araçları ve yedek mod', () => {
+describe('ASTRA · test tools and offline mode', () => {
   const seed = () => {
     makeDemoState();
     useTests.getState().add({ kind: 'SP', puan: 5 }, 'elif');
@@ -147,7 +147,7 @@ describe('ASTRA · test araçları ve yedek mod', () => {
     return JSON.parse(JSON.stringify(buildToolData(useAstra.getState())));
   };
 
-  it('get_test_results: son sonuçlar, değişim ve Katman 1 bilgisi', () => {
+  it('get_test_results: latest results, change and Layer 1 information', () => {
     const data = seed();
     const r = runTool('get_test_results', { ad: 'Elif' }, data) as { sonuclar: Record<string, { puan?: number; toplam?: number; ortalama_ms?: number }[]>; katman1eGidenPvt: string };
     expect(r.sonuclar.yorgunluk_SamnPerelli[0].puan).toBe(5);
@@ -160,7 +160,7 @@ describe('ASTRA · test araçları ve yedek mod', () => {
     expect(none.not).toMatch(/No test results for this person yet/);
   });
 
-  it('get_psych_state, get_test_schedule ve compare_crew_tests', () => {
+  it('get_psych_state, get_test_schedule and compare_crew_tests', () => {
     const data = seed();
     const ps = runTool('get_psych_state', { ad: 'Elif' }, data) as { seviye: string; etkenler: { esik?: string }[] };
     expect(ps.seviye).toBe('caution');
@@ -176,7 +176,7 @@ describe('ASTRA · test araçları ve yedek mod', () => {
     expect(cmp.sonDortGundeTestYapmayanlar).toContain('Mert');
   });
 
-  it('yedek mod: sonuçları, planı ve karşılaştırmayı en fazla 4 cümleyle anlatır', () => {
+  it('offline mode: describes results, plan and comparison in at most 4 sentences', () => {
     seed();
     const elif = ask("How are Elif's test results?");
     expect(elif).toMatch(/5\/7/);
@@ -189,12 +189,12 @@ describe('ASTRA · test araçları ve yedek mod', () => {
     for (const t of [elif, plan, cmp]) expect(countSentences(t)).toBeLessThanOrEqual(4);
   });
 
-  it('hiç test yokken uydurmaz', () => {
+  it('does not make things up when there are no tests', () => {
     makeDemoState();
     expect(ask('How are the psychological test results?')).toMatch(/Nobody has taken a psychological test yet/);
   });
 
-  it('PANAS ve BSI-18 simüle; ASTRA bunu belirtir (lisanslı ölçek)', () => {
+  it('PANAS and BSI-18 are simulated; ASTRA says so (licensed scales)', () => {
     makeDemoState();
     const mood = ask("How is Elif's mood?");
     expect(mood).toContain(LICENSED_NOTE);
@@ -206,7 +206,7 @@ describe('ASTRA · test araçları ve yedek mod', () => {
     expect(JSON.stringify(buildContext(useAstra.getState()))).toContain('licensed scales');
   });
 
-  it('cevap altında test kaynakları gösterilir', () => {
+  it('test sources are shown under the answer', () => {
     const src = answerSources('NASA-TLX iş yükü testi nedir?', 'NASA-TLX altı alt ölçekli bir iş yükü testidir.');
     expect(src.map((x) => x.url)).toContain('https://humansystems.arc.nasa.gov/groups/tlx/');
   });

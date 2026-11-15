@@ -1,5 +1,5 @@
-// Parça 2 · Raporlar = olay kaydı (incident ledger). Katman 1'in açtığı her olay, her otonom adım,
-// her mürettebat onayı ve sistem notu burada, en yeni üstte. Kayıtlar Türkçe ve ekranda aynen görünür.
+// Part 2 · Reports = incident ledger. Every incident Layer 1 raises, every autonomous action,
+// every crew acknowledgement and system note is here, newest at the top. Entries are in English and shown on screen as is.
 import { type ComponentType, useMemo, useState } from 'react';
 import { CREW } from '../../crew';
 import { ACTION_LABELS } from '../../engine';
@@ -9,8 +9,8 @@ import type { CrewId, Incident, Level, LedgerEntry } from '../../types';
 import { LevelBadge } from '../components/LevelBadge';
 import { COLORS, fmt, LEVEL_COLOR, LEVEL_ICON, LEVEL_LABEL } from '../theme';
 
-// Parça 4'ün mor "ASTRA açıklaması" kutusu. Dosya henüz yokken derleme bozulmasın diye glob ile
-// yüklenir; src/ui/components/AstraExplanation.tsx eklendiği anda burada kendiliğinden görünür.
+// Part 4's purple "ASTRA explanation" box. Loaded with a glob so the build does not break while the file
+// does not exist yet; appears here automatically as soon as src/ui/components/AstraExplanation.tsx is added.
 type ExplanationProps = { incidentId: string };
 const astraModules = import.meta.glob<{ AstraExplanation?: ComponentType<ExplanationProps> }>('../components/AstraExplanation.tsx', { eager: true });
 const AstraExplanation = Object.values(astraModules)[0]?.AstraExplanation;
@@ -38,7 +38,7 @@ const KIND_LABEL: Record<LedgerEntry['kind'], string> = {
 const PAGE = 150;
 const shortName = (id: CrewId) => CREW.find((c) => c.id === id)?.name.replace(/^Dr\. /, '').split(' ')[0] ?? id;
 
-/** Satırın sol kenar rengi: olaya bağlı kayıtlarda olayın seviyesi, diğerlerinde anlamına göre. */
+/** Left border color of a row: the incident's level for incident entries, otherwise by meaning. */
 function rowColor(e: LedgerEntry, inc: Incident | undefined): string {
   if (e.kind === 'INCIDENT_RESOLVED') return COLORS.normal;
   if (e.kind === 'ACK' || e.kind === 'SCENARIO') return COLORS.calm;
@@ -85,14 +85,14 @@ export function Raporlar({ crewId }: { crewId?: CrewId } = {}) {
 
   return (
     <div className="space-y-4">
-      {/* Özet */}
+      {/* Summary */}
       <div className="grid grid-cols-3 gap-4">
         <Stat title="Open incidents" value={String(openIncidents.length)} color={openIncidents.length ? (openCritical ? COLORS.critical : COLORS.caution) : COLORS.normal} />
         <Stat title="Autonomous actions" value={String(counts.actions)} color={COLORS.calm} />
         <Stat title="Total entries" value={String(counts.all)} color={COLORS.text} />
       </div>
 
-      {/* Araç çubuğu: filtre + anlık rapor */}
+      {/* Toolbar: filter + snapshot report */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-space-border bg-space-panel p-3">
         <div className="flex gap-1 rounded-xl bg-white/5 p-1" role="tablist" aria-label="Log filter">
           {FILTERS.map((f) => (
@@ -132,7 +132,7 @@ export function Raporlar({ crewId }: { crewId?: CrewId } = {}) {
         </div>
       </div>
 
-      {/* Kayıt listesi */}
+      {/* Entry list */}
       <div className="space-y-2">
         {shown.length === 0 && (
           <div className="rounded-xl border border-space-border bg-space-panel p-4 text-sm text-slate-400">
@@ -156,7 +156,7 @@ function LedgerRow({ entry: e, incident: inc, hasExplanation }: { entry: LedgerE
   const color = rowColor(e, inc);
   const level: Level | undefined = e.kind === 'INCIDENT_OPENED' ? inc?.level : undefined;
   const isOpening = e.kind === 'INCIDENT_OPENED' && inc;
-  // Açıklama: açık olaylarda istenir; çözülmüş olaylarda sadece zaten varsa gösterilir (gereksiz istek olmasın)
+  // Explanation: requested for open incidents; for resolved incidents only shown if it already exists (no unnecessary requests)
   const showExplanation = isOpening && AstraExplanation && (inc.status !== 'resolved' || hasExplanation);
 
   return (

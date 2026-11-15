@@ -1,4 +1,4 @@
-// Parça 3 · Seviye rozeti: renk + simge + yazı (● NORMAL, ▲ DİKKAT, ■ KRİTİK). Renk körlüğü için üçü birlikte.
+// Part 3 · Level badge: color + symbol + text (● NOMINAL, ▲ CAUTION, ■ WARNING). All three together for color blindness.
 import type { Level } from '../../types';
 import { alpha, COLORS, LEVEL_COLOR, LEVEL_ICON, LEVEL_LABEL } from '../theme';
 

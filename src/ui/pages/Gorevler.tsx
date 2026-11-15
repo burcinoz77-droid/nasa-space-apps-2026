@@ -1,7 +1,7 @@
-// Parça 4 · Görevler (Parça 3'ten devralındı). ARES-1 Mars görevi, 180. gün:
-// Gezegen ekibi habitat güneş panellerinin bakımını EVA ile yapar, Kokpit ekibi yörüngeden izler.
-// Tarih yerine görev günü yazılır; NASA logolu fotoğraf yerine logosuz temsilî çizim kullanılır.
-// Ekip durumu ve yüzey koşulları canlı veriden (Katman 1 ve simülasyon) okunur; bu sayfa karar vermez.
+// Part 4 · Tasks (taken over from Part 3). ARES-1 Mars mission, Mission Day 180:
+// the surface crew maintains the habitat solar panels on EVA, the orbit crew monitors from orbit.
+// The mission day is shown instead of a date; a logo-free representative drawing is used instead of a NASA-logo photo.
+// Crew status and surface conditions are read from live data (Layer 1 and the simulation); this page makes no decisions.
 import { useState } from 'react';
 import { delayText, shortName, valueText } from '../../ai/labels';
 import { CREW } from '../../crew';
@@ -27,7 +27,7 @@ const EQUIPMENT = [
 
 const STEPS = ['Suit check', 'Airlock', 'Panel cleaning', 'Connection test', 'Return to habitat'];
 
-// Sayfa değişince kontrol listesi sıfırlanmasın diye modül düzeyinde tutulur.
+// Kept at module level so the checklist is not reset when the page changes.
 const savedReady = new Set<string>(['suit', 'comms']);
 
 function avgMetric(telemetry: ReturnType<typeof useAstra.getState>['telemetry'], ids: CrewId[], key: MetricKey): number | undefined {
@@ -51,7 +51,7 @@ export function Gorevler() {
       return next;
     });
 
-  // Biyosensör yaması: Gezegen ekibinin üçünden de canlı telemetri geliyorsa otomatik hazır.
+  // Biosensor patch: automatically ready if live telemetry is coming from all three surface crew members.
   const sensorsLive = EVA_TEAM.every((c) => telemetry[c.id]);
   const total = EQUIPMENT.length + 1;
   const done = EQUIPMENT.filter((e) => ready.has(e.id)).length + (sensorsLive ? 1 : 0);
@@ -61,7 +61,7 @@ export function Gorevler() {
 
   return (
     <div className="space-y-4 pb-20">
-      {/* Görev kartı */}
+      {/* Task card */}
       <section className="flex flex-col gap-5 rounded-2xl border border-space-border bg-space-panel p-5 md:flex-row">
         <HabitatIllustration />
         <div className="flex min-w-0 flex-1 flex-col gap-3">
@@ -109,7 +109,7 @@ export function Gorevler() {
       </section>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {/* Ekipman kontrol listesi */}
+        {/* Equipment checklist */}
         <section className="rounded-2xl border border-space-border bg-space-panel p-5">
           <h3 className="mb-3 font-semibold">Equipment checklist</h3>
           <ul className="space-y-2">
@@ -141,7 +141,7 @@ export function Gorevler() {
           </ul>
         </section>
 
-        {/* Ekip durumu (Katman 1'den) */}
+        {/* Crew status (from Layer 1) */}
         <section className="rounded-2xl border border-space-border bg-space-panel p-5">
           <h3 className="mb-1 font-semibold">EVA team · live status</h3>
           <p className="mb-3 text-sm text-slate-400">Layer 1 sets the level; the crew decides on the EVA.</p>
@@ -173,7 +173,7 @@ export function Gorevler() {
           </ul>
         </section>
 
-        {/* Yüzey koşulları ve Dünya bağlantısı */}
+        {/* Surface conditions and comm with Earth */}
         <div className="flex flex-col gap-4 md:col-span-2 xl:col-span-1">
           <section className="rounded-2xl border border-space-border bg-space-panel p-5">
             <h3 className="mb-3 font-semibold">Surface conditions · live</h3>
@@ -221,7 +221,7 @@ function ReadyChip({ ok }: { ok: boolean }) {
   );
 }
 
-/** Logosuz temsilî çizim: Mars yüzeyinde habitat ve güneş paneli dizileri (alacakaranlık). */
+/** Logo-free representative drawing: habitat and solar panel arrays on the Mars surface (twilight). */
 function HabitatIllustration() {
   return (
     <figure className="shrink-0 md:w-72">
@@ -248,7 +248,7 @@ function HabitatIllustration() {
         <path d="M40 150 a34 26 0 0 1 68 0 Z" fill={COLORS.border} stroke={COLORS.textMuted} strokeWidth="1.5" />
         <rect x="64" y="138" width="20" height="12" rx="2" fill={COLORS.bg} stroke={COLORS.textMuted} strokeWidth="1" />
         <circle cx="74" cy="132" r="3" fill={COLORS.calm} opacity="0.8" />
-        {/* güneş paneli dizileri */}
+        {/* solar panel arrays */}
         {[0, 1, 2].map((i) => (
           <g key={i} transform={`translate(${136 + i * 46} ${150 - i * 3})`}>
             <line x1="18" y1="0" x2="18" y2="14" stroke={COLORS.textMuted} strokeWidth="1.5" />
@@ -256,7 +256,7 @@ function HabitatIllustration() {
             <path d="M12 -3 L16 11 M24 -5 L28 9" stroke={COLORS.calm} strokeOpacity="0.6" strokeWidth="0.8" />
           </g>
         ))}
-        {/* astronot */}
+        {/* astronaut */}
         <g transform="translate(176 160)" fill={COLORS.text}>
           <circle cx="0" cy="-12" r="3.5" />
           <rect x="-3.5" y="-8" width="7" height="10" rx="2" />

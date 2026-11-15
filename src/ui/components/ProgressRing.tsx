@@ -1,4 +1,4 @@
-// Parça 3 · İlerleme halkası (Kokpit'te görev ilerlemesi).
+// Part 3 · Progress ring (mission progress on Mission Status).
 import type { ReactNode } from 'react';
 import { COLORS } from '../theme';
 
@@ -15,7 +15,7 @@ export function ProgressRing({
   stroke?: number;
   color?: string;
   children?: ReactNode;
-  label: string; // ekran okuyucu için
+  label: string; // for screen readers
 }) {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;

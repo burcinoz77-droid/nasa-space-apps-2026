@@ -1,5 +1,5 @@
-// Parça 4 · Psikolojik test sonuçlarının ASTRA'ya giden kopyası (araçlar ve kısa özet).
-// Tüm puanlar ve değişimler burada KODLA hesaplanır; model yeni sayı üretmez, sadece bunları okur.
+// Part 4 · Copy of the psychological test results sent to ASTRA (tools and short summary).
+// All scores and changes are computed here IN CODE; the model produces no new numbers, it only reads these.
 import { CREW, CREW_IDS } from '../crew';
 import { crewComparison, dueTests, psychState, ROUTINE_TICKS, SHORT_SLEEP_H, SP_CAUTION, SP_CRITICAL, TLX_CAUTION, TLX_NAMES } from '../psych/analysis';
 import { PVT, TEST_INFO, TEST_SOURCES } from '../psych/instruments';
@@ -9,7 +9,7 @@ import { useAstra, type AstraState } from '../store';
 import type { CrewId, Level } from '../types';
 import { LEVEL_TR, shortName } from './labels';
 
-const KEEP = 5; // test başına en fazla son 5 sonuç
+const KEEP = 5; // at most the last 5 results per test
 const LEVEL: Record<Level, string> = LEVEL_TR;
 const days = (ticks: number) => Math.round(ticks / DAY_TICKS);
 
@@ -58,7 +58,7 @@ function crewTests(id: CrewId, a: AstraState) {
   };
 }
 
-/** Araçların okuduğu tam test verisi (src/ai/tooldata.ts -> toolData.testler). */
+/** Full test data read by the tools (src/ai/tooldata.ts -> toolData.testler). */
 export function buildTestData(a: AstraState = useAstra.getState()) {
   const cmp = crewComparison(CREW_IDS);
   return {
@@ -85,7 +85,7 @@ export function buildTestData(a: AstraState = useAstra.getState()) {
   };
 }
 
-/** Bağlama (sistem istemi) giden kısa özet: kişi başına seviye, son puanlar, bekleyen test sayısı. */
+/** Short summary sent to the context (system prompt): level, latest scores and number of pending tests per person. */
 export function testSummary(a: AstraState = useAstra.getState()) {
   const ts = useTests.getState();
   return Object.fromEntries(
