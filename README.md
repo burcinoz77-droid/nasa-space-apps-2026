@@ -29,19 +29,25 @@ crew cannot wait for a flight surgeon.
   PVT-B (alertness; flown on the ISS as the Reaction Self Test). Official items only, no AI-written questions.
 - All crew data is simulated; no real person's health data is used. The interface is in Turkish.
 
-**Live demo:** https://nasa-space-apps-2026-tau.vercel.app
-(backup: https://nasa-space-apps-2026.orbitalis-astra.workers.dev ·
-GitHub Pages without the AI server, ASTRA in backup mode: https://burcinoz77-droid.github.io/nasa-space-apps-2026/)
+| | Link |
+| --- | --- |
+| **Demo video (30 s)** | _to be added_ |
+| **Presentation (slides)** | _to be added_ |
+| **Live app** | https://nasa-space-apps-2026-tau.vercel.app |
+| Live app, backup | https://nasa-space-apps-2026.orbitalis-astra.workers.dev |
+| GitHub Pages (no AI server, ASTRA in backup mode) | https://burcinoz77-droid.github.io/nasa-space-apps-2026/ |
 
 **Try it in 2 minutes:** wait ~40 s until the clock shows "Canlı" (personal baselines learned) →
 top right **Simülasyon ▾ → Güneş fırtınası** (solar storm) → watch the cinematic, the red alert and
 the automatic shelter step → click **ASTRA'ya sor** (ask ASTRA). For a hands-free tour:
 **Ayarlar → ★ Jüri demosu**.
 
-## Canlı bağlantılar
+## Sunum, demo videosu ve canlı bağlantılar
 
 | Ne | Link | Not |
 | --- | --- | --- |
+| Demo videosu (30 sn) | _eklenecek_ | İngilizce altyazılı |
+| Sunum (slaytlar) | _eklenecek_ | İngilizce, en fazla 7 slayt |
 | Ana yayın (Vercel) | https://nasa-space-apps-2026-tau.vercel.app | ASTRA canlı (Gemini) |
 | Yedek (Cloudflare) | https://nasa-space-apps-2026.orbitalis-astra.workers.dev | ASTRA canlı |
 | GitHub Pages | https://burcinoz77-droid.github.io/nasa-space-apps-2026/ | Sunucu yok: ASTRA yedek modda |
