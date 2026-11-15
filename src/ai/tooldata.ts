@@ -9,6 +9,8 @@ import { incidentSummary, signalSummary } from './context';
 import { REFERENCES } from './knowledge';
 import { LEVEL_TR, shortName } from './labels';
 import { longHistory, longHistorySpanHours, MISSION_MIN_PER_TICK, personalNormal } from './memory';
+import { buildTestData } from './testdata';
+import { LICENSED_NOTE, LICENSED_SIM_KEYS } from '../psych/instruments';
 
 /** Geçmişten kaç ölçümde bir örnek alınır ve en fazla kaç nokta gönderilir. */
 const TREND_STRIDE = 6;
@@ -54,6 +56,7 @@ export function buildToolData(s: AstraState) {
                   deger: round(readMetric(t, mi.key), mi.decimals),
                   ...(pn ? { kisiselNormal: round(pn.mean, mi.decimals) } : {}),
                   ...(mi.cadence === 'daily' ? { olcumSikligi: 'günde bir' } : {}),
+                  ...(LICENSED_SIM_KEYS.includes(mi.key) ? { not: LICENSED_NOTE } : {}),
                 };
               })
             : [],
@@ -108,6 +111,7 @@ export function buildToolData(s: AstraState) {
     olaylar: s.incidents.slice(0, 15).map(incidentSummary),
     kayit: s.ledger.slice(0, 12).map((e) => ({ saat: new Date(e.at).toLocaleTimeString('tr-TR'), tur: e.kind, metin: e.text })),
     bilgi: REFERENCES,
+    testler: buildTestData(s),
   };
 }
 
