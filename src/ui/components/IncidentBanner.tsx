@@ -143,7 +143,7 @@ function SignalChip({ s, crewId }: { s: MetricScore; crewId?: CrewId }) {
           {fmtMetric(s.key, s.value)}
         </span>
         <span className="text-sm text-slate-400">
-          normal {fmtMetric(s.key, s.mean)}
+          baseline {fmtMetric(s.key, s.mean)}
           {Number.isFinite(s.z) && s.key !== 'env.doseCumulative_mSv' ? ` · ${fmtZ(s.z)}` : ''}
         </span>
       </div>
@@ -178,7 +178,7 @@ function CriticalHeader({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
             <span className="rounded-md px-2 py-0.5 font-mono font-bold text-space-bg" style={{ backgroundColor: c }}>
-              {LEVEL_ICON.critical} {LEVEL_LABEL.critical} OLAY
+              {LEVEL_ICON.critical} {LEVEL_LABEL.critical}
             </span>
             <span className="font-semibold" style={{ color: c }}>
               {INCIDENT_LABELS[inc.type]}

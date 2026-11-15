@@ -276,7 +276,7 @@ function RangeNote({ crewId, k, value, block }: { crewId: CrewId; k: MetricKey; 
           : 'Outside the reference range: deviation from personal baseline is evaluated.'
       }
     >
-      normal {text} {inside ? '✓' : '!'}
+      reference {text} {inside ? '✓' : '!'}
     </span>
   );
 }
@@ -392,7 +392,7 @@ function RadiationCard({ crewId, t, st }: { crewId: CrewId; t: Telemetry | undef
         value={cum}
         max={limit}
         color={cumLevel && cumLevel !== 'normal' ? LEVEL_COLOR[cumLevel] : COLORS.calm}
-        marks={[{ at: warn, color: COLORS.caution, label: `%80 = ${fmt(warn)} mSv (dikkat)` }]}
+        marks={[{ at: warn, color: COLORS.caution, label: `80% = ${fmt(warn)} mSv (caution)` }]}
       />
     </FactorCard>
   );
@@ -418,8 +418,8 @@ function Co2Card({ crewId, t }: { crewId: CrewId; t: Telemetry | undefined }) {
         max={6}
         color={level && level !== 'normal' ? LEVEL_COLOR[level] : COLORS.calm}
         marks={[
-          { at: cau, color: COLORS.caution, label: `${fmt(cau, 1)} mmHg dikkat` },
-          { at: crit, color: COLORS.critical, label: `${fmt(crit, 1)} mmHg kritik` },
+          { at: cau, color: COLORS.caution, label: `${fmt(cau, 1)} mmHg caution` },
+          { at: crit, color: COLORS.critical, label: `${fmt(crit, 1)} mmHg warning` },
         ]}
       />
       <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-sm text-slate-400">
@@ -550,7 +550,7 @@ function GroupTables({ crewId, t, st, groups }: { crewId: CrewId; t: Telemetry |
       {groups.map((g) => (
         <div key={g}>
           <h3 className="mb-1 text-sm font-semibold tracking-wide text-slate-300">
-            Veri grubu {g} · {GROUP_NAMES[g]}
+            Data group {g} · {GROUP_NAMES[g]}
           </h3>
           <div className="grid grid-cols-1 gap-x-6 min-[1400px]:grid-cols-2">
             {g === 1 && t && (
