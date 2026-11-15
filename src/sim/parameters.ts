@@ -41,6 +41,9 @@ const SRC = {
   hrpSleep: { source: 'NASA HRP uyku riski', url: 'https://www.nasa.gov/reference/risk-from-inadequate-sleep-and-irregular-schedules/' },
   relay: { source: 'NASA NTRS, ASCEND 2022: Mars görevlerinde iletişim gecikmesi', url: 'https://ntrs.nasa.gov/api/citations/20220013418/downloads/ASCEND-Communication%20Delays%2C%20Disruptions%2C%20and%20Blackouts%20for%20Crewed%20Mars%20Missions.pdf' },
   donki: { source: 'NASA DONKI, Mayıs 2024 SEP', url: 'https://ccmc.gsfc.nasa.gov/DONKI-API/get/SEP?startDate=2024-05-01&endDate=2024-05-31' },
+  ochmoEclss: { source: 'OCHMO-TB-002 ECLSS (NASA-STD-3001 V2 6012, 6013)', url: 'https://www.nasa.gov/wp-content/uploads/2023/07/eclss-technical-brief-ochmo.pdf' },
+  ochmoAcoustics: { source: 'OCHMO-TB-035 Akustik (NASA-STD-3001 V2 6078)', url: 'https://www.nasa.gov/sites/default/files/atoms/files/acoustics_technical_brief_ochmo_0.pdf' },
+  issNoise: { source: 'ISS gürültü sınırları (Int J Audiol 2020, NASA tıbbi operasyon gereksinimleri)', url: 'https://informahealthcare.com/doi/abs/10.1080/14992027.2019.1698067' },
   assumption: { source: 'Varsayım', assumption: true },
 } as const;
 
@@ -96,6 +99,14 @@ export const PARAMS = {
   sleepInSpaceMean: { label: 'Uzayda ortalama uyku', value: 6.09, unit: 'sa', ...SRC.barger2014 },
   remPctNormal: { label: 'REM uykusu oranı', value: 22, unit: '%', ...SRC.hrpSleep, assumption: true },
   swsPctNormal: { label: 'Derin uyku oranı', value: 18, unit: '%', ...SRC.hrpSleep, assumption: true },
+  // Ortam: NASA-STD-3001 performans bölgesi 20–25 °C ve %30–60 nem; sağlık sınırı 18 °C/%75 – 27 °C/%25 (OCHMO-TB-002).
+  // Normal değer aralığın ortasıdır. Gezegen ekibinde giysi içi de aynı kabul edildi (varsayım).
+  ambientTempComfort: { label: 'Ortam sıcaklığı', value: 22.5, unit: '°C (NASA performans bölgesi 20–25 °C; sağlık sınırı 18–27 °C)', ...SRC.ochmoEclss },
+  humidityComfort: { label: 'Ortam nemi', value: 45, unit: '% (NASA performans bölgesi %30–60; sağlık sınırı %25–75)', ...SRC.ochmoEclss },
+  // Gürültü: çalışma alanında sürekli gürültü sınırı NC-50 eğrisi (yaklaşık 58 dBA). 55 dBA bu sınırın altında seçilmiş bir varsayımdır.
+  noiseBaseline: { label: 'Ortam gürültüsü', value: 55, unit: 'dBA (sürekli gürültü sınırı NC-50, yaklaşık 58 dBA)', ...SRC.ochmoAcoustics, assumption: true },
+  noiseWorkLimit: { label: 'Gürültü sınırı, çalışma', value: 72, unit: 'dBA (16 saat ortalaması; uyku için 8 saatte 62 dBA)', ...SRC.issNoise },
+  noiseSleepLimit: { label: 'Gürültü sınırı, uyku', value: 62, unit: 'dBA (8 saat ortalaması)', ...SRC.issNoise },
   // İletişim
   commDelayMin: { label: 'Dünya gecikmesi, en kısa', value: 180, unit: 's (tek yön)', ...SRC.relay },
   commDelayMax: { label: 'Dünya gecikmesi, en uzun', value: 1344, unit: 's (tek yön)', ...SRC.relay },
@@ -175,6 +186,9 @@ export const NORMALS: Record<MetricKey, MetricNormal> = {
   'env.remPct': { rest: 22, eva: 22, personSd: 1.5, sd: 2, min: 5, max: 35, param: 'remPctNormal' },
   'env.swsPct': { rest: 18, eva: 18, personSd: 1.5, sd: 2, min: 5, max: 30, param: 'swsPctNormal' },
   'env.circadianShift_h': { rest: 0.5, eva: 0.5, personSd: 0.15, sd: 0.2, min: 0, max: 6, param: 'sleepInSpaceMean' },
+  'env.ambientTemp_C': { rest: 22.5, eva: 22.5, personSd: 0, sd: 0.3, min: 5, max: 45, param: 'ambientTempComfort' },
+  'env.humidity_pct': { rest: 45, eva: 45, personSd: 0, sd: 2, min: 0, max: 100, param: 'humidityComfort', integer: true },
+  'env.noise_dBA': { rest: 55, eva: 55, personSd: 0, sd: 1.5, min: 20, max: 130, param: 'noiseBaseline', integer: true },
 };
 
 /** 180. gündeki toplam doz: Kokpit 180 × 1,84; Gezegen (180 − 10) × 1,84 + 10 × 0,64 (yüzeyde 10 gün varsayım). */
