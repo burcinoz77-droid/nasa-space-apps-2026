@@ -3,9 +3,9 @@
   "name": "CO₂ scrubber failure",
   "seed": 7,
   "source": "OSDR EDA (highest CO₂ measured on the ISS 6,977 ppm ≈ 5.3 mmHg); OCHMO-TB-004 symptom thresholds",
-  "note": "Cockpit cabin ppCO₂ rises from 1.9 to 5.3 mmHg over 90 readings. Symptoms (breathing, EtCO₂, heart rate, PVT) scale with cabin CO₂; Kerem responds twice as strongly. When ventilation is increased CO₂ falls to 2.0 and symptoms recede. Symptom magnitudes are assumptions.",
+  "note": "Spacecraft cabin ppCO₂ rises from 1.9 to 5.3 mmHg over 90 readings. Symptoms (breathing, EtCO₂, heart rate, PVT) scale with cabin CO₂; Kerem responds twice as strongly. When ventilation is increased CO₂ falls to 2.0 and symptoms recede. Symptom magnitudes are assumptions.",
   "events": [
-    { "atTick": 0, "type": "SCRUBBER_FAIL", "text": "Cockpit CO₂ scrubber stopped" }
+    { "atTick": 0, "type": "SCRUBBER_FAIL", "text": "Cabin CO₂ scrubber stopped" }
   ],
   "effects": [
     { "metric": "env.ppCO2_mmHg", "crew": "KOKPIT", "to": 5.3, "rampTicks": 90 },

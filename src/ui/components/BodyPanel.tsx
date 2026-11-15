@@ -140,7 +140,7 @@ function RiskTip({ hover, status, t }: { hover: HoverInfo; status: CrewStatus | 
           <span className="font-mono" style={{ color: sig.level !== 'normal' ? LEVEL_COLOR[sig.level] : COLORS.text }}>
             {fmtMetric(sig.key, readMetric(t, sig.key))}
           </span>
-          <span className="text-slate-400"> (normal {fmtMetric(sig.key, sig.mean)})</span>
+          <span className="text-slate-400"> (baseline {fmtMetric(sig.key, sig.mean)})</span>
         </div>
       )}
       <div className="mt-1 text-sm text-slate-500">Click for details</div>

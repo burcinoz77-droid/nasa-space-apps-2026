@@ -202,7 +202,7 @@ export function createDetector(): Detector {
             inc.level = level;
             inc.title = rule.title(inc.crewIds, worst.hit, g.location);
             inc.status = 'open'; // onaylanmış olay kritikleşirse yeniden onay ister
-            ledger.push(entry(at, 'SYSTEM', `Incident escalated to critical: ${inc.title}`, { incidentId: inc.id, crewIds: [...inc.crewIds] }));
+            ledger.push(entry(at, 'SYSTEM', `Incident escalated to Warning: ${inc.title}`, { incidentId: inc.id, crewIds: [...inc.crewIds] }));
           }
           inc.signals = worst.hit.signals; // olay açıkken sinyaller canlı güncellenir
         }
@@ -234,7 +234,7 @@ export function createDetector(): Detector {
         o.inc.status = 'resolved';
         open.delete(key);
         ledger.push(
-          entry(at, 'INCIDENT_RESOLVED', `Resolved: ${o.inc.title} — signals normal for ${RESOLVE_AFTER} readings`, {
+          entry(at, 'INCIDENT_RESOLVED', `Resolved: ${o.inc.title} — signals nominal for ${RESOLVE_AFTER} readings`, {
             incidentId: o.inc.id,
             crewIds: [...o.inc.crewIds],
           }),

@@ -3,7 +3,7 @@
 import type { CrewId, CrewMember } from './types';
 
 export const CREW: CrewMember[] = [
-  { id: 'elif', name: 'Dr. Elif Yılmaz', role: 'Mission Specialist · Medical Officer', location: 'KOKPIT', unit: 'IVA-01', sensitivity: 'EVA radiation sensitivity' },
+  { id: 'elif', name: 'Dr. Elif Yılmaz', role: 'Mission Specialist · Crew Medical Officer', location: 'KOKPIT', unit: 'IVA-01', sensitivity: 'EVA radiation sensitivity' },
   { id: 'kerem', name: 'Kerem Demir', role: 'Flight Engineer', location: 'KOKPIT', unit: 'IVA-02', sensitivity: 'High cabin CO₂ sensitivity' },
   { id: 'zeynep', name: 'Zeynep Arslan', role: 'Commander', location: 'KOKPIT', unit: 'IVA-03', sensitivity: 'High-G and cardiac resilience' },
   { id: 'emir', name: 'Emir Çelik', role: 'Mission Specialist · Scientist', location: 'GEZEGEN', unit: 'xEMU-01', sensitivity: 'Circadian and surface radiation monitoring' },

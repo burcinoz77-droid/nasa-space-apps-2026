@@ -126,18 +126,18 @@ function Visor({ crewId, onClose }: { crewId: CrewId; onClose: () => void }) {
             ▲ HABITAT · 340 m{alert ? ' · 4 min walk' : ' · 78°'}
           </div>
         ) : (
-          <div className="text-base">ARES-1 · {alert?.type === 'RADIATION' ? 'radiation shelter ▲ 12 m' : 'Cockpit module'}</div>
+          <div className="text-base">ARES-1 · {alert?.type === 'RADIATION' ? 'storm shelter ▲ 12 m' : 'Crew module'}</div>
         )}
       </div>
 
       {/* Sol üst: kimlik ve gün */}
       <Corner side="left" top="13vh" label={surface ? `HELMET VISOR · ${member.unit}` : `AR GLASSES · ${member.unit}`}>
         <span className="text-2xl font-bold">{member.name.replace('Dr. ', '')}</span>
-        <span className="text-sm opacity-85">Mission day {ship?.missionDay ?? '—'}</span>
+        <span className="text-sm opacity-85">Mission Day {ship?.missionDay ?? '—'}</span>
       </Corner>
 
       {/* Sağ üst: Dünya ve ASTRA */}
-      <Corner side="right" top="13vh" label="EARTH LINK">
+      <Corner side="right" top="13vh" label="COMM WITH EARTH">
         <span className="text-lg font-bold">
           delay {Math.floor(delay / 60)} min {Math.round(delay % 60)} s
         </span>
@@ -206,7 +206,7 @@ function Alert({ incident, onSnooze }: { incident: Incident; onSnooze: () => voi
       >
         <div className="flex justify-between text-[13px] tracking-[0.2em]" style={{ fontFamily: MONO, color }}>
           <span>ASTRA · LAYER 1 · {INCIDENT_LABELS[incident.type].toUpperCase()}</span>
-          <span>{incident.level === 'critical' ? 'CRITICAL' : 'CAUTION'}</span>
+          <span>{incident.level === 'critical' ? 'WARNING' : 'CAUTION'}</span>
         </div>
         <div className="text-2xl leading-snug font-bold">{incident.title}</div>
         <div className="flex flex-wrap gap-x-5 gap-y-1 text-[15px]" style={{ fontFamily: MONO, color: '#E2E8F0' }}>

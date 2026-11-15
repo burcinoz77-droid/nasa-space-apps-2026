@@ -24,7 +24,7 @@ export const LEVEL_COLOR: Record<Level, string> = {
 };
 
 // Renk körlüğü için renk tek başına anlam taşımaz: her seviyenin bir de yazısı ve simgesi var.
-export const LEVEL_LABEL: Record<Level, string> = { normal: 'NORMAL', caution: 'CAUTION', critical: 'CRITICAL' };
+export const LEVEL_LABEL: Record<Level, string> = { normal: 'NOMINAL', caution: 'CAUTION', critical: 'WARNING' };
 export const LEVEL_ICON: Record<Level, string> = { normal: '●', caution: '▲', critical: '■' };
 
 const LEVEL_RANK: Record<Level, number> = { normal: 0, caution: 1, critical: 2 };

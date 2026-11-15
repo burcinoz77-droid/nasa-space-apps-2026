@@ -40,9 +40,9 @@ import { alpha, COLORS, fmt } from './ui/theme';
 type PageId = 'kokpit' | 'astronot' | 'astronotlar' | 'gorevler' | 'raporlar' | 'ayarlar';
 
 const PAGES: { id: PageId; label: string; icon: () => ReactNode; subtitle: string }[] = [
-  { id: 'kokpit', label: 'Cockpit', icon: IconCockpit, subtitle: 'Mission status at a glance' },
+  { id: 'kokpit', label: 'Mission Status', icon: IconCockpit, subtitle: 'Mission status at a glance' },
   { id: 'astronot', label: 'Astronaut View', icon: IconAstronaut, subtitle: 'All readings for one astronaut across 5 data groups' },
-  { id: 'astronotlar', label: 'Crew', icon: IconCrew, subtitle: 'Cockpit and Surface teams' },
+  { id: 'astronotlar', label: 'Crew', icon: IconCrew, subtitle: 'Orbit and surface crews' },
   { id: 'gorevler', label: 'Tasks', icon: IconTasks, subtitle: 'Today\'s EVA task and equipment check' },
   { id: 'raporlar', label: 'Reports', icon: IconReports, subtitle: 'Event log: incidents, autonomous actions, acknowledgements' },
   { id: 'ayarlar', label: 'Settings', icon: IconSettings, subtitle: 'Scenarios, sampling rate, data sources' },
@@ -51,8 +51,8 @@ const PAGES: { id: PageId; label: string; icon: () => ReactNode; subtitle: strin
 // Üst bardaki senaryo hapları (kısa adlar); tam adlar loop.ts → SCENARIO_NAMES
 // (dar ekranda, 1024 px tablet, kısa ad gösterilir)
 const SCENARIO_PILLS: { id: ScenarioId; label: string; short?: string }[] = [
-  { id: 'NORMAL', label: 'Normal day', short: 'Normal' },
-  { id: 'SOLAR_STORM', label: 'Solar storm' },
+  { id: 'NORMAL', label: 'Nominal day', short: 'Nominal' },
+  { id: 'SOLAR_STORM', label: 'Solar particle event' },
   { id: 'MARS_DAY_180', label: 'Mars day 180' },
   { id: 'CO2_SCRUBBER_FAIL', label: 'CO₂ failure' },
   { id: 'EVA_OVEREXERTION', label: 'EVA overexertion', short: 'EVA' },
@@ -150,7 +150,7 @@ function Sidebar({ page, onPage }: { page: PageId; onPage: (p: PageId) => void }
       <div className="mt-auto space-y-3">
         <div className="rounded-xl border border-space-border bg-space-bg/60 p-3">
           <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: COLORS.calm }}>
-            <IconSignal /> Earth link
+            <IconSignal /> Comm with Earth
           </div>
           <div className="mt-1 text-sm text-slate-400">delay · one way</div>
           <div className="font-mono text-lg font-semibold whitespace-nowrap text-white">{fmtDelay(delay)}</div>
@@ -199,7 +199,7 @@ function TopBar({ onBell }: { onBell: () => void }) {
           onClick={onBell}
           className="relative rounded-xl p-2 hover:bg-white/5"
           style={{ color: bellColor }}
-          aria-label={`${open} open incidents${critical ? ', critical present' : ''}. Open Reports`}
+          aria-label={`${open} open incidents${critical ? ', warning active' : ''}. Open Reports`}
           title="Open incidents"
         >
           <IconBell />

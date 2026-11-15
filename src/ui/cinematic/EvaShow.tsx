@@ -153,12 +153,12 @@ export function EvaShow({ onClose }: { onClose: () => void }) {
       <Caption show={phase === 'response'} pos="top">
         <div className="rounded-xl border px-5 py-3" style={{ borderColor: alpha(COLORS.critical, 0.6), background: alpha('#02040b', 0.8) }}>
           <div className="font-mono text-xs tracking-[0.25em]" style={{ color: COLORS.critical }}>
-            ASTRA · LAYER 1 · HEAT LOAD {peak === 'critical' ? 'CRITICAL' : 'CAUTION'}
+            ASTRA · LAYER 1 · HEAT LOAD {peak === 'critical' ? 'WARNING' : 'CAUTION'}
           </div>
           <div className="mt-2 flex items-center justify-center gap-2 text-lg" style={{ color: resting ? COLORS.normal : COLORS.textMuted }}>
             <span>{resting ? '✓' : '…'}</span>
             <span>
-              Autonomous action: <b>mandatory rest</b>
+              Autonomous action: <b>mandatory crew rest</b>
             </span>
           </div>
           <div className="mt-1 text-sm" style={{ color: COLORS.textMuted }}>

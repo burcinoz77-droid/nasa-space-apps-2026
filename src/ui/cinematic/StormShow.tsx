@@ -56,7 +56,7 @@ export function StormShow({ onClose }: { onClose: () => void }) {
     <Stage
       fading={phase === 'outro'}
       onClose={onClose}
-      label="Solar storm cinematic"
+      label="Solar particle event cinematic"
       credit={`${videoOk ? 'Imagery: NASA/SDO · ' : ''}Event times: NASA DONKI · Dose: ARES-1 simulation (live)`}
     >
       <Particles active={phase !== 'flare'} shielded={phase === 'response' && sheltered} />
@@ -114,14 +114,14 @@ export function StormShow({ onClose }: { onClose: () => void }) {
         </div>
         <div className="mt-2 text-2xl font-bold md:text-3xl">ARES-1, Mars orbit · mission day 180</div>
         <div className="mt-2 text-base" style={{ color: COLORS.textMuted }}>
-          Message delay to Earth <b style={{ color: COLORS.text }}>{fmtMinSec(delay)}</b>: by the time Mission Control's warning arrives, it is too late.
+          One-way light time to Earth <b style={{ color: COLORS.text }}>{fmtMinSec(delay)}</b>: by the time Mission Control's warning arrives, it is too late.
         </div>
       </Caption>
 
       {/* 3 · Çarpma: canlı doz sayacı */}
       <Caption show={phase === 'impact' || phase === 'response'} pos="top-right">
         <div className="font-mono text-xs tracking-[0.3em]" style={{ color: hot ? COLORS.critical : COLORS.normal }}>
-          LIVE READING · COCKPIT DOSE RATE
+          LIVE READING · SPACECRAFT DOSE RATE
         </div>
         <div className="mt-1 font-mono text-6xl font-bold tabular-nums md:text-7xl" style={{ color: hot ? COLORS.critical : COLORS.normal, transition: 'color .6s' }}>
           {fmt(dose, 0)}
@@ -146,13 +146,13 @@ export function StormShow({ onClose }: { onClose: () => void }) {
       <Caption show={phase === 'response'} pos="bottom-left">
         <div className="rounded-xl border p-4" style={{ borderColor: alpha(COLORS.critical, 0.6), background: alpha('#02040b', 0.75) }}>
           <div className="font-mono text-xs tracking-[0.25em]" style={{ color: COLORS.critical }}>
-            ASTRA · LAYER 1 · {incident ? 'CRITICAL INCIDENT RAISED' : 'DETECTING ANOMALY'}
+            ASTRA · LAYER 1 · {incident ? 'WARNING RAISED' : 'DETECTING ANOMALY'}
           </div>
-          <div className="mt-1 text-xl font-bold">Radiation: dose rate far above personal normal</div>
+          <div className="mt-1 text-xl font-bold">Radiation: dose rate far above personal baseline</div>
           <div className="mt-3 flex items-center gap-2 text-base" style={{ color: sheltered ? COLORS.normal : COLORS.textMuted }}>
             <span>{sheltered ? '✓' : '…'}</span>
             <span>
-              Autonomous action: <b>move to radiation shelter</b> {sheltered ? '(started)' : '(pending)'}
+              Autonomous action: <b>storm shelter ingress</b> {sheltered ? '(started)' : '(pending)'}
             </span>
           </div>
           <div className="mt-1 text-sm" style={{ color: COLORS.textMuted }}>
@@ -211,7 +211,7 @@ function Ship({ show, hot, sheltered }: { show: boolean; hot: boolean; sheltered
           </g>
         ))}
         <text x="470" y="440" textAnchor="middle" fill={COLORS.textMuted} fontSize="15">
-          Surface team · Mars surface · atmosphere shield
+          Surface crew · Mars surface · atmosphere shield
         </text>
 
         {/* Yörüngedeki ARES-1 */}
@@ -239,7 +239,7 @@ function Ship({ show, hot, sheltered }: { show: boolean; hot: boolean; sheltered
           {sheltered && <circle r="120" fill="url(#shield)" />}
         </g>
         <text x="150" y="80" textAnchor="middle" fill={COLORS.text} fontSize="17" fontWeight="700">
-          ARES-1 · Cockpit team
+          ARES-1 · orbit crew
         </text>
       </svg>
     </div>

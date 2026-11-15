@@ -13,11 +13,11 @@ export const SOURCE_LABEL: Record<AstraAnswer['source'], string> = {
   cache: 'From cache',
 };
 
-export const LEVEL_TR: Record<Level, string> = { normal: 'normal', caution: 'caution', critical: 'critical' };
+export const LEVEL_TR: Record<Level, string> = { normal: 'nominal', caution: 'caution', critical: 'warning' };
 
 export const SCENARIO_TR: Record<ScenarioId, string> = {
-  NORMAL: 'Normal day',
-  SOLAR_STORM: 'Solar storm',
+  NORMAL: 'Nominal day',
+  SOLAR_STORM: 'Solar particle event',
   MARS_DAY_180: 'Mars day 180 load',
   CO2_SCRUBBER_FAIL: 'CO₂ scrubber failure',
   EVA_OVEREXERTION: 'EVA overexertion',
@@ -36,16 +36,16 @@ export const INCIDENT_TR: Record<IncidentType, string> = {
 
 /** Otonom adımın "yapıldı" hâli (olay açıklamalarında). */
 export const ACTION_DONE_TR: Record<AutoActionType, string> = {
-  RADIATION_SHELTER: 'Move to radiation shelter started automatically',
+  RADIATION_SHELTER: 'Storm shelter ingress started automatically',
   INCREASE_VENTILATION: 'Ventilation increased automatically',
-  MANDATORY_REST: 'Mandatory rest applied automatically',
+  MANDATORY_REST: 'Mandatory crew rest applied automatically',
 };
 
 /** Otonom adımın kısa adı (veri özetinde). */
 export const ACTION_TR: Record<AutoActionType, string> = {
-  RADIATION_SHELTER: 'moving to the radiation shelter',
+  RADIATION_SHELTER: 'moving to the storm shelter',
   INCREASE_VENTILATION: 'increasing ventilation',
-  MANDATORY_REST: 'mandatory rest',
+  MANDATORY_REST: 'mandatory crew rest',
 };
 
 /** Araç adlarının ekranda görünen Türkçe karşılığı (api/astra.ts'teki TOOLS). */

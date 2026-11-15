@@ -94,7 +94,7 @@ function crewSummary(s: AstraState, id: CrewId, detailed: boolean, keysOnly: boo
     ad: shortName(id),
     tamAd: m.name,
     rol: m.role,
-    konum: m.location === 'KOKPIT' ? 'Cockpit (ship in orbit)' : 'Mars surface (EVA suit)',
+    konum: m.location === 'KOKPIT' ? 'Orbit (IVA, inside the spacecraft)' : 'Mars surface (EVA suit)',
     kisiselHassasiyet: m.sensitivity,
     durum: st ? LEVEL_TR[st.level] : 'no data',
     saglikSkoru_pct: st ? Math.round(st.healthScore) : undefined,

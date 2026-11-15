@@ -284,7 +284,7 @@ describe('Katman 1 · olay kuralları', () => {
     const out = h.run(3, { mert: { 'cardio.hr_bpm': 125, 'resp.rr_bpm': 32 } });
     const multi = out.incidents.find((i) => i.type === 'MULTI')!;
     expect(multi).toMatchObject({ level: 'critical', crewIds: ['mert'] });
-    expect(multi.title).toBe('Mert: simultaneous critical deviation in cardiovascular and respiratory-metabolic domains');
+    expect(multi.title).toBe('Mert: simultaneous warning-level deviation in cardiovascular and respiratory-metabolic domains');
   });
 
   it('toplam doz ≥ 480 mSv dikkat (kariyer limitinin %80\'i), sığınak açmaz', () => {

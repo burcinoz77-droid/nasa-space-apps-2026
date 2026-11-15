@@ -29,7 +29,7 @@ export function buildToolData(s: AstraState) {
           ad: shortName(m.id),
           tamAd: m.name,
           rol: m.role,
-          konum: m.location === 'KOKPIT' ? 'Cockpit (ship in orbit)' : 'Mars surface (EVA suit)',
+          konum: m.location === 'KOKPIT' ? 'Orbit (IVA, inside the spacecraft)' : 'Mars surface (EVA suit)',
           birim: m.unit,
           kisiselHassasiyet: m.sensitivity,
           durum: st ? LEVEL_TR[st.level] : 'no data',

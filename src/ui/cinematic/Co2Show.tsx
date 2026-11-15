@@ -79,7 +79,7 @@ export function Co2Show({ onClose }: { onClose: () => void }) {
 
       <Caption show={phase === 'cabin'} pos="top">
         <div className="font-mono text-xs tracking-[0.3em]" style={{ color: COLORS.calm }}>
-          ARES-1 · COCKPIT CABIN · MISSION DAY 180
+          ARES-1 · SPACECRAFT CABIN · MISSION DAY 180
         </div>
         <div className="mt-2 text-2xl font-bold md:text-3xl">CO₂ scrubber running</div>
         <div className="mt-2 text-base" style={{ color: COLORS.textMuted }}>
@@ -119,7 +119,7 @@ export function Co2Show({ onClose }: { onClose: () => void }) {
       <Caption show={phase === 'response'} pos="top">
         <div className="rounded-xl border px-5 py-3" style={{ borderColor: alpha(COLORS.critical, 0.6), background: alpha('#02040b', 0.8) }}>
           <div className="font-mono text-xs tracking-[0.25em]" style={{ color: COLORS.critical }}>
-            ASTRA · LAYER 1 · CO₂ {incident?.level === 'critical' ? 'CRITICAL' : 'CAUTION'}
+            ASTRA · LAYER 1 · CO₂ {incident?.level === 'critical' ? 'WARNING' : 'CAUTION'}
           </div>
           <div className="mt-2 flex items-center justify-center gap-2 text-lg" style={{ color: vented ? COLORS.normal : COLORS.textMuted }}>
             <span>{vented ? '✓' : '…'}</span>
@@ -172,7 +172,7 @@ function Gauge({ ppco2, level }: { ppco2: number; level: string }) {
       </div>
       <div className="relative flex-1">
         <div className="absolute" style={{ top: pct(CRITICAL), transform: 'translateY(-50%)' }}>
-          <Tick color={COLORS.critical} text={`${fmt(CRITICAL, 1)} critical`} />
+          <Tick color={COLORS.critical} text={`${fmt(CRITICAL, 1)} warning`} />
         </div>
         <div className="absolute" style={{ top: pct(CAUTION), transform: 'translateY(-50%)' }}>
           <Tick color={COLORS.caution} text={`${fmt(CAUTION, 1)} caution`} />

@@ -95,7 +95,7 @@ export const PARAMS = {
   pupilDiameterRest: { label: 'Pupil diameter', value: 6.1, unit: 'mm (healthy adults 6.12 ± 0.69; not a SANS measure)', ...SRC.tvst2021 },
   pupilLatencyRest: { label: 'Pupil response latency', value: 276, unit: 'ms (healthy adults median 276, IQR 249.5–289)', ...SRC.tvst2021 },
   // Veri grubu 5 · Çevre
-  doseRateMarsTransit: { label: 'Dose rate, Mars cruise (Cockpit)', value: 1.84, unit: 'mSv/day', ...SRC.swri },
+  doseRateMarsTransit: { label: 'Dose rate, Mars cruise (spacecraft)', value: 1.84, unit: 'mSv/day', ...SRC.swri },
   doseRateMarsSurface: { label: 'Dose rate, Mars surface', value: 0.64, unit: 'mSv/day', ...SRC.hassler2014 },
   careerDoseLimit: { label: 'Career radiation limit', value: 600, unit: 'mSv', ...SRC.ochmoRad },
   cabinCO2Median: { label: 'Cabin CO₂, ISS median', value: 1.9, unit: 'mmHg (ISS RR-19 median 2,516 ppm; no alert up to 2.3 mmHg)', ...SRC.eda, normalRange: [0, 2.3] },
@@ -103,7 +103,7 @@ export const PARAMS = {
   // 2,3 mmHg: NASA NTRS'e göre belirtiler bu seviyeden itibaren bildirilmiş (plan). OCHMO-TB-004 ayrıca baş ağrısı riskini
   // %1'in altında tutmak için 7 günlük ortalamanın 2,5 mmHg altında kalmasını ister; 3,0 mmHg 1 saatlik üst sınırdır.
   co2CautionLimit: { label: 'CO₂ caution threshold', value: 2.3, unit: 'mmHg (symptoms begin; 7-day average limit 2.5)', ...SRC.ochmoCO2 },
-  co2CriticalLimit: { label: 'CO₂ critical threshold', value: 3.0, unit: 'mmHg (1-hour average, NASA-STD-3001 V2 6004)', ...SRC.ochmoCO2 },
+  co2CriticalLimit: { label: 'CO₂ warning limit', value: 3.0, unit: 'mmHg (1-hour average, NASA-STD-3001 V2 6004)', ...SRC.ochmoCO2 },
   cabinPressure: { label: 'Cabin pressure and O₂', value: 101.3, unit: 'kPa, 21% O₂', ...SRC.ntrsCabin },
   suitPressure: { label: 'EVA suit pressure and O₂', value: 29.6, unit: 'kPa, 100% O₂ (4.3 psia)', ...SRC.ntrsSuit },
   sleepInSpaceMean: { label: 'Average sleep in space', value: 6.09, unit: 'h', ...SRC.barger2014 },
@@ -122,14 +122,14 @@ export const PARAMS = {
   commDelayMax: { label: 'Earth delay, longest', value: 1344, unit: 's (one way)', ...SRC.relay },
   commDelayDemo: { label: 'Earth delay, demo', value: 750, unit: 's (one way, 12.5 min)', ...SRC.relay },
   // Senaryo çarpanları (DONKI zamanı verir, doz değerini vermez)
-  stormDoseMultiplierOnset: { label: 'Storm dose multiplier, onset', value: 25, unit: '× dose rate (Cockpit)', ...SRC.assumption },
-  stormDoseMultiplierPeak: { label: 'Storm dose multiplier, peak', value: 30, unit: '× dose rate (Cockpit; Curiosity cruise quiet ~332, storm >10,000 µGy/day)', ...SRC.guo2015 },
+  stormDoseMultiplierOnset: { label: 'Storm dose multiplier, onset', value: 25, unit: '× dose rate (spacecraft)', ...SRC.assumption },
+  stormDoseMultiplierPeak: { label: 'Storm dose multiplier, peak', value: 30, unit: '× dose rate (spacecraft; Curiosity cruise quiet ~332, storm >10,000 µGy/day)', ...SRC.guo2015 },
   stormDoseMultiplierSurface: { label: 'Storm dose multiplier, surface', value: 5, unit: '× dose rate (Mars atmosphere shields; NASA: 8,100 µGy at the surface in the May 2024 storm, ratio uncertain)', ...SRC.assumption },
   // Kriz sonrası toparlanma: değer kötüleşirken hızlı (SIM.approachRate), iyileşirken yavaş değişir.
   // Yarı ömür = ln 2 / oran ölçüm. Ortam ölçümleri (CO₂, doz) fiziksel olduğu için hızlı kalır.
   recoveryRateLive: { label: 'Post-crisis recovery rate, live metrics', value: 0.025, unit: '× gap / reading (half-life ≈ 28 readings)', ...SRC.assumption },
   recoveryRateDaily: { label: 'Post-crisis recovery rate, daily metrics', value: 0.01, unit: '× gap / reading (sleep, reaction, mood; half-life ≈ 70 readings)', ...SRC.assumption },
-  recoveryRateRest: { label: 'Recovery rate during mandatory rest', value: 0.12, unit: '× gap / reading (heart rate, breathing, lactate, core temperature)', ...SRC.assumption },
+  recoveryRateRest: { label: 'Recovery rate during mandatory crew rest', value: 0.12, unit: '× gap / reading (heart rate, breathing, lactate, core temperature)', ...SRC.assumption },
   shelterDoseFactor: { label: 'Dose factor in shelter', value: 0.23, unit: '× dose rate (Orion shelter: 414 → 95 µGy/min in a 1989-storm simulation)', ...SRC.artemis1 },
 } satisfies Record<string, Param>;
 

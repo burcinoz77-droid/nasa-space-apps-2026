@@ -135,7 +135,7 @@ describe('fallback.ts · yedek mod, 10 test sorusu', () => {
   });
 
   it('kim dinlenmeli: zorunlu dinlenme verilen Elif önce gelir', () => {
-    expect(fallbackAnswer({ mode: 'chat', question: QUESTIONS[0], context: {} }).text).toMatch(/Layer 1 has applied mandatory rest: Elif/);
+    expect(fallbackAnswer({ mode: 'chat', question: QUESTIONS[0], context: {} }).text).toMatch(/Layer 1 has applied mandatory crew rest: Elif/);
   });
 
   it('Elif\'in nabzı ekrandakiyle aynı sayı', () => {
@@ -156,7 +156,7 @@ describe('fallback.ts · yedek mod, 10 test sorusu', () => {
   });
 
   it('"Peki Kerem?" sorusunu Kerem\'in durumu olarak anlar', () => {
-    expect(fallbackAnswer({ mode: 'chat', question: 'And Kerem?', context: {} }).text).toMatch(/^Kerem's status is critical/);
+    expect(fallbackAnswer({ mode: 'chat', question: 'And Kerem?', context: {} }).text).toMatch(/^Kerem's status is warning/);
   });
 
   it('telemetri yokken de cevap verir', () => {
@@ -313,7 +313,7 @@ describe('explain.ts · olay açıklaması', () => {
 
   it('olay sorusu sinyalleri değer ve kişisel normalle verir', () => {
     const s = makeDemoState();
-    expect(incidentQuestion(s.incidents[0])).toContain('3.4 mmHg (personal normal 1.9 mmHg)');
+    expect(incidentQuestion(s.incidents[0])).toContain('3.4 mmHg (personal baseline 1.9 mmHg)');
   });
 });
 
@@ -436,7 +436,7 @@ describe('Yeni ölçümler (ortam) ve sistemde ölçülmeyen konular', () => {
     expect(ask('Is there a SANS risk?')).toMatch(/not measured/);
     expect(ask("How is Mert's electrolyte balance?")).not.toMatch(/vestibular/);
     expect(ask('What is the noise in the cockpit?')).toMatch(/dBA/);
-    expect(ask('Is cabin noise normal?')).toMatch(/within the official normal range \(up to 72 dBA\)/);
+    expect(ask('Is cabin noise normal?')).toMatch(/within the reference range \(up to 72 dBA\)/);
     for (const q of ["How is Kerem's bone loss?", 'Is there a SANS risk?', 'What is the noise in the cockpit?']) {
       expect(checkAnswer(ask(q))).toEqual({ safe: true });
     }
@@ -455,7 +455,7 @@ describe('conditions.ts · olası durumlar (kesin teşhis değil)', () => {
     s = runSimulation(40, 'EVA_OVEREXERTION', 30);
     const mert = possibleConditions(s, 'mert');
     expect(mert[0].durum).toMatch(/Heat stress/);
-    expect(mert[0].dayanak.join(' ')).toMatch(/Core temperature .* \(personal normal/);
+    expect(mert[0].dayanak.join(' ')).toMatch(/Core temperature .* \(personal baseline/);
     expect(['low', 'medium']).toContain(mert[0].olasilik);
   });
 
@@ -704,7 +704,7 @@ describe('safety.ts · English answers', () => {
     'These changes may be consistent with heat stress and overexertion. This is a possibility, not a certainty.',
     'I cannot confirm a life-threatening condition from this data; if there are symptoms, report them to the flight surgeon immediately.',
     'Increasing ventilation is recommended; re-check the value after a few readings.',
-    'Layer 1 has applied mandatory rest: Elif (cognitive score 61%, sleep 6.6 h, PVT 260 ms).',
+    'Layer 1 has applied mandatory crew rest: Elif (cognitive score 61%, sleep 6.6 h, PVT 260 ms).',
   ];
   it.each(BLOCK)('blocks: %s', (text) => expect(checkAnswer(text).safe).toBe(false));
   it.each(PASS)('passes: %s', (text) => expect(checkAnswer(text)).toEqual({ safe: true }));

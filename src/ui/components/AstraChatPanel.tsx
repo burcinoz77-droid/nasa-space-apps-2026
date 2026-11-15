@@ -13,7 +13,7 @@ import { AstraMeta, Thinking } from './AstraExplanation';
 
 const PRESETS = [
   'Who should rest today?',
-  'Why is Kerem critical?',
+  'Why is Kerem at Warning level?',
   'What could be going on with Mert?',
   'How is the radiation situation?',
   'Is CO₂ safe?',

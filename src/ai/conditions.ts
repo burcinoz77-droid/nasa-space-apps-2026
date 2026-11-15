@@ -148,7 +148,7 @@ export const CONDITION_RULES: ConditionRule[] = [
     durum: 'Increased radiation exposure',
     aciklama: 'A higher dose rate raises cumulative dose quickly; long-term health risk increases with cumulative dose.',
     kaynak: 'NASA-STD-3001 (OCHMO radiation brief)',
-    oneri: 'Consider moving to the radiation shelter and track dose',
+    oneri: 'Consider moving to the storm shelter and track dose',
     isaretler: [
       { key: 'env.doseRate_uSv_h', dir: 'high' },
       { key: 'env.doseCumulative_mSv', dir: 'high', abs: 480 },
@@ -212,7 +212,7 @@ function deviation(s: AstraState, id: CrewId, sign: Sign): Deviation | undefined
   const byAbs = sign.abs !== undefined && (sign.dir === 'high' ? value >= sign.abs : value <= sign.abs);
   if (!byZ && !byAbs) return undefined;
   const label = METRIC_BY_KEY[sign.key]?.label ?? sign.key;
-  const text = pn ? `${label} ${valueText(sign.key, value)} (personal normal ${valueText(sign.key, pn.mean)})` : `${label} ${valueText(sign.key, value)}`;
+  const text = pn ? `${label} ${valueText(sign.key, value)} (personal baseline ${valueText(sign.key, pn.mean)})` : `${label} ${valueText(sign.key, value)}`;
   return { key: sign.key, value, normal: pn?.mean, z, text };
 }
 

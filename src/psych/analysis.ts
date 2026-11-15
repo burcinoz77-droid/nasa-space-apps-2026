@@ -82,7 +82,7 @@ export function dueTests(crewId: CrewId, a: AstraState = useAstra.getState(), ts
       continue;
     }
     if (!recent && kind !== 'TLX' && cog) {
-      out.push({ kind, oncelik: 'öncelikli', neden: 'Layer 1 sees cognitive metrics deviating from personal normal; an objective reaction test and a fatigue rating will clarify.' });
+      out.push({ kind, oncelik: 'öncelikli', neden: 'Layer 1 sees cognitive metrics deviating from personal baseline; an objective reaction test and a fatigue rating will clarify.' });
       continue;
     }
     if (!recent && kind === 'TLX' && (onSurface || inIncident)) {

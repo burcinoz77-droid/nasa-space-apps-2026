@@ -14,7 +14,7 @@ const inflight = new Set<string>();
 export function incidentQuestion(inc: Incident): string {
   const signals = inc.signals
     .slice(0, 3)
-    .map((x) => `${METRIC_BY_KEY[x.key]?.label ?? x.key} ${valueText(x.key, x.value)} (personal normal ${valueText(x.key, x.mean)})`)
+    .map((x) => `${METRIC_BY_KEY[x.key]?.label ?? x.key} ${valueText(x.key, x.value)} (personal baseline ${valueText(x.key, x.mean)})`)
     .join(', ');
   const actions = inc.autoActions.map((a) => ACTION_TR[a]).join(', ');
   return [

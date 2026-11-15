@@ -47,8 +47,8 @@ export function initials(id: CrewId): string {
     .toUpperCase();
 }
 
-export const LOCATION_TEXT = { KOKPIT: 'Cockpit', GEZEGEN: 'Surface' } as const;
-export const LOCATION_LONG = { KOKPIT: 'Mars orbit · inside ship', GEZEGEN: 'Mars surface · EVA' } as const;
+export const LOCATION_TEXT = { KOKPIT: 'Orbit', GEZEGEN: 'Surface' } as const;
+export const LOCATION_LONG = { KOKPIT: 'Mars orbit · IVA', GEZEGEN: 'Mars surface · EVA' } as const;
 
 const domainOf = (key: MetricKey) => key.split('.')[0] as Domain;
 

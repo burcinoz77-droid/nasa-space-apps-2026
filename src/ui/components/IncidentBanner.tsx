@@ -58,7 +58,7 @@ export function IncidentBanner({ onOpenCrew }: { onOpenCrew?: (id: CrewId) => vo
         ))}
         {cautionOpen.length > 3 && <div className="text-sm text-slate-400">+{cautionOpen.length - 3} more caution notice(s) · see Reports</div>}
         {critAck.slice(0, 2).map((i) => (
-          <Strip key={i.id} inc={i} note="Acknowledged · monitored until signals return to normal" />
+          <Strip key={i.id} inc={i} note="Acknowledged · monitored until signals return to baseline" />
         ))}
         {main && (
           <CriticalHeader
@@ -88,7 +88,7 @@ function EventLine({ events }: { events: string[] }) {
       title={events.join('\n')}
     >
       <span aria-hidden>◆</span>
-      <span className="font-semibold whitespace-nowrap">Ship event</span>
+      <span className="font-semibold whitespace-nowrap">Vehicle event</span>
       <span className="min-w-0 flex-1 truncate text-slate-200">{last}</span>
       {events.length > 1 && <span className="whitespace-nowrap text-slate-400">+{events.length - 1}</span>}
     </div>
@@ -216,7 +216,7 @@ function CriticalHeader({
 
       {others.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 border-t px-4 py-2 text-sm" style={{ borderColor: alpha(c, 0.4) }}>
-          <span className="text-slate-300">+{others.length} more critical incident(s):</span>
+          <span className="text-slate-300">+{others.length} more warning(s):</span>
           {others.map((o) => (
             <button
               key={o.id}

@@ -13,8 +13,8 @@ import { averageScore, fmtMetric, initials, LOCATION_LONG } from '../format';
 import { alpha, COLORS, fmt, LEVEL_COLOR, LEVEL_ICON, scoreLevel } from '../theme';
 
 const TEAMS: { loc: CrewLocation; title: string }[] = [
-  { loc: 'KOKPIT', title: 'Cockpit team' },
-  { loc: 'GEZEGEN', title: 'Surface team' },
+  { loc: 'KOKPIT', title: 'Orbit crew (IVA)' },
+  { loc: 'GEZEGEN', title: 'Surface crew' },
 ];
 
 export function Astronotlar({ onOpenCrew }: { onOpenCrew: (id: CrewId) => void }) {
@@ -73,7 +73,7 @@ function CrewCard({ m, onOpen }: { m: CrewMember; onOpen: () => void }) {
     >
       <div className="p-4">
         <div className="flex items-center justify-between font-mono text-sm text-slate-400">
-          <span>{m.location === 'KOKPIT' ? 'Cockpit · inside ship' : 'Surface · EVA'}</span>
+          <span>{m.location === 'KOKPIT' ? 'Orbit · IVA, inside the spacecraft' : 'Surface · EVA'}</span>
           <span>{m.unit}</span>
         </div>
         <div className="mt-2 flex items-center gap-3">
@@ -106,7 +106,7 @@ function CrewCard({ m, onOpen }: { m: CrewMember; onOpen: () => void }) {
             <LevelBadge level={st?.level} pill />
             {st?.restRequired && (
               <span className="text-sm" style={{ color: COLORS.calm }}>
-                ✓ Mandatory rest
+                ✓ Mandatory crew rest
               </span>
             )}
             {!st?.restRequired && openInc > 0 && (

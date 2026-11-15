@@ -15,9 +15,9 @@ export const INCIDENT_LABELS: Record<IncidentType, string> = {
 };
 
 export const ACTION_LABELS: Record<AutoActionType, string> = {
-  RADIATION_SHELTER: 'Move to radiation shelter',
+  RADIATION_SHELTER: 'Storm shelter ingress',
   INCREASE_VENTILATION: 'Ventilation increased',
-  MANDATORY_REST: 'Mandatory rest',
+  MANDATORY_REST: 'Mandatory crew rest',
 };
 
 export const DOMAIN_LABELS: Record<Domain, string> = {
@@ -34,7 +34,7 @@ export function joinTr(list: string[]): string {
   return `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
 }
 
-export const LOCATION_LABELS: Record<CrewLocation, string> = { KOKPIT: 'Cockpit', GEZEGEN: 'Surface' };
+export const LOCATION_LABELS: Record<CrewLocation, string> = { KOKPIT: 'Orbit', GEZEGEN: 'Surface' };
 
 /** "elif" -> "Elif" (kayıt metinlerinde kısa ad). */
 export function shortName(id: CrewId): string {

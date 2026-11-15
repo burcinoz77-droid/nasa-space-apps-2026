@@ -20,11 +20,11 @@ interface ScenarioButton {
 }
 
 const BUTTONS: ScenarioButton[] = [
-  { id: 'SOLAR_STORM', label: 'Start solar storm', who: 'All crew (Cockpit most exposed)', what: 'Dose rate ×25, then ×60. DONKI May 2024 event sequence.', color: COLORS.caution },
+  { id: 'SOLAR_STORM', label: 'Start solar particle event', who: 'All crew (orbit crew most exposed)', what: 'Dose rate ×25, then ×60. DONKI May 2024 event sequence.', color: COLORS.caution },
   { id: 'MARS_DAY_180', label: 'Mars day 180 load', who: 'Elif fully, others at half intensity', what: 'Sleep drops to 5 h, PVT slows, mood falls.', color: COLORS.caution },
-  { id: 'CO2_SCRUBBER_FAIL', label: 'CO₂ scrubber failure', who: 'Cockpit team, Kerem twice as sensitive', what: 'Cabin ppCO₂ 1.9 → 5.3 mmHg. Breathing and heart rate rise.', color: COLORS.critical },
-  { id: 'EVA_OVEREXERTION', label: 'EVA overexertion', who: 'Mert (Surface team)', what: 'Heart rate 155, core temperature 39.2 °C, lactate 22 mM.', color: COLORS.critical },
-  { id: 'NORMAL', label: 'Stabilize all crew', who: 'Everyone', what: 'Scenario effects stop; values recover gradually to personal normal.', color: COLORS.normal },
+  { id: 'CO2_SCRUBBER_FAIL', label: 'CO₂ scrubber failure', who: 'Orbit crew, Kerem twice as sensitive', what: 'Cabin ppCO₂ 1.9 → 5.3 mmHg. Breathing and heart rate rise.', color: COLORS.critical },
+  { id: 'EVA_OVEREXERTION', label: 'EVA overexertion', who: 'Mert (Surface crew)', what: 'Heart rate 155, core temperature 39.2 °C, lactate 22 mM.', color: COLORS.critical },
+  { id: 'NORMAL', label: 'Stabilize all crew', who: 'Everyone', what: 'Scenario effects stop; values recover gradually to personal baseline.', color: COLORS.normal },
 ];
 
 const SPEEDS = [800, 1200, 2500];
@@ -159,7 +159,7 @@ export function Ayarlar() {
               <tr>
                 <th className="py-1 pr-3 font-normal">Parameter</th>
                 <th className="py-1 pr-3 font-normal">Value</th>
-                <th className="py-1 pr-3 font-normal">Normal range</th>
+                <th className="py-1 pr-3 font-normal">Reference range</th>
                 <th className="py-1 font-normal">Source</th>
               </tr>
             </thead>
@@ -180,7 +180,7 @@ export function Ayarlar() {
           </table>
         </div>
         <p className="mt-3 text-xs" style={{ color: COLORS.textMuted }}>
-          Solar storm event times come from NASA DONKI May 2024 records (data/donki_sep_2024-05.json). DONKI gives no dose values: the storm peak multiplier is based on Curiosity's cruise measurement and the shelter factor on Artemis I; onset and surface multipliers are assumptions. Layer 1 raises no alert for values inside the "Normal range" column.
+          Solar particle event times come from NASA DONKI May 2024 records (data/donki_sep_2024-05.json). DONKI gives no dose values: the storm peak multiplier is based on Curiosity's cruise measurement and the shelter factor on Artemis I; onset and surface multipliers are assumptions. Layer 1 raises no alert for values inside the "Normal range" column.
         </p>
       </section>
     </div>

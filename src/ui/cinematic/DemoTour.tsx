@@ -13,9 +13,9 @@ import { CINEMATIC_END_EVENT, DEMO_EVENT, NAVIGATE_EVENT, runtime } from './phas
 import { Stars } from './shared';
 
 const TOUR: { id: ScenarioId; action: string }[] = [
-  { id: 'SOLAR_STORM', action: 'radiation shelter' },
+  { id: 'SOLAR_STORM', action: 'storm shelter' },
   { id: 'CO2_SCRUBBER_FAIL', action: 'ventilation increased' },
-  { id: 'EVA_OVEREXERTION', action: 'mandatory rest' },
+  { id: 'EVA_OVEREXERTION', action: 'mandatory crew rest' },
 ];
 const CALIBRATION_TICK_MS = 100;
 const INTRO_MS = 8000;
@@ -172,7 +172,7 @@ function Intro({ onStop }: { onStop: () => void }) {
       </div>
       <div className="mx-auto mt-10 max-w-md">
         <div className="mb-2 font-mono text-sm" style={{ color: COLORS.textMuted }}>
-          {pct < 100 ? 'ASTRA is learning each astronaut\'s personal normal…' : 'Personal baselines ready'} ({Math.min(samples, SIM.baselineWindow)}/{SIM.baselineWindow})
+          {pct < 100 ? 'ASTRA is learning each astronaut\'s personal baseline…' : 'Personal baselines ready'} ({Math.min(samples, SIM.baselineWindow)}/{SIM.baselineWindow})
         </div>
         <div className="h-2 overflow-hidden rounded-full" style={{ background: alpha(COLORS.text, 0.1) }}>
           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: pct < 100 ? COLORS.calm : COLORS.normal, transition: 'width .2s, background .5s' }} />
@@ -211,7 +211,7 @@ function Dwell({ i, onStop }: { i: number; onStop: () => void }) {
             DEMO {i + 1}/{TOUR.length} · {SCENARIO_NAMES[t.id].toUpperCase()}
           </div>
           <div>
-            Cockpit: Layer 1 logged the incident and applied the safe action (<b>{t.action}</b>). Explanation and acknowledgement are with the crew.
+            Mission Status: Layer 1 logged the incident and applied the safe action (<b>{t.action}</b>). Explanation and acknowledgement are with the crew.
           </div>
         </div>
         <StopButton onStop={onStop} />

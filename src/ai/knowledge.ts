@@ -55,9 +55,9 @@ export const REFERENCES: ReferenceTopic[] = [
     anahtarKelimeler: ['radiation', 'dose', 'solar', 'storm', 'shelter', 'career', 'radyasyon', 'doz', 'msv', 'sievert', 'güneş', 'fırtına', 'sığınak', 'kariyer'],
     bilgiler: [
       { bilgi: `Career radiation limit: ${val('careerDoseLimit', 600)} mSv.`, ...src('careerDoseLimit', 'NASA-STD-3001 (OCHMO radiation brief)') },
-      { bilgi: `Dose rate during the cruise to Mars (Cockpit): ${val('doseRateMarsTransit', 1.84)} mSv/day, about 76.7 µSv/h.`, ...src('doseRateMarsTransit', 'Curiosity RAD, Zeitlin et al. 2013') },
+      { bilgi: `Dose rate during the cruise to Mars (spacecraft): ${val('doseRateMarsTransit', 1.84)} mSv/day, about 76.7 µSv/h.`, ...src('doseRateMarsTransit', 'Curiosity RAD, Zeitlin et al. 2013') },
       { bilgi: `Dose rate on the Mars surface: ${val('doseRateMarsSurface', 0.64)} mSv/day, about 26.7 µSv/h; the atmosphere provides partial shielding.`, ...src('doseRateMarsSurface', 'Curiosity RAD, Hassler et al. 2013') },
-      { bilgi: 'Layer 1 raises a caution at a cumulative dose of 480 mSv (80% of the career limit) and a critical incident at 600 mSv; it starts the move to the radiation shelter when the dose rate deviates z ≥ 3 from personal normal.', kaynak: 'Layer 1 rule, based on the NASA-STD-3001 limit' },
+      { bilgi: 'Layer 1 raises a caution at a cumulative dose of 480 mSv (80% of the career limit) and a warning at 600 mSv; it starts storm shelter ingress when the dose rate deviates z ≥ 3 from personal baseline.', kaynak: 'Layer 1 rule, based on the NASA-STD-3001 limit' },
       { bilgi: 'About 30% of total radiation on the ISS is from neutrons; this ratio applies to the ISS and should not be used for Mars.', kaynak: 'Canadian Space Agency (CSA), 2026', url: 'https://www.asc-csa.gc.ca/eng/news/articles/2026/2026-02-26-monitoring-radiation-astronaut-health.asp' },
       { bilgi: 'On the Mars surface neutrons make up about 7% of the total dose rate and about 10% of the biologically relevant dose equivalent. The app does not show the neutron share separately.', kaynak: 'Köhler et al. 2014, Curiosity RAD neutron measurements on the Mars surface' },
       { bilgi: 'The event sequence in the solar storm scenario follows the May 2024 DONKI records (DONKI does not provide dose values).', ...src('donkiSep', 'NASA DONKI, May 2024 SEP') },
@@ -70,10 +70,10 @@ export const REFERENCES: ReferenceTopic[] = [
     konu: 'co2',
     anahtarKelimeler: ['co2', 'co₂', 'carbon dioxide', 'ventilation', 'scrubber', 'cabin air', 'karbondioksit', 'karbon', 'havalandırma', 'temizleyici', 'kabin havası'],
     bilgiler: [
-      { bilgi: `CO₂ partial pressure above ${val('co2CautionLimit', 2.3)} mmHg is caution and above ${val('co2CriticalLimit', 3.0)} mmHg is critical.`, ...src('co2CautionLimit', 'OCHMO-TB-004 CO₂') },
+      { bilgi: `CO₂ partial pressure above ${val('co2CautionLimit', 2.3)} mmHg is caution and above ${val('co2CriticalLimit', 3.0)} mmHg is warning.`, ...src('co2CautionLimit', 'OCHMO-TB-004 CO₂') },
       { bilgi: 'High CO₂ can cause symptoms such as headache and loss of concentration.', ...src('co2CautionLimit', 'OCHMO-TB-004 CO₂') },
       { bilgi: `Median CO₂ in the ISS cabin is ${val('cabinCO2Median', 1.9)} mmHg (2,516 ppm); the highest measured value is ${val('cabinCO2FailurePeak', 5.3)} mmHg (6,977 ppm).`, ...src('cabinCO2Median', 'OSDR EDA (ISS environmental data)') },
-      { bilgi: 'In a critical CO₂ incident, Layer 1 increases ventilation automatically.', kaynak: 'Layer 1 rule' },
+      { bilgi: 'In a CO₂ warning, Layer 1 increases ventilation automatically.', kaynak: 'Layer 1 rule' },
     ],
   },
   {
@@ -81,7 +81,7 @@ export const REFERENCES: ReferenceTopic[] = [
     anahtarKelimeler: ['oxygen', 'spo2', 'spo₂', 'saturation', 'hypoxia', 'pressure', 'suit', 'cabin', 'oksijen', 'doygunluk', 'hipoksi', 'basınç', 'giysi', 'kabin'],
     bilgiler: [
       { bilgi: 'SpO₂ is normally 96–100% at sea-level pressure; the cabin is also at sea-level pressure. No alert is raised for values in this range.', ...src('spo2Normal', 'NIH StatPearls') },
-      { bilgi: 'For SpO₂, below 94% caution and below 90% critical are clinical assumptions.', ...ASSUMPTION, kaynak: 'Clinical threshold, assumption (risk: NASA HRP hypoxia)' },
+      { bilgi: 'For SpO₂, below 94% caution and below 90% warning are clinical assumptions.', ...ASSUMPTION, kaynak: 'Clinical threshold, assumption (risk: NASA HRP hypoxia)' },
       { bilgi: `Cabin: ${val('cabinPressure', 101.3)} kPa and 21% O₂ (same as the ISS).`, ...src('cabinPressure', 'Cabin atmosphere (NASA NTRS)') },
       { bilgi: `EVA suit: ${val('suitPressure', 29.6)} kPa and 100% O₂.`, ...src('suitPressure', 'EVA suit regulator (NASA NTRS)') },
     ],
@@ -91,7 +91,7 @@ export const REFERENCES: ReferenceTopic[] = [
     anahtarKelimeler: ['temperature', 'fever', 'core', 'heat', 'exertion', 'thermal', 'sıcaklık', 'sicaklik', 'ateş', 'çekirdek', 'ısı', 'efor', 'termal'],
     bilgiler: [
       { bilgi: `At rest in space, core temperature is about ${val('coreTempRiseInSpace', 1)} °C higher (37.3–37.8 °C); during exercise it can exceed 40 °C.`, ...src('coreTempRiseInSpace', 'Stahn et al. 2017, Sci Rep') },
-      { bilgi: 'Layer 1 raises a caution at 38.5 °C core temperature and a critical incident at 39.0 °C, and applies mandatory rest.', ...ASSUMPTION },
+      { bilgi: 'Layer 1 raises a caution at 38.5 °C core temperature and a warning at 39.0 °C, and applies mandatory crew rest.', ...ASSUMPTION },
     ],
   },
   {
@@ -100,7 +100,7 @@ export const REFERENCES: ReferenceTopic[] = [
     bilgiler: [
       { bilgi: `Average sleep in space is ${val('sleepInSpaceMean', 6.09)} hours; NASA schedules 8.5 hours.`, ...src('sleepInSpaceMean', 'Barger et al. 2014, Lancet Neurology') },
       { bilgi: 'Sleep loss lengthens PVT reaction time and increases stress.', ...src('pvtMeanRtRested', 'Jones et al. 2022 (NASA Reaction Self Test)') },
-      { bilgi: 'Layer 1 raises a fatigue incident and applies mandatory rest if at least three of sleep, PVT, PANAS positive affect, BSI-18 and HRV reach caution together.', kaynak: 'Layer 1 rule' },
+      { bilgi: 'Layer 1 raises a fatigue incident and applies mandatory crew rest if at least three of sleep, PVT, PANAS positive affect, BSI-18 and HRV reach caution together.', kaynak: 'Layer 1 rule' },
     ],
   },
   {
@@ -146,8 +146,8 @@ export const REFERENCES: ReferenceTopic[] = [
     konu: 'ortam',
     anahtarKelimeler: ['environment', 'cabin temperature', 'ambient temperature', 'humidity', 'noise', 'sound level', 'decibel', 'dba', 'comfort', 'ortam', 'kabin sıcaklığı', 'ortam sıcaklığı', 'nem', 'rutubet', 'gürültü', 'ses düzeyi', 'desibel', 'konfor'],
     bilgiler: [
-      { bilgi: 'NASA performance zone: ambient temperature 20–25 °C and relative humidity 30–60%. The health limit lies between 18 °C at 75% humidity and 27 °C at 25% humidity. The app\'s normal values (22.5 °C, 45%) sit in the middle of this range.', ...src('ambientTempComfort', 'OCHMO-TB-002 ECLSS') },
-      { bilgi: 'The continuous noise limit in spacecraft work areas is the NC-50 curve (about 58 dBA). The app\'s normal value of 55 dBA is an assumption chosen below this limit.', ...src('noiseBaseline', 'OCHMO-TB-035 Acoustics') },
+      { bilgi: 'NASA performance zone: ambient temperature 20–25 °C and relative humidity 30–60%. The health limit lies between 18 °C at 75% humidity and 27 °C at 25% humidity. The app\'s baseline values (22.5 °C, 45%) sit in the middle of this range.', ...src('ambientTempComfort', 'OCHMO-TB-002 ECLSS') },
+      { bilgi: 'The continuous noise limit in spacecraft work areas is the NC-50 curve (about 58 dBA). The app\'s baseline value of 55 dBA is an assumption chosen below this limit.', ...src('noiseBaseline', 'OCHMO-TB-035 Acoustics') },
       { bilgi: 'On the ISS, the noise exposure limit for astronauts is 72 dBA averaged over a 16-hour work period and 62 dBA over 8 hours of sleep. If 50 dBA is exceeded during sleep, the flight surgeon advises the astronaut on noise reduction steps.', ...src('noiseWorkLimit', 'ISS noise limits') },
       { bilgi: 'On the ISS, noise is measured with personal noise dosimeters worn by astronauts.', kaynak: 'NASA NTRS, ISS acoustic monitoring', url: 'https://ntrs.nasa.gov/api/citations/20110013006/downloads/20110013006.pdf' },
     ],
@@ -191,11 +191,11 @@ export const REFERENCES: ReferenceTopic[] = [
     anahtarKelimeler: ['method', 'baseline', 'z-score', 'z score', 'layer', 'how does it decide', 'threshold', 'yöntem', 'yontem', 'z-skoru', 'z skoru', 'katman', 'nasıl karar', 'eşik', 'esik'],
     bilgiler: [
       {
-        bilgi: 'NASA sources give no universal numeric thresholds for heart rate, blood pressure, SpO₂ or mood; so Layer 1 tracks each astronaut\'s deviation from their personal normal (z-score): z ≥ 2 caution, z ≥ 3 critical, over at least 3 consecutive readings.',
+        bilgi: 'NASA sources give no universal numeric thresholds for heart rate, blood pressure, SpO₂ or mood; so Layer 1 tracks each astronaut\'s deviation from their personal baseline (z-score): z ≥ 2 caution, z ≥ 3 warning, over at least 3 consecutive readings.',
         kaynak: 'Project method (plan: Data and sources)',
       },
       { bilgi: 'Only Layer 1 raises alerts; ASTRA (Layer 2) only reads and explains.', kaynak: 'Project architecture' },
-      { bilgi: 'For metrics whose official source gives a normal range, no alert is raised while the value is within it: SpO₂ 96–100% (NIH), resting breathing 12–20/min and EtCO₂ 35–45 mmHg (JEMS), EVA heart rate 100–110 bpm (NASA, Apollo), cabin CO₂ up to 2.3 mmHg, ambient 20–25 °C and humidity 30–60% (NASA), noise up to 72 dBA (ISS). Outside the range, deviation from personal normal is evaluated.', kaynak: 'Project method (normal ranges in src/sim/parameters.ts)' },
+      { bilgi: 'For metrics whose official source gives a reference range, no alert is raised while the value is within it: SpO₂ 96–100% (NIH), resting breathing 12–20/min and EtCO₂ 35–45 mmHg (JEMS), EVA heart rate 100–110 bpm (NASA, Apollo), cabin CO₂ up to 2.3 mmHg, ambient 20–25 °C and humidity 30–60% (NASA), noise up to 72 dBA (ISS). Outside the range, deviation from personal baseline is evaluated.', kaynak: 'Project method (reference ranges in src/sim/parameters.ts)' },
     ],
   },
 ];

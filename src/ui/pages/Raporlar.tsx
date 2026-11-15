@@ -79,7 +79,7 @@ export function Raporlar({ crewId }: { crewId?: CrewId } = {}) {
       `core temperature ${fmt(t.resp.coreTemp_C, 1)} °C`,
       `ppCO₂ ${fmt(t.env.ppCO2_mmHg, 1)} mmHg`,
     ];
-    if (st.restRequired) parts.push('on mandatory rest');
+    if (st.restRequired) parts.push('on mandatory crew rest');
     s.addLedger([{ id: `rep-${Date.now()}`, at: Date.now(), kind: 'SYSTEM', text: `Telemetry snapshot · ${name}: ${parts.join(' · ')}`, crewIds: [selected] }]);
   }
 
@@ -136,7 +136,7 @@ export function Raporlar({ crewId }: { crewId?: CrewId } = {}) {
       <div className="space-y-2">
         {shown.length === 0 && (
           <div className="rounded-xl border border-space-border bg-space-panel p-4 text-sm text-slate-400">
-            {filter === 'all' ? 'No entries yet.' : 'No entries for this filter. On a normal day no incidents are expected.'}
+            {filter === 'all' ? 'No entries yet.' : 'No entries for this filter. On a nominal day no incidents are expected.'}
           </div>
         )}
         {shown.slice(0, limit).map((e) => (

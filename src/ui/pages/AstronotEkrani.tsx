@@ -83,7 +83,7 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
                 {m.name.replace(/^Dr\.\s*/, '')}
                 {m.location === 'GEZEGEN' && (
                   <span className="text-[11px] font-semibold" style={{ color: COLORS.critical }}>
-                    On spacewalk
+                    On EVA
                   </span>
                 )}
               </span>
@@ -109,7 +109,7 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
           <div className="text-xl font-bold">{member.name}</div>
           {eva && (
             <div className="text-sm font-semibold" style={{ color: COLORS.critical }}>
-              ● On spacewalk
+              ● On EVA
             </div>
           )}
           <div className="text-sm text-slate-400">
@@ -133,7 +133,7 @@ export function AstronotEkrani({ crewId, onSelect }: { crewId: CrewId; onSelect:
         )}
         {st?.restRequired && (
           <span className="rounded-full px-3 py-1 text-sm font-semibold" style={{ color: COLORS.calm, backgroundColor: alpha(COLORS.calm, 0.12) }}>
-            ✓ Mandatory rest · automatic
+            ✓ Mandatory crew rest · automatic
           </span>
         )}
         {due.length > 0 && (
@@ -272,8 +272,8 @@ function RangeNote({ crewId, k, value, block }: { crewId: CrewId; k: MetricKey; 
       style={{ color: inside ? COLORS.normal : COLORS.caution }}
       title={
         inside
-          ? 'Within the official normal range: no alert for this value (see the source badge).'
-          : 'Outside the official normal range: deviation from personal normal is evaluated.'
+          ? 'Within the reference range: no alert for this value (see the source badge).'
+          : 'Outside the reference range: deviation from personal baseline is evaluated.'
       }
     >
       normal {text} {inside ? '✓' : '!'}
@@ -505,8 +505,8 @@ function Overview({ crewId, st }: { crewId: CrewId; st: CrewStatus | undefined }
     <div>
       <p className="mb-3 text-sm text-slate-400">
         {allNormal
-          ? 'All metrics are within personal normal range. Below are the 3 metrics furthest from personal normal.'
-          : 'Layer 1 shows the 3 metrics deviating most from personal normal. Only Layer 1 can raise alerts.'}
+          ? 'All metrics are within personal baseline range. Below are the 3 metrics furthest from personal baseline.'
+          : 'Layer 1 shows the 3 metrics deviating most from personal baseline. Only Layer 1 can raise alerts.'}
       </p>
       <div className="grid grid-cols-1 gap-3 min-[900px]:grid-cols-3">
         {st.topSignals.map((s) => (
@@ -533,7 +533,7 @@ function SignalCard({ s, crewId, series }: { s: MetricScore; crewId: CrewId; ser
         <SourceBadge metric={s.key} crewId={crewId} />
       </div>
       <div className="mt-1 text-sm text-slate-400">
-        personal normal {fmtMetric(s.key, s.mean)}
+        personal baseline {fmtMetric(s.key, s.mean)}
         {s.key !== 'env.doseCumulative_mSv' && <> · deviation {fmtZ(s.z)}</>}
       </div>
       <div className="mt-2">

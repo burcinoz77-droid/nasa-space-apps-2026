@@ -19,7 +19,7 @@ const EQUIPMENT = [
   { id: 'suit', name: 'xEMU suit pressure test', detail: `${fmt(PARAMS.suitPressure.value, 1)} kPa, 100% O₂` },
   { id: 'prebreathe', name: 'Pure-oxygen prebreathe complete', detail: 'Before depressurization' },
   { id: 'cooling', name: 'Liquid cooling garment', detail: 'For core temperature' },
-  { id: 'comms', name: 'Radio and helmet camera', detail: 'Voice and video with the Cockpit' },
+  { id: 'comms', name: 'Radio and helmet camera', detail: 'Voice and video with the orbit crew' },
   { id: 'tools', name: 'Panel cleaning brush and torque wrench', detail: 'Dust and loose connectors' },
   { id: 'cable', name: 'Spare power cable', detail: 'For the faulty string' },
   { id: 'tether', name: 'Safety tether and carabiner', detail: 'Attached to the airlock' },
@@ -66,12 +66,12 @@ export function Gorevler() {
         <HabitatIllustration />
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="rounded-full bg-calm/15 px-3 py-1 font-semibold text-calm">EVA · Surface team</span>
+            <span className="rounded-full bg-calm/15 px-3 py-1 font-semibold text-calm">EVA · Surface crew</span>
             <span className="rounded-full bg-white/5 px-3 py-1 text-slate-300">ARES-1 · Mars surface</span>
           </div>
           <h2 className="text-2xl font-bold">Habitat solar panel maintenance</h2>
           <p className="text-slate-300">
-            The Surface team cleans dust-covered panel strings and replaces loose power connectors. The Cockpit team monitors telemetry from orbit.
+            The surface crew cleans dust-covered panel strings and replaces loose power connectors. The orbit crew monitors telemetry from orbit.
           </p>
           <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
             <div>
@@ -164,7 +164,7 @@ export function Gorevler() {
                   </div>
                   {st?.restRequired && (
                     <div className="mt-1 text-sm font-semibold" style={{ color: COLORS.caution }}>
-                      ▲ Mandatory rest applied
+                      ▲ Mandatory crew rest applied
                     </div>
                   )}
                 </li>
@@ -185,7 +185,7 @@ export function Gorevler() {
             <p className="mt-3 text-sm text-slate-400">Surface dose reference: {PARAMS.doseRateMarsSurface.source}</p>
           </section>
           <section className="rounded-2xl border border-space-border bg-space-panel p-5">
-            <h3 className="font-semibold">Earth link</h3>
+            <h3 className="font-semibold">Comm with Earth</h3>
             <p className="mt-1 font-mono text-lg text-calm">delay {ship ? delayText(ship.commDelayOneWay_s) : '—'}</p>
             <p className="mt-1 text-sm text-slate-400">
               One way. Round trip about {ship ? fmt((ship.commDelayOneWay_s * 2) / 60) : '—'} min · NASA Mars Relay Network

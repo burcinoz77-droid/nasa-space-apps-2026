@@ -61,7 +61,7 @@ function label(key: MetricKey): string {
 
 /** "kalp atış hızı 155 bpm (kişisel normal 92 bpm)" */
 function signalText(sig: MetricScore): string {
-  return `${label(sig.key)} ${valueText(sig.key, sig.value)} (personal normal ${valueText(sig.key, sig.mean)})`;
+  return `${label(sig.key)} ${valueText(sig.key, sig.value)} (personal baseline ${valueText(sig.key, sig.mean)})`;
 }
 
 function metricNow(s: AstraState, id: CrewId, key: MetricKey): number | undefined {
@@ -139,12 +139,12 @@ function incidentText(req: AstraRequest, s: AstraState): string {
         cumulative
           ? `Long-term risk grows as cumulative dose approaches the ${fmt(param('careerDoseLimit', 600))} mSv career limit.`
           : 'During a solar particle event the dose rate can rise quickly.',
-        `${step('Moving to the radiation shelter is recommended')}keep monitoring the dose rate.`,
+        `${step('Moving to the storm shelter is recommended')}keep monitoring the dose rate.`,
       );
     }
     case 'CO2':
       return sentences(
-        `${who}: ${sig}; critical limit ${fmt(param('co2CriticalLimit', 3.0), 1)} mmHg.`,
+        `${who}: ${sig}; warning limit ${fmt(param('co2CriticalLimit', 3.0), 1)} mmHg.`,
         'High CO₂ can cause headache and loss of concentration; the CO₂ scrubber should be checked.',
         `${step('Increasing ventilation is recommended')}re-check the value after a few readings.`,
       );
@@ -180,7 +180,7 @@ function incidentText(req: AstraRequest, s: AstraState): string {
       );
     case 'MULTI':
       return sentences(
-        `${who}: critical deviation in more than one domain; ${sig}.`,
+        `${who}: warning-level deviation in more than one domain; ${sig}.`,
         'The situation may not have a single cause.',
         `A medical check is recommended. ${DOCTOR}`,
       );
@@ -249,7 +249,7 @@ function statusSentence(s: AstraState, id: CrewId, withName = true): string {
 function topSignalsSentence(s: AstraState, id: CrewId): string | undefined {
   const st = s.statuses[id];
   if (!st?.topSignals.length) return undefined;
-  if (st.level === 'normal') return 'Readings are close to personal normal.';
+  if (st.level === 'normal') return 'Readings are close to personal baseline.';
   return `Most deviating readings: ${list(st.topSignals.slice(0, 3).map(signalText))}.`;
 }
 
@@ -264,7 +264,7 @@ function whyText(s: AstraState, id: CrewId, askedCritical: boolean): string {
   const st = s.statuses[id];
   const inc = openIncidents(s, (i) => i.crewIds.includes(id))[0];
   return sentences(
-    askedCritical && st && st.level !== 'critical' && `${shortName(id)} is not critical right now.`,
+    askedCritical && st && st.level !== 'critical' && `${shortName(id)} is not at Warning level right now.`,
     statusSentence(s, id),
     topSignalsSentence(s, id),
     inc && `Open incident: ${inc.title}${inc.autoActions.length ? `; ${actionsText(inc).toLowerCase()}` : ''}.`,
@@ -288,7 +288,7 @@ function conditionText(s: AstraState, id: CrewId | undefined, urgent: boolean): 
   if (!found.length) {
     return sentences(
       'I cannot give a definitive diagnosis.',
-      `${shortName(id)}'s readings show no clear deviation from personal normal.`,
+      `${shortName(id)}'s readings show no clear deviation from personal baseline.`,
       lifeThreat,
       DOCTOR,
     );
@@ -314,8 +314,8 @@ function restText(s: AstraState): string {
     `${shortName(id)} (cognitive score ${fmt(cog(id))}%, sleep ${valueText('env.sleepLastNight_h', metricNow(s, id, 'env.sleepLastNight_h') ?? 0)}, PVT ${valueText('cog.pvtMeanRt_ms', pvt(id))})`;
   return sentences(
     rest.length
-      ? `Layer 1 has applied mandatory rest: ${list(rest.map(detail))}.`
-      : 'Nobody is on mandatory rest right now.',
+      ? `Layer 1 has applied mandatory crew rest: ${list(rest.map(detail))}.`
+      : 'Nobody is on mandatory crew rest right now.',
     lowest.length > 0 && `${rest.length ? 'Also, lowest' : 'Lowest'} cognitive scores: ${list(lowest.map(detail))}.`,
     'The crew decides on rest.',
   );
@@ -390,7 +390,7 @@ function radiationText(s: AstraState, crew: CrewId[]): string {
   const limit = param('careerDoseLimit', 600);
   const inc = openIncidents(s, (i) => i.type === 'RADIATION')[0];
   const incSentence = inc
-    ? `There is an open radiation incident; ${inc.autoActions.includes('RADIATION_SHELTER') ? 'the move to the radiation shelter started automatically' : 'moving to the radiation shelter is recommended'}.`
+    ? `There is an open radiation incident; ${inc.autoActions.includes('RADIATION_SHELTER') ? 'storm shelter ingress started automatically' : 'moving to the storm shelter is recommended'}.`
     : 'No open radiation incident; values are being monitored.';
   const pct = (cum: number) => Math.round((cum / limit) * 100);
 
@@ -411,7 +411,7 @@ function radiationText(s: AstraState, crew: CrewId[]): string {
     .sort((a, b) => (metricNow(s, b, 'env.doseCumulative_mSv') ?? 0) - (metricNow(s, a, 'env.doseCumulative_mSv') ?? 0))[0];
   const cum = top ? (metricNow(s, top, 'env.doseCumulative_mSv') ?? 0) : 0;
   return sentences(
-    `Average radiation dose rate is ${valueText('env.doseRate_uSv_h', kok ?? 0)} for the Cockpit team and ${valueText('env.doseRate_uSv_h', gez ?? 0)} for the Surface team.`,
+    `Average radiation dose rate is ${valueText('env.doseRate_uSv_h', kok ?? 0)} for the orbit crew and ${valueText('env.doseRate_uSv_h', gez ?? 0)} for the surface crew.`,
     top && `Highest cumulative dose: ${shortName(top)}, ${valueText('env.doseCumulative_mSv', cum)}; that is ${pct(cum)}% of the ${fmt(limit)} mSv career limit.`,
     incSentence,
   );
@@ -427,22 +427,22 @@ function co2Text(s: AstraState): string {
   const sensitive = CREW.find((c) => /CO₂|CO2/.test(c.sensitivity));
   const gez = avg(s, crewAt(s, 'GEZEGEN'), 'env.ppCO2_mmHg');
   return sentences(
-    `Cockpit cabin CO₂ partial pressure is ${valueText('env.ppCO2_mmHg', v)}; caution limit ${fmt(caution, 1)}, critical limit ${fmt(critical, 1)} mmHg.`,
+    `Spacecraft cabin CO₂ partial pressure is ${valueText('env.ppCO2_mmHg', v)}; caution limit ${fmt(caution, 1)}, warning limit ${fmt(critical, 1)} mmHg.`,
     v <= caution
       ? 'The value is in the safe range.'
       : v <= critical
         ? 'The value is above the caution limit; the CO₂ scrubber and ventilation should be checked.'
         : ventilated
-          ? 'The value is above the critical limit; ventilation was increased automatically and the value should fall within a few readings.'
-          : 'The value is above the critical limit; increasing ventilation is recommended.',
+          ? 'The value is above the warning limit; ventilation was increased automatically and the value should fall within a few readings.'
+          : 'The value is above the warning limit; increasing ventilation is recommended.',
     v > caution && sensitive && `${shortName(sensitive.id)} is sensitive to high CO₂; his breathing should be watched closely.`,
-    gez !== undefined && `The Surface team's in-suit average is ${valueText('env.ppCO2_mmHg', gez)}.`,
+    gez !== undefined && `The surface crew's in-suit average is ${valueText('env.ppCO2_mmHg', gez)}.`,
   );
 }
 
 function delayAnswer(s: AstraState): string {
   const d = s.ship?.commDelayOneWay_s;
-  if (d === undefined) return 'Ship data has not arrived yet; please ask again in a few seconds.';
+  if (d === undefined) return 'Vehicle data has not arrived yet; please ask again in a few seconds.';
   return sentences(
     `The one-way delay to Earth is ${delayText(d)}; a message and its reply take about ${fmt((d * 2) / 60)} minutes.`,
     'During that time Layer 1 and the crew take the urgent steps; ASTRA explains the data.',
@@ -479,9 +479,9 @@ function rangeSentence(s: AstraState, ids: CrewId[], key: MetricKey): string | u
   const rangeText = r[0] === 0 ? `up to ${valueText(key, r[1])}` : `${fmt(r[0], Number.isInteger(r[0]) ? 0 : 1)}–${valueText(key, r[1])}`;
   if (!outside.length) {
     const who = withRange.length === 1 ? 'The value is' : 'All values are';
-    return `${who} within the official normal range (${rangeText}); no alert is needed in this range.`;
+    return `${who} within the reference range (${rangeText}); no alert is needed in this range.`;
   }
-  return `${list(outside.map(shortName))} outside the official normal range (${rangeText}); deviation from personal normal is being monitored.`;
+  return `${list(outside.map(shortName))} outside the reference range (${rangeText}); deviation from personal baseline is being monitored.`;
 }
 
 function summaryText(s: AstraState): string {
@@ -518,9 +518,9 @@ function chatText(question: string, s: AstraState): string {
   if (has(/(raise|create|open|trigger|start) (an? )?(alert|alarm|incident)|turn off|shut down|disable|silence|mute|(uyarı|alarm|olay)[a-zçğıöşü]*\s+(aç|oluştur|başlat)(?![ıi])|kapat|devre dışı|sustur/)) {
     const co2 = Math.max(...crewAt(s, 'KOKPIT').map((id) => metricNow(s, id, 'env.ppCO2_mmHg') ?? 0), 0);
     return sentences(
-      'I cannot raise alerts or operate or shut down ship systems.',
+      'I cannot raise alerts or operate or shut down vehicle systems.',
       'Layer 1 raises alerts; the crew makes system decisions such as ventilation.',
-      has(/ventilat|co2|co₂|havalandır/) && `For reference: Cockpit CO₂ partial pressure is currently ${valueText('env.ppCO2_mmHg', co2)}.`,
+      has(/ventilat|co2|co₂|havalandır/) && `For reference: Cabin CO₂ partial pressure is currently ${valueText('env.ppCO2_mmHg', co2)}.`,
     );
   }
   // 3) İlaç ve doz
@@ -541,9 +541,9 @@ function chatText(question: string, s: AstraState): string {
   // 5b) Psikolojik testler (Samn-Perelli, NASA-TLX, PVT-B): sonuçlar, plan, karşılaştırma
   if (has(/test|tlx|samn|perelli|workload|psycholog|questionnaire|iş yük|is yuk|psikoloj|anket/)) return testText(s, crew, has);
   // 6) Neden kritik / neden dikkat
-  if (has(/why|reason|cause|neden|niye|sebep/) && (crew.length || has(/critical|caution|kritik|dikkat/))) {
+  if (has(/why|reason|cause|neden|niye|sebep/) && (crew.length || has(/critical|caution|warning|kritik|dikkat/))) {
     const id = crew[0] ?? mostSevere(s);
-    if (id) return whyText(s, id, has(/critical|kritik/));
+    if (id) return whyText(s, id, has(/critical|warning|kritik/));
   }
   // 7) Konular
   if (has(/radiation|dose|sievert|msv|solar storm|radyasyon|doz|güneş fırtına/)) return radiationText(s, crew);
@@ -556,7 +556,7 @@ function chatText(question: string, s: AstraState): string {
   const unmeasured = unmeasuredText(s, has);
   if (unmeasured) return unmeasured;
   // 9) Bir kişinin durumu
-  if (crew.length && has(/how|status|ok\b|okay|doing|critical|caution|score|nasıl|durum|iyi mi|ne durumda|kritik|dikkat|skor/)) return whyText(s, crew[0], false);
+  if (crew.length && has(/how|status|ok\b|okay|doing|critical|caution|warning|nominal|score|nasıl|durum|iyi mi|ne durumda|kritik|dikkat|skor/)) return whyText(s, crew[0], false);
   // 10) Sadece bir ad ("Peki Kerem?"): o kişinin durumu
   const FILLER = new Set(['and', 'what', 'about', 'how', 'now', 'then', 'so', 'peki', 'ya', 'ne', 'için', 've', 'mi', 'mı', 'olacak', 'bakalım', 'şimdi']);
   const rest = q

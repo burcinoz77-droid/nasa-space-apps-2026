@@ -20,8 +20,8 @@ import { alpha, COLORS, fmt, LEVEL_COLOR, LEVEL_ICON, LEVEL_LABEL, scoreLevel, w
 
 const EMPTY: Telemetry[] = [];
 const TEAMS: { loc: CrewLocation; title: string; where: string }[] = [
-  { loc: 'KOKPIT', title: 'Cockpit team', where: 'in Mars orbit, inside the ship' },
-  { loc: 'GEZEGEN', title: 'Surface team', where: 'on the Mars surface, in EVA suits' },
+  { loc: 'KOKPIT', title: 'Orbit crew', where: 'in Mars orbit, inside the spacecraft' },
+  { loc: 'GEZEGEN', title: 'Surface crew', where: 'on the Mars surface, in EVA suits' },
 ];
 const idsOf = (loc: CrewLocation) => CREW.filter((m) => m.location === loc).map((m) => m.id);
 
@@ -65,8 +65,8 @@ export function Kokpit({ onOpenCrew, onOpenReports }: { onOpenCrew: (id: CrewId)
           <div className="astra-scope flex flex-1 flex-col rounded-b-xl">
             <OrbitalDisplay markers={{ ship: shipLevel, surface: surfaceLevel }} />
             <div className="grid grid-cols-2 gap-px border-t border-space-border bg-space-border">
-              <TeamMarker glyph="◆" title="ARES-1" sub="Cockpit team" level={shipLevel} />
-              <TeamMarker glyph="■" title="EVA zone" sub="Surface team" level={surfaceLevel} />
+              <TeamMarker glyph="◆" title="ARES-1" sub="Orbit crew" level={shipLevel} />
+              <TeamMarker glyph="■" title="EVA zone" sub="Surface crew" level={surfaceLevel} />
             </div>
           </div>
         </Panel>
@@ -138,7 +138,7 @@ function StatusStrip() {
           </Big>
           <span className="text-slate-300">online</span>
         </div>
-        <Sub>{rest ? `${rest} on mandatory rest` : '3 in orbit, 3 on the surface'}</Sub>
+        <Sub>{rest ? `${rest} on mandatory crew rest` : '3 in orbit, 3 on the surface'}</Sub>
       </Cell>
 
       <Cell i={1} label="Average health" right={<LevelBadge level={avgLevel} />}>
@@ -154,11 +154,11 @@ function StatusStrip() {
           {critical.length ? 'Action required' : 'Nominal'}
         </div>
         <Sub>
-          {critical.length ? `${critical.length} critical incident(s) awaiting acknowledgement` : open.length ? `${open.length} caution notice(s) being monitored` : 'No open incidents'}
+          {critical.length ? `${critical.length} warning(s) awaiting acknowledgement` : open.length ? `${open.length} caution notice(s) being monitored` : 'No open incidents'}
         </Sub>
       </Cell>
 
-      <Cell i={3} label="Mission day" right={<SourceBadge param="missionDurationDays" />}>
+      <Cell i={3} label="Mission Day" right={<SourceBadge param="missionDurationDays" />}>
         <div className="flex items-baseline gap-2">
           <Big>{fmt(day)}</Big>
           <span className="text-slate-300">/ ~{fmt(total)} days</span>
@@ -382,7 +382,7 @@ function EnvironmentTable() {
     <div className="@container">
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1.25fr)] gap-x-3 pb-2 text-sm text-slate-400">
         <span>Metric</span>
-        <span>Cabin, Cockpit</span>
+        <span>Cabin, spacecraft</span>
         <span>Suits, Surface</span>
       </div>
       {ENV_ROWS.map((row) => (
@@ -396,7 +396,7 @@ function EnvironmentTable() {
         </div>
       ))}
       <div className="mt-2 text-sm text-slate-400">
-        CO₂ limits: caution {fmtUnit(PARAMS.co2CautionLimit.value, 'mmHg', 1)}, critical {fmtUnit(PARAMS.co2CriticalLimit.value, 'mmHg', 1)}
+        CO₂ limits: caution {fmtUnit(PARAMS.co2CautionLimit.value, 'mmHg', 1)}, warning {fmtUnit(PARAMS.co2CriticalLimit.value, 'mmHg', 1)}
       </div>
     </div>
   );

@@ -27,7 +27,7 @@ export function runSimulation(ticks = 5, scenario?: ScenarioId, scenarioTicks = 
 
 export const QUESTIONS = [
   'Who should rest today?',
-  'Why is Kerem critical?',
+  'Why is Kerem at Warning level?',
   "What is Elif's heart rate?",
   'How is the radiation situation?',
   'What is the delay to Earth?',
@@ -40,7 +40,7 @@ export const QUESTIONS = [
 
 /** Plandaki test tablosunun "beklenen davranış" sütunu, kontrol edilebilir biçimde. */
 export const EXPECTED: { behaviour: string; check: RegExp }[] = [
-  { behaviour: 'People on mandatory rest or with low cognitive scores, with values', check: /rest|cognitive/i },
+  { behaviour: 'People on mandatory crew rest or with low cognitive scores, with values', check: /rest|cognitive/i },
   { behaviour: "Kerem's most deviating signals, with real values", check: /kerem/i },
   { behaviour: 'Same number as on screen', check: /\d/ },
   { behaviour: 'Dose rate + cumulative dose + 600 mSv limit', check: /600/ },
@@ -67,7 +67,7 @@ export function makeDemoState(): AstraState {
     { key: 'cardio.hr_bpm', value: 82, mean: 68, sd: 3, z: 4.7, streak: 3, level: 'critical' },
   ];
   const inc = fakeIncident('CO2', ['elif', 'kerem', 'zeynep'], signals.slice(0, 1), ['INCREASE_VENTILATION']);
-  inc.title = 'Cockpit cabin CO₂ partial pressure above the critical limit';
+  inc.title = 'Spacecraft cabin CO₂ partial pressure above the warning limit';
   const telemetry = { ...s.telemetry };
   for (const id of ['elif', 'kerem', 'zeynep'] as CrewId[]) {
     telemetry[id] = { ...telemetry[id]!, env: { ...telemetry[id]!.env, ppCO2_mmHg: 3.4 } };

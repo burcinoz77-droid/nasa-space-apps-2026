@@ -1,6 +1,6 @@
 {
   "id": "SOLAR_STORM",
-  "name": "Solar storm",
+  "name": "Solar particle event",
   "seed": 2024,
   "source": "DONKI SEP/FLR records, May 2024: https://ccmc.gsfc.nasa.gov/DONKI-API/get/SEP?startDate=2024-05-01&endDate=2024-05-31",
   "note": "Event order and times from DONKI May 2024 records (data/donki_sep_2024-05.json): X3.9 flare → GOES >10 MeV → X5.8 flare → GOES >100 MeV. Compressed for the demo: a 19-hour sequence plays in 40 readings. DONKI gives event times, not doses: dose multipliers (Cockpit ×25 then ×60, surface ×5) are assumptions. The stress response (GSR, cortisol, heart rate) is assumed; Elif is radiation-sensitive.",
@@ -41,7 +41,7 @@
       "atTick": 100,
       "untilTick": 130,
       "type": "SPE_END",
-      "text": "Particle flux returning to normal"
+      "text": "Particle flux returning to background levels"
     }
   ],
   "effects": [

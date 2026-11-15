@@ -3,7 +3,7 @@
   "name": "EVA overexertion",
   "seed": 155,
   "source": "Stahn et al. 2017 (core temperature can exceed 40 °C during exercise in space); sweat biomarker table (lactate, sodium ranges)",
-  "note": "Mert overexerts and builds up heat while doing heavy surface work (carrying a panel). Target values come from the plan table. When mandatory rest is applied, heart rate, breathing, lactate and core temperature recover to baseline.",
+  "note": "Mert overexerts and builds up heat while doing heavy surface work (carrying a panel). Target values come from the plan table. When mandatory crew rest is applied, heart rate, breathing, lactate and core temperature recover to baseline.",
   "events": [
     { "atTick": 0, "untilTick": 40, "type": "EVA_HEAVY", "text": "Mert: carrying habitat solar panel, heavy EVA task" },
     { "atTick": 40, "type": "EVA_HEAT", "text": "Mert: heat building up inside the suit" }
